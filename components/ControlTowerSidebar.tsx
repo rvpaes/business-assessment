@@ -64,12 +64,12 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-[#E8F1F8] flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none shadow-xs z-30 font-sans">
+    <aside className="w-[295px] bg-white border-r border-[#E8F1F8] flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none shadow-xs z-30 font-sans">
       {/* Topo: Brand Header Executivo Google Cloud Business Assessment */}
       <div>
-        <div className="px-5 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[73px]">
+        <div className="px-6 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[76px]">
           <div className="flex items-center gap-2">
-            <GoogleCloudLogo height={28} />
+            <GoogleCloudLogo height={30} />
           </div>
           <div className="flex items-center gap-2 mt-2">
             <span className="text-[8.5px] font-extrabold px-2 py-0.5 rounded bg-blue-50 text-[#074878] border border-blue-100 uppercase tracking-wider">
@@ -79,7 +79,7 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
         </div>
 
         {/* Itens de Navegação */}
-        <nav className="p-3 space-y-1.5">
+        <nav className="p-3.5 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -93,13 +93,13 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
                     : "text-[#5A6B7A] hover:bg-slate-50 hover:text-[#1A2733]"
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[#5A6B7A]"}`} />
-                  <span>{item.label}</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-[#5A6B7A]"}`} />
+                  <span className="whitespace-nowrap">{item.label}</span>
                 </div>
 
                 <span
-                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0 ml-2 ${
                     isActive ? "bg-white/20 text-white" : item.badgeColor
                   }`}
                 >
