@@ -34,7 +34,7 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
     },
     {
       id: "decision" as NavigationTab,
-      label: "Visão Geral",
+      label: "Agent Intelligence",
       icon: LayoutDashboard,
       badge: "MESA",
       badgeColor: "bg-[#074878] text-white",

@@ -58,7 +58,7 @@ Seu papel biológico é a ideação divergente, associação lateral livre e cri
 
 INFORMAÇÕES DO CLIENTE AUDITADO:
 - Nome do Cliente: ${assessment.customerName}
-- Indústria Principal: ${assessment.industry}
+- Indústria Principal: ${assessment.industry}${assessment.websiteUrl ? `\n- Website / Domínio: ${assessment.websiteUrl}` : ""}${assessment.additionalInfo ? `\n- CONTEXTO ESTRATÉGICO & DIRETRIZES FORNECIDAS PELO USUÁRIO:\n  ${assessment.additionalInfo}` : ""}
 - Total de Tabelas: ${assessment.totalTables} | Views: ${assessment.totalViews} | Colunas: ${assessment.totalColumns}
 - % Documentação de Colunas: ${assessment.docPercentage}%
 - TABELAS E DATASETS REAIS DISPONÍVEIS NO BIGQUERY (GROUNDING):
@@ -219,7 +219,7 @@ Seu papel biológico é o controle inibitório, escrutínio de regras formais, c
 
 CONTEXTO DO CLIENTE:
 - Cliente: ${assessment.customerName}
-- Indústria: ${assessment.industry}
+- Indústria: ${assessment.industry}${assessment.websiteUrl ? `\n- Website: ${assessment.websiteUrl}` : ""}${assessment.additionalInfo ? `\n- DIRETRIZES ESTRATÉGICAS PRIORITÁRIAS:\n  ${assessment.additionalInfo}` : ""}
 - Tabelas Reais:
 ${tablesContextStr}
 

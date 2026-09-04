@@ -1,4 +1,4 @@
-// components/views/UploadIngestionView.tsx - Ingestão Minimalista & Acolhedora de Assessment
+// components/views/UploadIngestionView.tsx - Ingestão com Detecção de Setor por Gemini & Info Adicional
 "use client";
 
 import React, { useState, useRef } from "react";
@@ -11,11 +11,12 @@ import {
   Sparkles, 
   RefreshCw, 
   Building2,
+  Globe,
+  FileText,
   Check,
-  Copy,
-  Layers,
   Database,
-  ChevronRight
+  ChevronRight,
+  Bot
 } from "lucide-react";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 
@@ -33,7 +34,11 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   onNavigateToCases
 }) => {
   const [customerName, setCustomerName] = useState(assessment?.customerName || "");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState(assessment?.industry || "Varejo & E-commerce");
+  const [additionalInfo, setAdditionalInfo] = useState("");
+  const [isDetectingSector, setIsDetectingSector] = useState(false);
+  const [sectorDetectedByAi, setSectorDetectedByAi] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
@@ -51,8 +56,40 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     "Telecom & Mídia",
     "Tecnologia & SaaS",
     "Energia & Utilities",
+    "Educação & Serviços",
+    "iGaming & Apostas Regulamentadas",
     "Outro Segmento"
   ];
+
+  // Identificação automática de setor com Gemini 3.8 Flash
+  const handleDetectIndustry = async (nameOverride?: string, urlOverride?: string) => {
+    const targetName = nameOverride !== undefined ? nameOverride : customerName;
+    const targetUrl = urlOverride !== undefined ? urlOverride : websiteUrl;
+
+    if (!targetName.trim() && !targetUrl.trim()) return;
+
+    setIsDetectingSector(true);
+    try {
+      const res = await fetch("/api/identify-sector", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: targetName,
+          websiteUrl: targetUrl,
+          additionalInfo: additionalInfo
+        })
+      });
+      const data = await res.json();
+      if (data.industry) {
+        setIndustry(data.industry);
+        setSectorDetectedByAi(true);
+      }
+    } catch (e) {
+      console.warn("Falha ao detectar setor automaticamente:", e);
+    } finally {
+      setIsDetectingSector(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -106,7 +143,9 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     try {
       const formData = new FormData();
       formData.append("customerName", customerName.trim());
+      formData.append("websiteUrl", websiteUrl.trim());
       formData.append("industry", industry);
+      formData.append("additionalInfo", additionalInfo.trim());
       formData.append("file", selectedFile);
 
       const res = await fetch("/api/upload", {
@@ -129,7 +168,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   };
 
   const handleLoadSample = async () => {
-    const finalCustomerName = customerName.trim() || "Empresa Modelo (Exemplo)";
+    const finalCustomerName = customerName.trim() || "Hypera Pharma";
     setIsLoading(true);
     setErrorMessage("");
     setStatusMessage("Carregando pacote de exemplo para Cloud Storage & BigQuery...");
@@ -140,7 +179,9 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           customerName: finalCustomerName,
-          industry: industry
+          websiteUrl: websiteUrl,
+          industry: industry,
+          additionalInfo: additionalInfo
         })
       });
 
@@ -174,52 +215,126 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         </p>
       </div>
 
-      {/* 2. Card Principal de Ingestão (Clean & Intuitivo) */}
+      {/* 2. Card Principal de Ingestão */}
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
         {/* Passo 1: Informações do Cliente */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
-              1
-            </span>
-            <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
-              Quem é o cliente?
-            </h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
+                1
+              </span>
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
+                Quem é o cliente?
+              </h2>
+            </div>
+
+            {/* Indicador de Identificação de Setor por IA */}
+            {isDetectingSector && (
+              <span className="text-[10px] font-bold text-[#074878] flex items-center gap-1 animate-pulse">
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                Identificando setor com Gemini...
+              </span>
+            )}
+            {sectorDetectedByAi && !isDetectingSector && (
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-600" />
+                Setor identificado por IA
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Nome da Empresa */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+              <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-slate-400" />
                 Nome da Empresa / Cliente *
               </label>
               <input
                 type="text"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Ex: Nubank, Ambev, Magazine Luiza"
+                onChange={(e) => {
+                  setCustomerName(e.target.value);
+                  setSectorDetectedByAi(false);
+                }}
+                onBlur={() => handleDetectIndustry()}
+                placeholder="Ex: Nubank, Ambev, Magazine Luiza, Hypera"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all"
               />
             </div>
 
+            {/* URL / Site do Cliente (Ajuste 1) */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                Setor de Atuação *
+              <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                <Globe className="w-3.5 h-3.5 text-slate-400" />
+                Website / URL do Cliente
               </label>
-              <select
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all cursor-pointer"
-              >
-                {industriesList.map((ind) => (
-                  <option key={ind} value={ind}>{ind}</option>
-                ))}
-              </select>
+              <input
+                type="url"
+                value={websiteUrl}
+                onChange={(e) => {
+                  setWebsiteUrl(e.target.value);
+                  setSectorDetectedByAi(false);
+                }}
+                onBlur={() => handleDetectIndustry()}
+                placeholder="Ex: https://www.cliente.com.br"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all"
+              />
             </div>
+          </div>
+
+          {/* Setor de Atuação (Auto-detectado pelo Gemini - Ajuste 2) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-bold text-slate-600">
+                Setor / Indústria (Classificado por Gemini 3.8 Flash) *
+              </label>
+              <button
+                type="button"
+                onClick={() => handleDetectIndustry()}
+                disabled={isDetectingSector || (!customerName && !websiteUrl)}
+                className="text-[10px] font-bold text-[#074878] hover:underline inline-flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+              >
+                <Bot className="w-3 h-3" />
+                <span>Reclassificar com IA</span>
+              </button>
+            </div>
+            <select
+              value={industry}
+              onChange={(e) => {
+                setIndustry(e.target.value);
+                setSectorDetectedByAi(false);
+              }}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all cursor-pointer"
+            >
+              {industriesList.map((ind) => (
+                <option key={ind} value={ind}>{ind}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Informações Adicionais do Cliente (Textarea Opcional - Ajuste 3) */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
+              Informações Estratégicas Adicionais (Opcional para o Prompt)
+            </label>
+            <textarea
+              value={additionalInfo}
+              onChange={(e) => setAdditionalInfo(e.target.value)}
+              rows={3}
+              placeholder="Ex: Foco prioritário em redução de custos de nuvem e FinOps, expansão de novos canais digitais omnichannel, conformidade estrita com LGPD e prevenção de perdas de estoque..."
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all resize-none"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">
+              Estas informações serão injetadas diretamente nas instruções do debate multi-agente NC-MAD.
+            </p>
           </div>
         </div>
 
         {/* Passo 2: Dropzone de Arquivo ZIP */}
-        <div className="space-y-3 pt-2">
+        <div className="space-y-3 pt-2 border-t border-slate-100">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
               2
@@ -373,13 +488,14 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             </div>
           </div>
 
+          {/* Ajuste 5: Visão Geral renomeada para Agent Intelligence */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             {onNavigateToDashboard && (
               <button
                 onClick={onNavigateToDashboard}
                 className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#074878] hover:bg-[#053456] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Acessar Mesa de Decisão (Visão Geral)</span>
+                <span>Acessar Agent Intelligence</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             )}

@@ -12,7 +12,8 @@ export interface ParsedAssessmentData {
 export async function parseAssessmentZip(
   customerName: string,
   zipBuffer: Buffer,
-  gcsArchiveUri: string
+  gcsArchiveUri: string,
+  industryOverride?: string
 ): Promise<ParsedAssessmentData> {
   const zip = await JSZip.loadAsync(zipBuffer);
 
@@ -127,15 +128,17 @@ export async function parseAssessmentZip(
 
   // 4. Detecção Inteligente da Indústria
   const allNames = tables.map(t => `${t.datasetId} ${t.tableName} ${t.tableDescription}`).join(" ").toLowerCase();
-  let industry = "Indústria Geral & Serviços Corporativos";
-  if (allNames.includes("apostad") || allNames.includes("bolsafamilia") || allNames.includes("bets") || allNames.includes("jogo")) {
-    industry = "iGaming, Loterias & Regulamentação de Apostas (SPA/MF)";
-  } else if (allNames.includes("farma") || allNames.includes("remedio") || allNames.includes("farmacia") || allNames.includes("medico") || allNames.includes("crm")) {
-    industry = "Indústria Farmacêutica & Healthcare (Pharma Commercial)";
-  } else if (allNames.includes("cliente") || allNames.includes("venda") || allNames.includes("varejo") || allNames.includes("pdv")) {
-    industry = "Varejo, Distribuição & Bens de Consumo (CPG/Retail)";
-  } else if (allNames.includes("conta") || allNames.includes("pix") || allNames.includes("credito") || allNames.includes("banco")) {
-    industry = "Serviços Financeiros & Fintechs";
+  let industry = industryOverride || "Indústria Geral & Serviços Corporativos";
+  if (!industryOverride) {
+    if (allNames.includes("apostad") || allNames.includes("bolsafamilia") || allNames.includes("bets") || allNames.includes("jogo")) {
+      industry = "iGaming, Loterias & Regulamentação de Apostas (SPA/MF)";
+    } else if (allNames.includes("farma") || allNames.includes("remedio") || allNames.includes("farmacia") || allNames.includes("medico") || allNames.includes("crm")) {
+      industry = "Farmacêutica & Saúde";
+    } else if (allNames.includes("cliente") || allNames.includes("venda") || allNames.includes("varejo") || allNames.includes("pdv")) {
+      industry = "Varejo & E-commerce";
+    } else if (allNames.includes("conta") || allNames.includes("pix") || allNames.includes("credito") || allNames.includes("banco")) {
+      industry = "Financeiro & Fintech";
+    }
   }
 
   const assessmentId = `ass_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;

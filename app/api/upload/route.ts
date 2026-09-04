@@ -9,6 +9,9 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const customerName = (formData.get("customerName") as string) || "Cliente Não Informado";
+    const industry = (formData.get("industry") as string) || "";
+    const websiteUrl = (formData.get("websiteUrl") as string) || "";
+    const additionalInfo = (formData.get("additionalInfo") as string) || "";
     const file = formData.get("file") as File | null;
 
     if (!file) {
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
       severity: "INFO",
       phase: "INGESTION",
       toolAction: "upload_zip_received",
-      thought: `Recebido arquivo ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) para cliente ${customerName}.`
+      thought: `Recebido arquivo ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) para cliente ${customerName} (Setor: ${industry || "Auto-detectar"}, Site: ${websiteUrl || "N/A"}).`
     });
 
     const arrayBuffer = await file.arrayBuffer();
@@ -59,8 +62,8 @@ export async function POST(req: NextRequest) {
     // 2. Upload para o GCS no padrão: gs://dass-2026/business_assessment/{datahoje_hora_nome_cliente}/
     const gcsResult = await uploadAssessmentPackage(customerName, zipBuffer, extractedFiles);
 
-    // 3. Parser e agregação dos metadados
-    const parsedData = await parseAssessmentZip(customerName, zipBuffer, gcsResult.archiveUri);
+    // 3. Parser e agregação dos metadados com industryOverride
+    const parsedData = await parseAssessmentZip(customerName, zipBuffer, gcsResult.archiveUri, industry || undefined);
 
     // 4. Gravação no BigQuery
     await saveAssessmentToBigQuery(parsedData.assessment, parsedData.tables);

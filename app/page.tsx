@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ControlTowerHeader } from "@/components/ControlTowerHeader";
+import { ControlTowerHeader, CustomerOption } from "@/components/ControlTowerHeader";
 import { ControlTowerSidebar, NavigationTab } from "@/components/ControlTowerSidebar";
 import { UploadIngestionView } from "@/components/views/UploadIngestionView";
 import { ExecutiveDecisionView } from "@/components/views/ExecutiveDecisionView";
@@ -242,6 +242,20 @@ export default function HomePage() {
     }
   };
 
+  const handleSelectCustomer = (cust: CustomerOption) => {
+    setAssessment((prev) => ({
+      ...(prev || defaultAssessment),
+      customerName: cust.name,
+      industry: cust.industry,
+      totalTables: cust.totalTables,
+      totalColumns: cust.totalColumns,
+      docPercentage: cust.docPercentage,
+      gcsArchiveUri: cust.gcsArchiveUri || prev?.gcsArchiveUri || ""
+    }));
+    setShowLiveDebateView(false);
+    setActiveTab("decision");
+  };
+
   return (
     <div className="min-h-screen flex bg-[#F0F4F8] text-slate-900 font-sans antialiased">
       {/* 1. Sidebar Fixa à Esquerda */}
@@ -268,6 +282,7 @@ export default function HomePage() {
             setShowLiveDebateView(false);
             setActiveTab("upload");
           }}
+          onSelectCustomer={handleSelectCustomer}
           onSearchSubmit={(q) => {
             console.log("Busca executiva:", q);
           }}
@@ -283,7 +298,7 @@ export default function HomePage() {
                   onClick={() => setShowLiveDebateView(false)}
                   className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  ← Voltar para Visão Geral
+                  ← Voltar para Agent Intelligence
                 </button>
               </div>
               <NeuroDebateView

@@ -14,6 +14,8 @@ export interface CustomerAssessment {
   customerId: string;
   customerName: string;
   industry: string;
+  websiteUrl?: string;
+  additionalInfo?: string;
   uploadTimestamp: string;
   totalDatasets: number;
   totalTables: number;

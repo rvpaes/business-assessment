@@ -12,6 +12,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const customerName = body.customerName || "Hypera Pharma (Exemplo)";
+    const industry = body.industry || "";
+    const websiteUrl = body.websiteUrl || "";
+    const additionalInfo = body.additionalInfo || "";
 
     const homeDir = os.homedir();
     const samplePaths = [
@@ -69,8 +72,8 @@ export async function POST(req: NextRequest) {
     // Upload para GCS
     const gcsResult = await uploadAssessmentPackage(customerName, zipBuffer, extractedFiles);
 
-    // Parsing
-    const parsedData = await parseAssessmentZip(customerName, zipBuffer, gcsResult.archiveUri);
+    // Parsing com industryOverride
+    const parsedData = await parseAssessmentZip(customerName, zipBuffer, gcsResult.archiveUri, industry || undefined);
 
     // Gravação no BigQuery
     await saveAssessmentToBigQuery(parsedData.assessment, parsedData.tables);

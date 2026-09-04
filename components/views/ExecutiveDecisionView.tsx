@@ -407,7 +407,7 @@ ORDER BY u.rank ASC;`
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-900/60 border border-blue-400/20 text-[11px] font-bold text-blue-200">
             <span className="text-amber-300 font-extrabold">ⓘ CONSELHO ESTRATÉGICO INTELIGENTE</span>
             <span className="text-blue-300">•</span>
-            <span className="text-blue-100 uppercase">BUSINESS ASSESSMENT</span>
+            <span className="text-blue-100 uppercase">AGENT INTELLIGENCE</span>
             <span className="text-blue-300">•</span>
             <span className="text-blue-300 font-medium">Patrimônio de Dados de {customerName} ({industry})</span>
           </div>
@@ -437,7 +437,7 @@ ORDER BY u.rank ASC;`
         {/* Título e Descrição */}
         <div className="mt-4 max-w-4xl">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Conselho Neurocognitivo & Oportunidades Estratégicas de Negócio
+            Agent Intelligence: Conselho Neurocognitivo & Decisão Estratégica
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-blue-100/85 leading-relaxed font-normal">
             A análise multi-agente cruzou o catálogo de metadados, a maturidade de governança Dataplex e as tabelas auditadas no BigQuery para <strong className="text-white font-bold">{customerName}</strong>, sintetizando hipóteses de inovação, viabilidade e plano de valor para a indústria de <strong className="text-white font-bold">{industry}</strong>.
