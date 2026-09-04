@@ -1,11 +1,26 @@
-// components/views/TopUseCasesView.tsx - Apresentação Executiva dos Top 6 Casos de Uso
+// components/views/TopUseCasesView.tsx - Cards Executivos de Casos de Uso & Modal de Detalhamento
 "use client";
 
 import React, { useState } from "react";
 import { 
-  Target, TrendingUp, DollarSign, Database, ShieldCheck, 
-  Layers, ArrowUpRight, Sparkles, Filter, CheckCircle2,
-  TableProperties, Network
+  Target, 
+  TrendingUp, 
+  DollarSign, 
+  Database, 
+  ShieldCheck, 
+  Layers, 
+  ArrowUpRight, 
+  Sparkles, 
+  Filter, 
+  CheckCircle2,
+  TableProperties, 
+  Network,
+  X,
+  Cpu,
+  Coins,
+  ChevronRight,
+  Info,
+  Server
 } from "lucide-react";
 import { TopUseCase, CustomerAssessment } from "@/lib/types";
 
@@ -23,6 +38,10 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
   onNavigateToGraph
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [activeModalCase, setActiveModalCase] = useState<TopUseCase | null>(null);
+
+  const customerName = assessment?.customerName || "Cliente Corporativo";
+  const industry = assessment?.industry || "Bens de Consumo & Saúde";
 
   const categories = ["ALL", ...Array.from(new Set(useCases.map(u => u.category)))];
 
@@ -36,245 +55,330 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
   const totalGcpAnnualCostUsd = totalGcpMonthlyCostUsd * 12;
   const overallRoi = totalGcpAnnualCostUsd > 0 
     ? (((totalFinancialGainUsd - totalGcpAnnualCostUsd) / totalGcpAnnualCostUsd) * 100).toFixed(0)
-    : "380";
+    : "340";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-200 font-sans">
       {/* 1. Header do Módulo */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Target className="w-6 h-6 text-blue-600" />
-            Top 6 Casos de Uso Priorizados & Business Case (BC)
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Soluções validadas pelo debate multi-agente NC-MAD com grounding estrito nas tabelas reais do BigQuery,
-            acompanhadas de benchmarks de ganhos e estimativa de infraestrutura GCP.
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold uppercase tracking-wider mb-1">
+            <Target className="w-3 h-3" />
+            <span>Casos de Uso & Business Case</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+            Casos de Uso Priorizados para {customerName}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+            Soluções validadas sobre os dados reais do BigQuery, com estimativa de retorno financeiro para o cliente e consumo de infraestrutura Google Cloud.
           </p>
         </div>
 
         {onNavigateToGraph && (
           <button
             onClick={onNavigateToGraph}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all shrink-0 cursor-pointer self-start md:self-auto"
           >
-            <Network className="w-4 h-4 text-violet-600" />
-            Visualizar no Grafo BigQuery
+            <Network className="w-3.5 h-3.5 text-[#074878]" />
+            <span>Ver no Property Graph</span>
           </button>
         )}
       </div>
 
-      {/* 2. Banner de Impacto Financeiro Consolidado (C-Level ROI) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md shadow-blue-500/15">
-          <div className="flex items-center justify-between text-blue-100 text-xs font-semibold uppercase tracking-wider">
-            <span>Retorno Médio (ROI)</span>
-            <TrendingUp className="w-4 h-4" />
+      {/* 2. Banner de Métricas Consolidadas (C-Level ROI) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-[#063964] via-[#08487D] to-[#03233F] text-white shadow-md">
+          <span className="text-[10px] font-black uppercase text-blue-200 tracking-wider block">
+            RETORNO CONSOLIDADO (BC)
+          </span>
+          <div className="text-2xl font-black mt-1">
+            ${(totalFinancialGainUsd / 1000).toFixed(0)}k <span className="text-xs font-normal text-blue-200">/ ano</span>
           </div>
-          <div className="text-3xl font-black mt-2">+{overallRoi}%</div>
-          <p className="text-xs text-blue-100/80 mt-1">Payback estimado em &lt; 4 meses</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
-            <span>Ganho Anual Estimado</span>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-            ${(totalFinancialGainUsd / 1000).toFixed(0)}k <span className="text-xs font-normal text-slate-400">/ ano</span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            ~R$ {((totalFinancialGainUsd * 5.6) / 1000000).toFixed(2)}M em valor destravado
+          <p className="text-[11px] text-emerald-300 font-semibold mt-1">
+            ~R$ {((totalFinancialGainUsd * 5.6) / 1000000).toFixed(2)}M em receita e eficiência
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
-            <span>Custo Total GCP Mensal</span>
-            <Database className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+        <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
+          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+            CUSTO TOTAL GOOGLE CLOUD
+          </span>
+          <div className="text-2xl font-black text-[#074878] mt-1">
             ${totalGcpMonthlyCostUsd.toLocaleString()} <span className="text-xs font-normal text-slate-400">/ mês</span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">BigQuery + Vertex AI + Cloud Run + GCS</p>
+          <p className="text-[11px] text-slate-500 mt-1">
+            ${(totalGcpAnnualCostUsd / 1000).toFixed(1)}k/ano (BigQuery + Vertex AI)
+          </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
-            <span>Grounding & Guardrails</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
+          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+            MULTIPLICADOR DE RETORNO (ROI)
+          </span>
+          <div className="text-2xl font-black text-emerald-600 mt-1">
+            +{overallRoi}%
           </div>
-          <div className="text-2xl font-bold text-emerald-600 mt-2">100% Zero Alucinação</div>
-          <p className="text-xs text-slate-500 mt-1">Todas as tabelas validadas no catálogo BQ</p>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Payback estimado em ~1.8 meses
+          </p>
         </div>
       </div>
 
-      {/* 3. Filtros por Categoria */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />
-        {categories.map(cat => (
+      {/* 3. Filtro por Categoria */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+          <Filter className="w-3.5 h-3.5" /> Filtrar:
+        </span>
+        {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               selectedCategory === cat
-                ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                ? "bg-[#074878] text-white shadow-xs"
+                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
             }`}
           >
-            {cat === "ALL" ? "Todos os Casos (6)" : cat}
+            {cat === "ALL" ? "Todos os Casos" : cat}
           </button>
         ))}
       </div>
 
-      {/* 4. Lista dos Top 6 Casos de Uso */}
-      <div className="grid grid-cols-1 gap-6">
-        {filteredCases.map(uc => (
-          <div
-            key={uc.useCaseId}
-            className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all space-y-5"
-          >
-            {/* Topo do Card: Rank, Título e Badges */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-sm shadow-blue-500/30">
-                  #{uc.rank}
-                </span>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    {uc.title}
-                  </h3>
-                  <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                    {uc.category}
+      {/* 4. GRID DE CARDS DOS CASOS DE USO (Foco em Caso, Retorno Cliente e Retorno Google) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filteredCases.map((useCase) => {
+          const clientAnnualGainUsd = useCase.financialGainEstimateUsd || 0;
+          const clientAnnualGainBrl = (clientAnnualGainUsd * 5.6) / 1000000;
+          const gcpMonthlyCost = useCase.gcpMonthlyCostUsd || 0;
+          const gcpAnnualCost = gcpMonthlyCost * 12;
+
+          return (
+            <div
+              key={useCase.useCaseId}
+              onClick={() => setActiveModalCase(useCase)}
+              className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-lg hover:border-[#074878]/40 transition-all duration-200 p-6 flex flex-col justify-between cursor-pointer group space-y-5"
+            >
+              {/* Topo: Rank & Categoria */}
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#074878] text-[10px] font-black border border-blue-100 uppercase">
+                    RANK #{useCase.rank}
+                  </span>
+                  <span className="text-[10px] font-extrabold text-slate-500 uppercase">
+                    {useCase.category}
                   </span>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/50 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Confiança {(uc.confidenceScore * 100).toFixed(0)}%
-                </span>
-                {onSelectUseCaseForGraph && (
-                  <button
-                    onClick={() => onSelectUseCaseForGraph(uc)}
-                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
-                    title="Inspecionar nó no Property Graph"
-                  >
-                    <Network className="w-4 h-4 text-violet-600" />
-                  </button>
-                )}
-              </div>
-            </div>
+                {/* Título do Caso */}
+                <h3 className="text-sm font-extrabold text-slate-900 mt-2.5 group-hover:text-[#074878] transition-colors leading-snug">
+                  {useCase.title}
+                </h3>
 
-            {/* Problema & Solução */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1">
-                <strong className="text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block">
-                  🚨 Problema de Negócio:
-                </strong>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {uc.businessProblem}
+                {/* Problema Resumido */}
+                <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                  {useCase.businessProblem}
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-1">
-                <strong className="text-blue-700 dark:text-blue-300 uppercase tracking-wider text-[11px] block flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" /> Solução Arquitetural em GCP:
-                </strong>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {uc.solutionDescription}
-                </p>
-              </div>
-            </div>
+              {/* BLOCOS CENTRAIS DE RETORNO (Destaque Principal) */}
+              <div className="space-y-2.5">
+                {/* 1. Retorno para o Cliente */}
+                <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-0.5">
+                  <span className="text-[9px] font-black uppercase text-emerald-800 tracking-wider block">
+                    RETORNO ESPERADO PARA O CLIENTE (BC)
+                  </span>
+                  <div className="text-base font-black text-emerald-700">
+                    +${(clientAnnualGainUsd / 1000).toFixed(0)}k <span className="text-[10px] font-normal text-emerald-800">/ ano</span>
+                    <span className="text-xs font-bold text-slate-500 ml-1.5">(~R$ {clientAnnualGainBrl.toFixed(2)}M)</span>
+                  </div>
+                  <p className="text-[10px] text-emerald-900 font-medium leading-tight">
+                    {useCase.businessCaseRoi}
+                  </p>
+                </div>
 
-            {/* Business Case (BC) & Custos GCP */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-2">
-              {/* Benchmarking & ROI */}
-              <div className="md:col-span-6 p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5" /> Benchmarking & Business Case (BC):
+                {/* 2. Retorno / Consumo para o Google Cloud */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 space-y-0.5">
+                  <span className="text-[9px] font-black uppercase text-[#074878] tracking-wider block">
+                    CONSUMO DE INFRAESTRUTURA GOOGLE CLOUD
+                  </span>
+                  <div className="text-base font-black text-[#074878]">
+                    ${gcpMonthlyCost} <span className="text-[10px] font-normal text-slate-500">/ mês</span>
+                    <span className="text-xs font-bold text-slate-500 ml-1.5">(~${(gcpAnnualCost / 1000).toFixed(1)}k/ano)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-600 font-medium leading-tight">
+                    BigQuery (${useCase.costBreakdown?.bigqueryUsd || 0}) + Vertex AI (${useCase.costBreakdown?.vertexAiUsd || 0}) + Cloud Run
+                  </p>
+                </div>
+              </div>
+
+              {/* Rodapé do Card */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-[10px] font-bold text-slate-400">
+                  {useCase.requiredTables?.length || 3} Tabelas Auditadas
                 </span>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  {uc.businessCaseRoi}
+
+                <span className="text-xs font-black text-[#074878] group-hover:underline flex items-center gap-0.5">
+                  <span>Ver Detalhes do Caso</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 5. MODAL DE DETALHAMENTO DO CASO DE USO & BUSINESS CASE */}
+      {activeModalCase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            {/* Header do Modal */}
+            <div className="p-6 border-b border-slate-100 flex items-start justify-between sticky top-0 bg-white z-10">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#074878] text-[10px] font-black border border-blue-100 uppercase">
+                    CASO DE USO #{activeModalCase.rank}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold uppercase">
+                    {activeModalCase.category}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Grounding BigQuery
+                  </span>
+                </div>
+                <h2 className="text-lg font-black text-slate-900">{activeModalCase.title}</h2>
+              </div>
+
+              <button
+                onClick={() => setActiveModalCase(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo Detalhado */}
+            <div className="p-6 space-y-6 text-xs text-slate-700">
+              {/* 1. Problema de Negócio & Solução Proposta */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                  <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
+                    Gargalo / Problema de Negócio
+                  </span>
+                  <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                    {activeModalCase.businessProblem}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                  <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider block">
+                    Solução com IA & BigQuery
+                  </span>
+                  <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                    {activeModalCase.solutionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {/* 2. Destaque dos Retornos (Cliente vs Google) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Retorno do Cliente */}
+                <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">
+                      Business Case (Ganhos do Cliente)
+                    </span>
+                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-xl font-black text-emerald-700">
+                    +${(activeModalCase.financialGainEstimateUsd / 1000).toFixed(0)}k <span className="text-xs font-normal text-emerald-800">/ ano</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900 font-semibold leading-snug">
+                    {activeModalCase.businessCaseRoi}
+                  </p>
+                  <div className="pt-2 border-t border-emerald-200 text-[10px] text-emerald-800 space-y-1">
+                    <div>• Impacto direto no EBITDA da organização</div>
+                    <div>• Payback estimado em menos de 2 meses</div>
+                    <div>• Alavanca de produtividade e redução de perdas</div>
+                  </div>
+                </div>
+
+                {/* Retorno / Custo Google Cloud */}
+                <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider">
+                      Consumo Google Cloud (FinOps)
+                    </span>
+                    <Database className="w-4 h-4 text-[#074878]" />
+                  </div>
+                  <div className="text-xl font-black text-[#074878]">
+                    ${activeModalCase.gcpMonthlyCostUsd} <span className="text-xs font-normal text-slate-500">/ mês</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                    <div className="p-2 rounded-xl bg-white border border-blue-100">
+                      <span className="text-[9px] text-slate-400 uppercase block">BigQuery</span>
+                      <strong>${activeModalCase.costBreakdown?.bigqueryUsd || 0}/mês</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-blue-100">
+                      <span className="text-[9px] text-slate-400 uppercase block">Vertex AI</span>
+                      <strong>${activeModalCase.costBreakdown?.vertexAiUsd || 0}/mês</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-blue-100">
+                      <span className="text-[9px] text-slate-400 uppercase block">Cloud Run</span>
+                      <strong>${activeModalCase.costBreakdown?.cloudRunUsd || 0}/mês</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-blue-100">
+                      <span className="text-[9px] text-slate-400 uppercase block">Cloud Storage</span>
+                      <strong>${activeModalCase.costBreakdown?.storageUsd || 0}/mês</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Tabelas Reais e Grounding no BigQuery */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                  <TableProperties className="w-3.5 h-3.5 text-blue-600" />
+                  Tabelas Auditadas Necessárias no BigQuery
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {activeModalCase.requiredTables?.map((t, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold text-slate-800"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Guardrails e Governança */}
+              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/70 space-y-1.5">
+                <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                  Guardrails de Governança & Zero Alucinação
+                </span>
+                <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
+                  {activeModalCase.guardrails}
                 </p>
-                <div className="text-xs text-slate-500">
-                  Retorno Financeiro Anual Estimado:{" "}
-                  <strong className="text-emerald-600 text-sm">
-                    ${uc.financialGainEstimateUsd.toLocaleString()}
-                  </strong>{" "}
-                  (~R$ {(uc.financialGainEstimateUsd * 5.6 / 1000).toFixed(0)}k)
-                </div>
-              </div>
-
-              {/* Custos GCP */}
-              <div className="md:col-span-6 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-blue-600" /> Custo Mensal Estimado em GCP:
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                    ${uc.gcpMonthlyCostUsd.toLocaleString()} / mês
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-4 gap-2 text-[11px] pt-1">
-                  <div className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
-                    <div className="text-slate-400">BigQuery</div>
-                    <div className="font-bold text-slate-800 dark:text-slate-200">
-                      ${uc.costBreakdown?.bigqueryUsd || 0}
-                    </div>
-                  </div>
-                  <div className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
-                    <div className="text-slate-400">Vertex AI</div>
-                    <div className="font-bold text-slate-800 dark:text-slate-200">
-                      ${uc.costBreakdown?.vertexAiUsd || 0}
-                    </div>
-                  </div>
-                  <div className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
-                    <div className="text-slate-400">Cloud Run</div>
-                    <div className="font-bold text-slate-800 dark:text-slate-200">
-                      ${uc.costBreakdown?.cloudRunUsd || 0}
-                    </div>
-                  </div>
-                  <div className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
-                    <div className="text-slate-400">Storage</div>
-                    <div className="font-bold text-slate-800 dark:text-slate-200">
-                      ${uc.costBreakdown?.storageUsd || 0}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Grounding Estrito: Tabelas e Colunas BigQuery */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
-                <TableProperties className="w-3.5 h-3.5 text-blue-600" />
-                <span>Tabelas Reais do Cliente que Alimentam a Solução (Grounding BQ):</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {(uc.requiredTables || []).map((t, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Guardrail */}
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-              <span>
-                <strong>Guardrail Mandatório:</strong> {uc.guardrails}
+            {/* Rodapé do Modal */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-b-3xl">
+              <span className="text-[11px] text-slate-500">
+                Confiança do Modelo: <strong>{(activeModalCase.confidenceScore * 100).toFixed(0)}%</strong>
               </span>
+              <button
+                onClick={() => setActiveModalCase(null)}
+                className="px-5 py-2 rounded-xl bg-[#074878] hover:bg-[#053456] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+              >
+                Fechar Detalhes
+              </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

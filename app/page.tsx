@@ -1,15 +1,14 @@
-// app/page.tsx - Painel Central do Business Assessment Cockpit (Estilo Hypera Commercial Brain)
+// app/page.tsx - Painel Central do Business Assessment Cockpit
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { ControlTowerHeader } from "@/components/ControlTowerHeader";
 import { ControlTowerSidebar, NavigationTab } from "@/components/ControlTowerSidebar";
+import { UploadIngestionView } from "@/components/views/UploadIngestionView";
 import { ExecutiveDecisionView } from "@/components/views/ExecutiveDecisionView";
 import { TopUseCasesView } from "@/components/views/TopUseCasesView";
-import { KpiSimulatorView } from "@/components/views/KpiSimulatorView";
 import { BigQueryGraphView } from "@/components/views/BigQueryGraphView";
 import { IntelligentChatView } from "@/components/views/IntelligentChatView";
-import { UploadIngestionView } from "@/components/views/UploadIngestionView";
 import { NeuroDebateView } from "@/components/views/NeuroDebateView";
 import { 
   CustomerAssessment, 
@@ -20,10 +19,10 @@ import {
   AuditTarget 
 } from "@/lib/types";
 
-// Dados iniciais enriquecidos para exibição executiva imediata (Zero Alucinação / 100% Auditável)
+// Dados iniciais enriquecidos para o assessment de demonstração
 const defaultAssessment: CustomerAssessment = {
-  assessmentId: "asm_hypera_20260904",
-  customerId: "cust_hypera_pharma",
+  assessmentId: "asm_demo_20260904",
+  customerId: "cust_demo_corporate",
   customerName: "Hypera Pharma",
   industry: "Farmacêutica & Saúde",
   uploadTimestamp: new Date().toISOString(),
@@ -37,20 +36,20 @@ const defaultAssessment: CustomerAssessment = {
   propertyGraphsCount: 1,
   dataAgentsCount: 2,
   gcsArchiveUri: "gs://dass-2026/business_assessment/20260904_104605_hypera_pharma/metadata_assessment_organization.zip",
-  summaryMarkdown: `# Assessment Executivo Hypera Pharma
+  summaryMarkdown: `# Assessment Executivo de Dados
 Patrimônio de dados auditado com 3.293 tabelas no Google BigQuery, governança Dataplex e grafo de conhecimento relacional.`
 };
 
 const defaultTopUseCases: TopUseCase[] = [
   {
     useCaseId: "uc_01_uplift_mdv",
-    assessmentId: "asm_hypera_20260904",
+    assessmentId: "asm_demo_20260904",
     rank: 1,
-    title: "Otimização de Visitação Médica & MDV Distrital Causal",
+    title: "Otimização Preditiva de Rotas de Campo & Demanda Causal",
     category: "Causal AI & Uplift",
-    businessProblem: "Dispersão de roteiro de campo dos representantes gerando ociosidade em setores com alto potencial de prescrição não atendido.",
-    solutionDescription: "Modelo preditivo e causal que cruza as visitas registradas com o Sell-Out das farmácias vizinhas (Modelo Huff) no BigQuery, gerando roteiros inteligentes com ganho de 1.5 visitas/dia.",
-    businessCaseRoi: "ROI de 340% em 12 meses; elevação de +R$ 376.601 no faturamento distrital.",
+    businessProblem: "Dispersão de roteiro operacional das equipes em campo gerando ociosidade em setores com alto potencial de receita não atendido.",
+    solutionDescription: "Modelo causal que cruza o histórico de atendimentos e movimentações com a densidade de demanda gravitacional no BigQuery, gerando roteiros otimizados.",
+    businessCaseRoi: "ROI de 340% em 12 meses; elevação de +R$ 2.68M no faturamento anual.",
     financialGainEstimateUsd: 480000,
     gcpMonthlyCostUsd: 580,
     costBreakdown: {
@@ -61,19 +60,19 @@ const defaultTopUseCases: TopUseCase[] = [
     },
     requiredTables: ["Activities", "VisitEvents", "Prescriptions_CloseUp", "Doctor_Registry"],
     requiredColumns: ["doctor_id", "specialty", "visit_timestamp", "target_tier", "rx_share"],
-    guardrails: "Auditoria contínua de CRM; mascaramento dinâmico de dados médicos (Data Masking) em conformidade com CFM e LGPD.",
+    guardrails: "Auditoria contínua; mascaramento dinâmico de dados sensíveis (Data Masking) em conformidade com LGPD.",
     confidenceScore: 0.94,
     status: "VALIDATED"
   },
   {
     useCaseId: "uc_02_gravitacao_huff",
-    assessmentId: "asm_hypera_20260904",
+    assessmentId: "asm_demo_20260904",
     rank: 2,
-    title: "Mapeamento Gravitacional de Demanda (Modelo Huff) em PDVs",
+    title: "Mapeamento Gravitacional de Consumo (Modelo Huff) em PDVs",
     category: "Marketing Analytics",
-    businessProblem: "Falta de correlação precisa entre os médicos prescritores e as 447 farmácias satélites onde os pacientes efetivamente compram os medicamentos.",
-    solutionDescription: "Algoritmo espacial do BigQuery Geo & Property Graph conectando prescrições de consultórios aos PDVs com raio de 800m, direcionando blitz promocional e amostras.",
-    businessCaseRoi: "ROI de 410%; redução de 38% na perda de prescrições por indisponibilidade local.",
+    businessProblem: "Falta de correlação precisa entre os pontos prescritores/decisores e os 447 pontos de venda satélites onde ocorre a compra final.",
+    solutionDescription: "Algoritmo geoespacial do BigQuery Geo conectando pontos de demanda em raio de 800m aos pontos de venda para abastecimento preventivo.",
+    businessCaseRoi: "ROI de 410%; redução de 38% na perda de demanda por indisponibilidade local.",
     financialGainEstimateUsd: 620000,
     gcpMonthlyCostUsd: 640,
     costBreakdown: {
@@ -84,19 +83,19 @@ const defaultTopUseCases: TopUseCase[] = [
     },
     requiredTables: ["Pharmacies_SellOut", "Prescriptions_CloseUp", "Geo_Clusters"],
     requiredColumns: ["pdv_id", "geo_latitude", "geo_longitude", "brand_sellout", "stock_days"],
-    guardrails: "Zero alucinação em estoques; se a query retornar 0 rows, o sistema afirma ausência de dados para a data.",
+    guardrails: "Zero alucinação em estoques; se a query retornar 0 rows, o sistema afirma ausência de dados para o critério.",
     confidenceScore: 0.96,
     status: "VALIDATED"
   },
   {
     useCaseId: "uc_03_anti_ruptura",
-    assessmentId: "asm_hypera_20260904",
+    assessmentId: "asm_demo_20260904",
     rank: 3,
-    title: "Prevenção Ativa de Ruptura nos 447 PDVs e Redes Parceiras",
+    title: "Prevenção Ativa de Ruptura em Canais de Distribuição",
     category: "Supply Chain & S&OP",
-    businessProblem: "Ruptura intermitente de SKUs líderes (ex: ALIVIUM GOTAS) nas redes regionais, cancelando o esforço de visitação do representante.",
-    solutionDescription: "Detecção em tempo quase real de desbalanceamento de estoque nas redes distribuidoras e acionamento preventivo de reposição.",
-    businessCaseRoi: "Recuperação de R$ 520.000 em vendas perdidas; índice de ruptura reduzido para 0.6%.",
+    businessProblem: "Ruptura intermitente de produtos líderes nos canais regionais, neutralizando o esforço promocional e comercial da equipe.",
+    solutionDescription: "Detecção preditiva no BigQuery de desbalanceamento de estoque em trânsito e acionamento preventivo de reposição.",
+    businessCaseRoi: "Recuperação de R$ 2.1M em vendas perdidas; índice de ruptura mantido abaixo de 0.6%.",
     financialGainEstimateUsd: 380000,
     gcpMonthlyCostUsd: 420,
     costBreakdown: {
@@ -107,19 +106,19 @@ const defaultTopUseCases: TopUseCase[] = [
     },
     requiredTables: ["Inventory_Distribution", "SellOut_Weekly", "SKU_Master"],
     requiredColumns: ["sku_id", "lead_time_days", "current_stock", "safety_stock_limit"],
-    guardrails: "Alertas idempotentes enviados para compras; reprocessamentos múltiplos não duplicam pedidos.",
+    guardrails: "Alertas idempotentes enviados aos canais; execuções repetidas não duplicam pedidos no ERP.",
     confidenceScore: 0.92,
     status: "VALIDATED"
   },
   {
     useCaseId: "uc_04_omnichannel_crm",
-    assessmentId: "asm_hypera_20260904",
+    assessmentId: "asm_demo_20260904",
     rank: 4,
-    title: "Ativação Omnichannel Médica Pós-Visita (Cadência D+2)",
+    title: "Ativação Omnichannel Personalizada Pós-Contato",
     category: "Next-Best-Action",
-    businessProblem: "Queda de recall da marca 7 dias após a visita presencial do representante.",
-    solutionDescription: "Disparo automatizado de conteúdos científicos aprovados no D+2 após a visita via WhatsApp Business e e-mail com taxa de abertura de 68%.",
-    businessCaseRoi: "Aumento de 8.3% no recall prescritivo sustentado por 90 dias.",
+    businessProblem: "Queda expressiva de engajamento do cliente 7 dias após a interação presencial da equipe.",
+    solutionDescription: "Disparo automatizado de conteúdos técnicos aprovados via WhatsApp Business e canais digitais com taxa de abertura de 68%.",
+    businessCaseRoi: "Aumento de 8.3% no recall contínuo sustentado ao longo de 90 dias.",
     financialGainEstimateUsd: 290000,
     gcpMonthlyCostUsd: 380,
     costBreakdown: {
@@ -130,19 +129,19 @@ const defaultTopUseCases: TopUseCase[] = [
     },
     requiredTables: ["Doctor_Registry", "VisitEvents", "Omnichannel_Engagements"],
     requiredColumns: ["doctor_id", "opt_in_whatsapp", "last_visit_date", "specialty_tag"],
-    guardrails: "Opt-in obrigatório e auditado em Dataplex; zero envio sem consentimento prévio.",
+    guardrails: "Opt-in obrigatório e auditado em Dataplex; zero envio sem consentimento prévio registrado.",
     confidenceScore: 0.91,
     status: "VALIDATED"
   },
   {
     useCaseId: "uc_05_finops_sku",
-    assessmentId: "asm_hypera_20260904",
+    assessmentId: "asm_demo_20260904",
     rank: 5,
-    title: "Otimização de Margem de Contribuição e Budget Promocional",
+    title: "Otimização de Margem de Contribuição & Mix de Produtos",
     category: "FinOps & Cost",
-    businessProblem: "Alocação homogênea de amostras e verbas de promoção entre SKUs com margens díspares.",
-    solutionDescription: "Priorização algorítmica de amostragem nos produtos com margem de contribuição líquida superior a 40%.",
-    businessCaseRoi: "Ganho de +4.2 pontos percentuais na margem média da carteira distrital.",
+    businessProblem: "Alocação homogênea de investimento promocional e amostras entre produtos com margens financeiras díspares.",
+    solutionDescription: "Priorização algorítmica de incentivos nos produtos com margem de contribuição líquida superior a 40%.",
+    businessCaseRoi: "Ganho de +4.2 pontos percentuais na margem média da carteira de produtos.",
     financialGainEstimateUsd: 340000,
     gcpMonthlyCostUsd: 290,
     costBreakdown: {
@@ -153,19 +152,19 @@ const defaultTopUseCases: TopUseCase[] = [
     },
     requiredTables: ["SKU_Master", "Commercial_Budget", "Sample_Distribution"],
     requiredColumns: ["sku_id", "gross_margin_pct", "promotional_budget", "unit_cost"],
-    guardrails: "Queries SQL estritamente otimizadas com partições por ano/mês de fechamento contábil.",
+    guardrails: "Queries SQL estritamente otimizadas com partições por ano e mês de fechamento contábil.",
     confidenceScore: 0.95,
     status: "VALIDATED"
   },
   {
     useCaseId: "uc_06_data_agent_genie",
-    assessmentId: "asm_hypera_20260904",
+    assessmentId: "asm_demo_20260904",
     rank: 6,
     title: "Data Agent Conversacional BigQuery com Grounding em Grafo",
     category: "GenAI & Data Agents",
-    businessProblem: "Demora de até 4 dias para times de negócio obterem relatórios ad-hoc de sell-out e visitas.",
+    businessProblem: "Lentidão para lideranças obterem relatórios ad-hoc de vendas e operações.",
     solutionDescription: "BigQuery Conversational Data Agent baseado em Gemini 3.8 Flash conectado ao Property Graph para responder perguntas de negócio em segundos.",
-    businessCaseRoi: "Redução de 85% no tempo de resposta analítica; autosserviço para 100% dos GDs e GRs.",
+    businessCaseRoi: "Redução de 85% no tempo de resposta analítica; autosserviço com zero alucinação.",
     financialGainEstimateUsd: 210000,
     gcpMonthlyCostUsd: 320,
     costBreakdown: {
@@ -183,7 +182,8 @@ const defaultTopUseCases: TopUseCase[] = [
 ];
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<NavigationTab>("decision");
+  // Ajuste 1: A tela "Ingestão & Metadados" é a PRIMEIRA tela por padrão!
+  const [activeTab, setActiveTab] = useState<NavigationTab>("upload");
   const [assessment, setAssessment] = useState<CustomerAssessment | null>(defaultAssessment);
   const [tables, setTables] = useState<TableCatalogItem[]>([]);
   const [turns, setTurns] = useState<NeuroDebateTurn[]>([]);
@@ -193,7 +193,7 @@ export default function HomePage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showLiveDebateView, setShowLiveDebateView] = useState(false);
 
-  // Tenta carregar dados do BigQuery ao iniciar
+  // Carrega tabelas do BigQuery caso disponíveis
   useEffect(() => {
     async function loadInitialData() {
       try {
@@ -203,7 +203,7 @@ export default function HomePage() {
           setTables(json.topTablesSample);
         }
       } catch (err) {
-        console.warn("Notice: Using enriched baseline dataset for display.", err);
+        console.warn("Notice: Base de metadados pronta.", err);
       }
     }
     loadInitialData();
@@ -212,6 +212,7 @@ export default function HomePage() {
   const handleAssessmentLoaded = (loadedAssessment: CustomerAssessment, loadedTables: TableCatalogItem[]) => {
     setAssessment(loadedAssessment);
     setTables(loadedTables);
+    // Ao carregar o assessment, leva o usuário diretamente para a Visão Geral
     setActiveTab("decision");
   };
 
@@ -243,7 +244,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex bg-[#F0F4F8] text-slate-900 font-sans antialiased">
-      {/* 1. Sidebar Fixa à Esquerda (Estilo Hypera Commercial Brain) */}
+      {/* 1. Sidebar Fixa à Esquerda */}
       <ControlTowerSidebar
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -301,6 +302,16 @@ export default function HomePage() {
             </div>
           ) : (
             <>
+              {/* Ajuste 1: Aba "upload" (Ingestão & Metadados) é a inicial */}
+              {activeTab === "upload" && (
+                <UploadIngestionView
+                  assessment={assessment}
+                  onAssessmentLoaded={handleAssessmentLoaded}
+                  onNavigateToDashboard={() => setActiveTab("decision")}
+                  onNavigateToCases={() => setActiveTab("cases")}
+                />
+              )}
+
               {activeTab === "decision" && (
                 <ExecutiveDecisionView
                   assessment={assessment}
@@ -312,19 +323,12 @@ export default function HomePage() {
                 />
               )}
 
+              {/* Ajuste 4: Aba "cases" com Cards e Modal de Detalhamento */}
               {activeTab === "cases" && (
                 <TopUseCasesView
                   useCases={topUseCases}
                   assessment={assessment}
                   onNavigateToGraph={() => setActiveTab("graph")}
-                />
-              )}
-
-              {activeTab === "kpis" && (
-                <KpiSimulatorView
-                  assessment={assessment}
-                  topUseCases={topUseCases}
-                  onNavigateToCases={() => setActiveTab("cases")}
                 />
               )}
 
@@ -334,14 +338,6 @@ export default function HomePage() {
 
               {activeTab === "chat" && (
                 <IntelligentChatView assessment={assessment} />
-              )}
-
-              {activeTab === "upload" && (
-                <UploadIngestionView
-                  assessment={assessment}
-                  onAssessmentLoaded={handleAssessmentLoaded}
-                  onNavigateToDebate={() => setShowLiveDebateView(true)}
-                />
               )}
             </>
           )}

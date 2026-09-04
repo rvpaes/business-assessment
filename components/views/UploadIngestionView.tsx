@@ -1,24 +1,36 @@
-// components/views/UploadIngestionView.tsx - Ingestão, Upload e Scorecard Executivo
+// components/views/UploadIngestionView.tsx - Ingestão Minimalista & Acolhedora de Assessment
 "use client";
 
 import React, { useState, useRef } from "react";
 import { 
-  UploadCloud, FileArchive, CheckCircle2, AlertCircle, 
-  ArrowRight, HardDrive, Database, Sparkles, Copy, ExternalLink,
-  ShieldAlert, RefreshCw, Layers, Check, Building2
+  UploadCloud, 
+  FileArchive, 
+  CheckCircle2, 
+  AlertCircle, 
+  ArrowRight, 
+  Sparkles, 
+  RefreshCw, 
+  Building2,
+  Check,
+  Copy,
+  Layers,
+  Database,
+  ChevronRight
 } from "lucide-react";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 
 interface UploadIngestionViewProps {
   assessment: CustomerAssessment | null;
   onAssessmentLoaded: (assessment: CustomerAssessment, tables: TableCatalogItem[]) => void;
-  onNavigateToDebate: () => void;
+  onNavigateToDashboard?: () => void;
+  onNavigateToCases?: () => void;
 }
 
 export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   assessment,
   onAssessmentLoaded,
-  onNavigateToDebate
+  onNavigateToDashboard,
+  onNavigateToCases
 }) => {
   const [customerName, setCustomerName] = useState(assessment?.customerName || "");
   const [industry, setIndustry] = useState(assessment?.industry || "Varejo & E-commerce");
@@ -26,7 +38,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [copiedGcs, setCopiedGcs] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const industriesList = [
@@ -54,19 +66,42 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (!file.name.endsWith(".zip")) {
+        setErrorMessage("Por favor, selecione um arquivo no formato .zip.");
+        return;
+      }
+      setSelectedFile(file);
+      setErrorMessage("");
+    }
+  };
+
   const handleUpload = async () => {
     if (!customerName.trim()) {
-      setErrorMessage("Por favor, informe o nome do cliente antes de enviar.");
+      setErrorMessage("Por favor, informe o nome do cliente antes de prosseguir.");
       return;
     }
     if (!selectedFile) {
-      setErrorMessage("Selecione um arquivo ZIP para realizar a ingestão.");
+      setErrorMessage("Por favor, adicione o arquivo .ZIP de metadados.");
       return;
     }
 
     setIsLoading(true);
     setErrorMessage("");
-    setStatusMessage(`Enviando pacote para Google Cloud Storage (gs://dass-2026/business_assessment)...`);
+    setStatusMessage("Salvando no Google Cloud Storage e indexando no BigQuery...");
 
     try {
       const formData = new FormData();
@@ -84,10 +119,10 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         throw new Error(data.error || "Falha no processamento do arquivo.");
       }
 
-      setStatusMessage("Assessment e metadados indexados com sucesso no BigQuery!");
+      setStatusMessage("Assessment e metadados indexados com sucesso!");
       onAssessmentLoaded(data.assessment, data.topTablesSample || []);
     } catch (err: any) {
-      setErrorMessage(err.message || "Erro desconhecido durante o upload.");
+      setErrorMessage(err.message || "Erro durante o upload do pacote.");
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +132,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     const finalCustomerName = customerName.trim() || "Empresa Modelo (Exemplo)";
     setIsLoading(true);
     setErrorMessage("");
-    setStatusMessage("Carregando metadata_assessment_organization.zip para GCS & BigQuery...");
+    setStatusMessage("Carregando pacote de exemplo para Cloud Storage & BigQuery...");
 
     try {
       const res = await fetch("/api/sample", {
@@ -114,275 +149,253 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         throw new Error(data.error || "Falha ao carregar arquivo de exemplo.");
       }
 
-      setStatusMessage("Exemplo oficial carregado e sincronizado no BigQuery!");
+      setStatusMessage("Demonstração carregada com sucesso!");
       onAssessmentLoaded(data.assessment, data.topTablesSample || []);
     } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao carregar o exemplo.");
+      setErrorMessage(err.message || "Erro ao carregar o exemplo local.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const copyGcsPath = () => {
-    if (assessment?.gcsArchiveUri) {
-      navigator.clipboard.writeText(assessment.gcsArchiveUri);
-      setCopiedGcs(true);
-      setTimeout(() => setCopiedGcs(false), 2000);
-    }
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 font-sans">
-      {/* 1. Header do Módulo */}
-      <div className="border-b border-slate-200 pb-5">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-blue-100 text-[#074878] text-[10px] font-black uppercase">
-            Fluxo de Ingestão de Assessment
-          </span>
+    <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-200 font-sans py-4">
+      {/* 1. Header Minimalista & Direto */}
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#074878] text-[11px] font-black uppercase tracking-wider">
+          <Database className="w-3.5 h-3.5" />
+          <span>Google Cloud Business Assessment</span>
         </div>
-        <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 mt-1">
-          <UploadCloud className="w-6 h-6 text-[#074878]" />
-          Ingestão do Assessment de Metadados do Cliente
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Execute os 4 passos obrigatórios: nome do cliente, upload do arquivo ZIP, gravação no Cloud Storage (<code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono text-[#074878]">gs://dass-2026/business_assessment/datahoje_hora_nome_cliente/</code>) e análise de valor com <strong>Gemini 3.8 Flash</strong>.
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Inicie o Assessment de Negócio
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
+          Informe os dados da empresa e faça o upload do arquivo <code className="text-[#074878] font-bold">.ZIP</code> de metadados para calcular os Casos de Uso com Gemini 3.8 Flash e gerar o Grafo BigQuery.
         </p>
       </div>
 
-      {/* 4 Passos Estruturados */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 1</span>
-          <div className="text-xs font-black text-slate-900 mt-0.5">Identificação do Cliente</div>
-          <p className="text-[10px] text-slate-500 mt-1">Nome corporativo e setor de atuação para contextualizar o Gemini.</p>
-        </div>
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 2</span>
-          <div className="text-xs font-black text-slate-900 mt-0.5">Upload do Pacote ZIP</div>
-          <p className="text-[10px] text-slate-500 mt-1">Envio do metadata_assessment_organization.zip gerado no cliente.</p>
-        </div>
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 3</span>
-          <div className="text-xs font-black text-slate-900 mt-0.5">GCS gs://dass-2026</div>
-          <p className="text-[10px] text-slate-500 mt-1">Gravação automática na pasta versionada com data e hora.</p>
-        </div>
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 4</span>
-          <div className="text-xs font-black text-slate-900 mt-0.5">Gemini 3.8 Flash + BQ</div>
-          <p className="text-[10px] text-slate-500 mt-1">Geração dos Casos de Uso, Business Case ROI, FinOps e Grafo GQL.</p>
-        </div>
-      </div>
+      {/* 2. Card Principal de Ingestão (Clean & Intuitivo) */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+        {/* Passo 1: Informações do Cliente */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
+              1
+            </span>
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
+              Quem é o cliente?
+            </h2>
+          </div>
 
-      {/* 2. Formulário de Ingestão */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-6 space-y-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
-            {/* Campo 1: Nome do Cliente e Indústria */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
-                  1. Nome do Cliente Corporativo *
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  placeholder="Ex: Magazine Luiza, Nubank, Petrobras, Hypera Pharma, Ambev"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-[#074878] transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Setor / Indústria do Cliente *
-                </label>
-                <select
-                  value={industry}
-                  onChange={e => setIndustry(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-[#074878] transition-all"
-                >
-                  {industriesList.map((ind) => (
-                    <option key={ind} value={ind}>{ind}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Campo 2: Upload de ZIP */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
-                2. Pacote de Metadados (.ZIP) do Cliente *
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                Nome da Empresa / Cliente *
               </label>
               <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".zip"
-                className="hidden"
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Ex: Nubank, Ambev, Magazine Luiza"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all"
               />
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 hover:border-[#074878] rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50/50 group"
-              >
-                <FileArchive className="w-9 h-9 text-slate-400 group-hover:text-[#074878] mx-auto mb-2 transition-colors" />
-                <p className="text-xs font-bold text-slate-800">
-                  {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo .ZIP do assessment"}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-1">
-                  {selectedFile
-                    ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB selecionados`
-                    : "metadata_assessment_organization.zip gerado no ambiente do cliente"}
-                </p>
-              </div>
             </div>
 
-            {/* Ações de Envio */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-              <button
-                onClick={handleUpload}
-                disabled={isLoading || !selectedFile || !customerName.trim()}
-                className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#074878] hover:bg-[#053456] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                Setor de Atuação *
+              </label>
+              <select
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all cursor-pointer"
               >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Processando Ingestão...</span>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="w-4 h-4" />
-                    <span>Enviar para GCS & BigQuery</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleLoadSample}
-                disabled={isLoading}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                title="Carregar arquivo de exemplo do diretório Downloads"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Carregar Exemplo Local</span>
-              </button>
+                {industriesList.map((ind) => (
+                  <option key={ind} value={ind}>{ind}</option>
+                ))}
+              </select>
             </div>
+          </div>
+        </div>
 
-            {/* Status e Mensagens de Feedback */}
-            {statusMessage && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-medium">{statusMessage}</span>
+        {/* Passo 2: Dropzone de Arquivo ZIP */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
+              2
+            </span>
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
+              Arquivo de Metadados (.ZIP)
+            </h2>
+          </div>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".zip"
+            className="hidden"
+          />
+
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-150 ${
+              isDragging
+                ? "border-[#074878] bg-blue-50/60 scale-[0.99]"
+                : selectedFile
+                ? "border-emerald-300 bg-emerald-50/30"
+                : "border-slate-200 hover:border-[#074878] hover:bg-slate-50/60 bg-slate-50/30"
+            }`}
+          >
+            {selectedFile ? (
+              <div className="flex flex-col items-center gap-2 animate-in fade-in duration-150">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-xs">
+                  <Check className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-extrabold text-slate-900">{selectedFile.name}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Clique para substituir o arquivo
+                  </p>
+                </div>
               </div>
-            )}
-
-            {errorMessage && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                <span className="font-medium">{errorMessage}</span>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#074878] flex items-center justify-center shadow-xs">
+                  <UploadCloud className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-800">
+                    Arraste o arquivo <span className="font-extrabold text-[#074878]">.ZIP</span> aqui ou clique para buscar
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Pacote gerado pelo extrator no ambiente do cliente (ex: metadata_assessment_organization.zip)
+                  </p>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* 3. Painel de Status do Assessment Atual */}
-        <div className="lg:col-span-6 space-y-6">
-          {assessment ? (
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <span className="text-[10px] font-black uppercase text-[#074878]">
-                    Assessment Ativo
-                  </span>
-                  <h3 className="text-base font-black text-slate-900">
-                    {assessment.customerName}
-                  </h3>
-                  <p className="text-xs text-slate-500">{assessment.industry}</p>
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  Indexado
-                </span>
-              </div>
+        {/* Mensagens de Feedback */}
+        {statusMessage && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="font-medium">{statusMessage}</span>
+          </div>
+        )}
 
-              {/* Grid de Métricas do Catálogo */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">Tabelas</span>
-                  <div className="text-lg font-black text-[#074878] mt-0.5">
-                    {assessment.totalTables.toLocaleString()}
-                  </div>
-                  <span className="text-[9px] text-slate-500">Auditadas no BQ</span>
-                </div>
+        {errorMessage && (
+          <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            <span className="font-medium">{errorMessage}</span>
+          </div>
+        )}
 
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">Colunas</span>
-                  <div className="text-lg font-black text-slate-900 mt-0.5">
-                    {assessment.totalColumns.toLocaleString()}
-                  </div>
-                  <span className="text-[9px] text-slate-500">Mapeadas</span>
-                </div>
+        {/* Botões de Ação */}
+        <div className="space-y-3 pt-2">
+          <button
+            onClick={handleUpload}
+            disabled={isLoading || !selectedFile || !customerName.trim()}
+            className="w-full py-3.5 px-6 rounded-2xl bg-[#074878] hover:bg-[#053456] disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Processando com Gemini 3.8 Flash...</span>
+              </>
+            ) : (
+              <>
+                <span>Iniciar Assessment com Gemini 3.8 Flash</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
 
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">Documentação</span>
-                  <div className="text-lg font-black text-emerald-600 mt-0.5">
-                    {assessment.docPercentage.toFixed(1)}%
-                  </div>
-                  <span className="text-[9px] text-slate-500">Com descrição</span>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">Dataplex</span>
-                  <div className="text-lg font-black text-blue-600 mt-0.5">
-                    {assessment.dataplexScansCount || "Ativo"}
-                  </div>
-                  <span className="text-[9px] text-slate-500">Data Scans</span>
-                </div>
-              </div>
-
-              {/* Caminho no GCS */}
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                  Caminho do Pacote no Cloud Storage (GCS)
-                </span>
-                <div className="flex items-center justify-between text-xs font-mono text-[#074878] break-all bg-white p-2 rounded-xl border border-slate-200">
-                  <span>{assessment.gcsArchiveUri}</span>
-                  <button
-                    onClick={copyGcsPath}
-                    className="p-1 text-slate-400 hover:text-slate-700 ml-2 shrink-0 cursor-pointer"
-                    title="Copiar URI do GCS"
-                  >
-                    {copiedGcs ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Botão de Avanço para o Debate Neurocognitivo */}
-              <div className="pt-2">
-                <button
-                  onClick={onNavigateToDebate}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition-all cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Executar Debate com Gemini 3.8 Flash (NC-MAD)</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white p-8 rounded-3xl border border-slate-200 text-center space-y-4 shadow-xs">
-              <Database className="w-12 h-12 text-slate-300 mx-auto" />
-              <div>
-                <h4 className="text-sm font-black text-slate-900">
-                  Nenhum assessment carregado no momento
-                </h4>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  Preencha o nome do cliente e envie o arquivo .ZIP ou utilize o botão de exemplo para carregar os metadados.
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="text-center">
+            <button
+              onClick={handleLoadSample}
+              disabled={isLoading}
+              className="text-xs font-bold text-[#074878] hover:text-blue-800 hover:underline inline-flex items-center gap-1.5 cursor-pointer transition-colors py-1"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Experimentar com pacote de exemplo (1 clique)</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* 3. Card de Cliente Ativo (se já houver assessment carregado) */}
+      {assessment && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider block">
+                Assessment Atualmente Carregado
+              </span>
+              <div className="flex items-center gap-2 mt-0.5">
+                <h3 className="text-base font-extrabold text-slate-900">{assessment.customerName}</h3>
+                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold uppercase">
+                  {assessment.industry}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                Indexado no BigQuery
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Tabelas</span>
+              <div className="text-base font-black text-[#074878] mt-0.5">
+                {assessment.totalTables.toLocaleString()}
+              </div>
+            </div>
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Colunas</span>
+              <div className="text-base font-black text-slate-900 mt-0.5">
+                {assessment.totalColumns.toLocaleString()}
+              </div>
+            </div>
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Documentação</span>
+              <div className="text-base font-black text-emerald-600 mt-0.5">
+                {assessment.docPercentage.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+            {onNavigateToDashboard && (
+              <button
+                onClick={onNavigateToDashboard}
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#074878] hover:bg-[#053456] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Acessar Mesa de Decisão (Visão Geral)</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+
+            {onNavigateToCases && (
+              <button
+                onClick={onNavigateToCases}
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Ver Casos de Uso & Retorno (BC)</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

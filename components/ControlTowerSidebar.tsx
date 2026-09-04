@@ -3,17 +3,15 @@
 
 import React from "react";
 import {
+  UploadCloud,
   LayoutDashboard,
   Target,
-  BarChart3,
   Network,
   Sparkles,
-  UploadCloud,
-  Layers,
   Database
 } from "lucide-react";
 
-export type NavigationTab = "decision" | "cases" | "kpis" | "graph" | "chat" | "upload";
+export type NavigationTab = "upload" | "decision" | "cases" | "graph" | "chat";
 
 export interface ControlTowerSidebarProps {
   activeTab: NavigationTab;
@@ -28,6 +26,13 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
 }) => {
   const navItems = [
     {
+      id: "upload" as NavigationTab,
+      label: "Ingestão & Metadados",
+      icon: UploadCloud,
+      badge: "INÍCIO",
+      badgeColor: "bg-blue-100 text-[#074878]",
+    },
+    {
       id: "decision" as NavigationTab,
       label: "Visão Geral",
       icon: LayoutDashboard,
@@ -38,15 +43,8 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
       id: "cases" as NavigationTab,
       label: "Casos de Uso & BC",
       icon: Target,
-      badge: "PLANO",
+      badge: "CASES",
       badgeColor: "bg-purple-100 text-purple-700",
-    },
-    {
-      id: "kpis" as NavigationTab,
-      label: "KPIs & Simulador FinOps",
-      icon: BarChart3,
-      badge: "METAS",
-      badgeColor: "bg-emerald-100 text-emerald-800",
     },
     {
       id: "graph" as NavigationTab,
@@ -61,13 +59,6 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
       icon: Sparkles,
       badge: "IA",
       badgeColor: "bg-amber-100 text-amber-700",
-    },
-    {
-      id: "upload" as NavigationTab,
-      label: "Ingestão & Metadados",
-      icon: UploadCloud,
-      badge: "ZIP",
-      badgeColor: "bg-blue-100 text-blue-700",
     },
   ];
 
