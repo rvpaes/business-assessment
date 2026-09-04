@@ -14,6 +14,8 @@ import {
   Sparkles 
 } from "lucide-react";
 import { GoogleCloudLogo } from "./GoogleCloudLogo";
+import { LanguageSelector } from "./LanguageSelector";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { CustomerAssessment } from "@/lib/types";
 
 export interface CustomerOption {
@@ -49,6 +51,7 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
   onNavigateToUpload,
   onSelectCustomer
 }) => {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [customersList, setCustomersList] = useState<CustomerOption[]>([]);
@@ -200,18 +203,21 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar tabela, coluna, caso de uso ou métrica auditada..."
+          placeholder={t("searchPlaceholder")}
           className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#074878] focus:ring-2 focus:ring-blue-500/10 transition-all"
         />
         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
       </form>
 
-      {/* 3. Lado Direito: Status BigQuery & Perfil */}
-      <div className="flex items-center gap-3">
+      {/* 3. Lado Direito: Seletor de Idioma, Status BigQuery & Perfil */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Seletor Executivo de Idioma (pt-BR, en-US, es-ES) */}
+        <LanguageSelector />
+
         {/* Status Sincronizado do BigQuery */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>BigQuery Grounding Ativo</span>
+          <span>{t("groundingActive")}</span>
         </div>
 
         {/* Sincronização manual */}
@@ -219,7 +225,7 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            title="Sincronizar com BigQuery"
+            title={t("syncBigQuery")}
             className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-[#074878]" : ""}`} />
@@ -228,16 +234,16 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
 
         {/* Perfil do Arquiteto/Avaliador com Google Cloud Logo */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-          <GoogleCloudLogo height={22} className="hidden lg:block mr-1" />
+          <GoogleCloudLogo height={22} className="hidden sm:block mr-1" />
           <div className="w-8 h-8 rounded-full bg-[#074878] text-white flex items-center justify-center font-black text-xs shadow-xs">
             GC
           </div>
           <div className="hidden xl:flex flex-col text-left">
             <span className="font-extrabold text-xs text-slate-900 leading-tight">
-              Arquiteto de Dados GCP
+              {t("architectRole")}
             </span>
             <span className="text-[10px] text-slate-500 font-medium">
-              Data & AI Assessment
+              {t("assessmentSubtitle")}
             </span>
           </div>
         </div>

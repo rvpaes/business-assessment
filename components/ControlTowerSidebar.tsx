@@ -11,6 +11,7 @@ import {
   Database
 } from "lucide-react";
 import { GoogleCloudLogo } from "./GoogleCloudLogo";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export type NavigationTab = "upload" | "decision" | "cases" | "graph" | "chat";
 
@@ -25,38 +26,40 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
   onTabChange,
   casesCount = 6
 }) => {
+  const { t } = useLanguage();
+
   const navItems = [
     {
       id: "upload" as NavigationTab,
-      label: "Ingestão & Metadados",
+      label: t("tabUpload"),
       icon: UploadCloud,
-      badge: "INÍCIO",
+      badge: "START",
       badgeColor: "bg-blue-100 text-[#074878]",
     },
     {
       id: "decision" as NavigationTab,
-      label: "Agent Intelligence",
+      label: t("tabDecision"),
       icon: LayoutDashboard,
       badge: "MESA",
       badgeColor: "bg-[#074878] text-white",
     },
     {
       id: "cases" as NavigationTab,
-      label: "Casos de Uso & BC",
+      label: t("tabCases"),
       icon: Target,
       badge: "CASES",
       badgeColor: "bg-purple-100 text-purple-700",
     },
     {
       id: "graph" as NavigationTab,
-      label: "Property Graph GQL",
+      label: t("tabGraph"),
       icon: Network,
       badge: "GRAFO",
       badgeColor: "bg-violet-100 text-violet-700",
     },
     {
       id: "chat" as NavigationTab,
-      label: "Data Agent Conversacional",
+      label: t("tabChat"),
       icon: Sparkles,
       badge: "IA",
       badgeColor: "bg-amber-100 text-amber-700",

@@ -181,6 +181,8 @@ const defaultTopUseCases: TopUseCase[] = [
   }
 ];
 
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+
 export default function HomePage() {
   // Ajuste 1: A tela "Ingestão & Metadados" é a PRIMEIRA tela por padrão!
   const [activeTab, setActiveTab] = useState<NavigationTab>("upload");
@@ -264,108 +266,110 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F0F4F8] text-slate-900 font-sans antialiased">
-      {/* 1. Sidebar Fixa à Esquerda */}
-      <ControlTowerSidebar
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          setShowLiveDebateView(false);
-          setActiveTab(tab);
-        }}
-        casesCount={topUseCases.length}
-      />
-
-      {/* 2. Área Principal com Header Sticky e Conteúdo */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header Superior Fixo com Busca e Perfil */}
-        <ControlTowerHeader
-          customerName={assessment?.customerName || "Cliente Corporativo"}
-          industry={assessment?.industry || "Bens de Consumo & Saúde"}
-          totalTables={assessment?.totalTables || 0}
-          docPercentage={assessment?.docPercentage || 0}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-          onNavigateToUpload={() => {
+    <LanguageProvider>
+      <div className="min-h-screen flex bg-[#F0F4F8] text-slate-900 font-sans antialiased">
+        {/* 1. Sidebar Fixa à Esquerda */}
+        <ControlTowerSidebar
+          activeTab={activeTab}
+          onTabChange={(tab) => {
             setShowLiveDebateView(false);
-            setActiveTab("upload");
+            setActiveTab(tab);
           }}
-          onSelectCustomer={handleSelectCustomer}
-          onSearchSubmit={(q) => {
-            console.log("Busca executiva:", q);
-          }}
+          casesCount={topUseCases.length}
         />
 
-        {/* Conteúdo da Aba Ativa */}
-        <main className="flex-1 p-6 sm:p-8 max-w-[1600px] w-full mx-auto">
-          {/* Visualização de Debate ao Vivo (se acionado) */}
-          {showLiveDebateView ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setShowLiveDebateView(false)}
-                  className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  ← Voltar para Agent Intelligence
-                </button>
-              </div>
-              <NeuroDebateView
-                assessment={assessment || defaultAssessment}
-                tables={tables}
-                turns={turns}
-                topUseCases={topUseCases}
-                salienceMatrix={salienceMatrix}
-                auditTargets={auditTargets}
-                autoStart={autoStartDebate}
-                onDebateComplete={handleDebateComplete}
-                onNavigateToCases={() => {
-                  setShowLiveDebateView(false);
-                  setActiveTab("cases");
-                }}
-              />
-            </div>
-          ) : (
-            <>
-              {/* Ajuste 1: Aba "upload" (Ingestão & Metadados) é a inicial */}
-              {activeTab === "upload" && (
-                <UploadIngestionView
-                  assessment={assessment}
-                  onAssessmentLoaded={handleAssessmentLoaded}
-                  onNavigateToDashboard={() => setActiveTab("decision")}
-                  onNavigateToCases={() => setActiveTab("cases")}
-                />
-              )}
+        {/* 2. Área Principal com Header Sticky e Conteúdo */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header Superior Fixo com Busca e Perfil */}
+          <ControlTowerHeader
+            customerName={assessment?.customerName || "Cliente Corporativo"}
+            industry={assessment?.industry || "Bens de Consumo & Saúde"}
+            totalTables={assessment?.totalTables || 0}
+            docPercentage={assessment?.docPercentage || 0}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+            onNavigateToUpload={() => {
+              setShowLiveDebateView(false);
+              setActiveTab("upload");
+            }}
+            onSelectCustomer={handleSelectCustomer}
+            onSearchSubmit={(q) => {
+              console.log("Busca executiva:", q);
+            }}
+          />
 
-              {activeTab === "decision" && (
-                <ExecutiveDecisionView
-                  assessment={assessment}
-                  topUseCases={topUseCases}
+          {/* Conteúdo da Aba Ativa */}
+          <main className="flex-1 p-6 sm:p-8 max-w-[1600px] w-full mx-auto">
+            {/* Visualização de Debate ao Vivo (se acionado) */}
+            {showLiveDebateView ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setShowLiveDebateView(false)}
+                    className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    ← Voltar para Agent Intelligence
+                  </button>
+                </div>
+                <NeuroDebateView
+                  assessment={assessment || defaultAssessment}
                   tables={tables}
-                  onTriggerDebate={() => setShowLiveDebateView(true)}
-                  onNavigateToTab={(tab) => setActiveTab(tab as NavigationTab)}
-                  onNavigateToUpload={() => setActiveTab("upload")}
+                  turns={turns}
+                  topUseCases={topUseCases}
+                  salienceMatrix={salienceMatrix}
+                  auditTargets={auditTargets}
+                  autoStart={autoStartDebate}
+                  onDebateComplete={handleDebateComplete}
+                  onNavigateToCases={() => {
+                    setShowLiveDebateView(false);
+                    setActiveTab("cases");
+                  }}
                 />
-              )}
+              </div>
+            ) : (
+              <>
+                {/* Ajuste 1: Aba "upload" (Ingestão & Metadados) é a inicial */}
+                {activeTab === "upload" && (
+                  <UploadIngestionView
+                    assessment={assessment}
+                    onAssessmentLoaded={handleAssessmentLoaded}
+                    onNavigateToDashboard={() => setActiveTab("decision")}
+                    onNavigateToCases={() => setActiveTab("cases")}
+                  />
+                )}
 
-              {/* Ajuste 4: Aba "cases" com Cards e Modal de Detalhamento */}
-              {activeTab === "cases" && (
-                <TopUseCasesView
-                  useCases={topUseCases}
-                  assessment={assessment}
-                  onNavigateToGraph={() => setActiveTab("graph")}
-                />
-              )}
+                {activeTab === "decision" && (
+                  <ExecutiveDecisionView
+                    assessment={assessment}
+                    topUseCases={topUseCases}
+                    tables={tables}
+                    onTriggerDebate={() => setShowLiveDebateView(true)}
+                    onNavigateToTab={(tab) => setActiveTab(tab as NavigationTab)}
+                    onNavigateToUpload={() => setActiveTab("upload")}
+                  />
+                )}
 
-              {activeTab === "graph" && (
-                <BigQueryGraphView />
-              )}
+                {/* Ajuste 4: Aba "cases" com Cards e Modal de Detalhamento */}
+                {activeTab === "cases" && (
+                  <TopUseCasesView
+                    useCases={topUseCases}
+                    assessment={assessment}
+                    onNavigateToGraph={() => setActiveTab("graph")}
+                  />
+                )}
 
-              {activeTab === "chat" && (
-                <IntelligentChatView assessment={assessment} />
-              )}
-            </>
-          )}
-        </main>
+                {activeTab === "graph" && (
+                  <BigQueryGraphView />
+                )}
+
+                {activeTab === "chat" && (
+                  <IntelligentChatView assessment={assessment} />
+                )}
+              </>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </LanguageProvider>
   );
 }
