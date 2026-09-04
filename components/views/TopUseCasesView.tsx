@@ -62,9 +62,17 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
       {/* 1. Header do Módulo */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold uppercase tracking-wider mb-1">
-            <Target className="w-3 h-3" />
-            <span>Casos de Uso & Business Case</span>
+          <div className="flex items-center gap-2 mb-1.5">
+            <img 
+              src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
+              alt="Google Cloud" 
+              className="h-5 w-auto object-contain"
+            />
+            <span className="text-slate-300">•</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold uppercase tracking-wider">
+              <Target className="w-3 h-3" />
+              <span>Casos de Uso & Business Case</span>
+            </div>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900">
             Casos de Uso Priorizados para {customerName}

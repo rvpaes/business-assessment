@@ -225,8 +225,13 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
           </button>
         )}
 
-        {/* Perfil do Arquiteto/Avaliador */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+        {/* Perfil do Arquiteto/Avaliador com Google Cloud Logo */}
+        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
+          <img 
+            src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
+            alt="Google Cloud" 
+            className="h-6 w-auto object-contain hidden lg:block mr-1"
+          />
           <div className="w-8 h-8 rounded-full bg-[#074878] text-white flex items-center justify-center font-black text-xs shadow-xs">
             GC
           </div>

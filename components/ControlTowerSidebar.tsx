@@ -66,23 +66,17 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
     <aside className="w-64 bg-white border-r border-[#E8F1F8] flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none shadow-xs z-30 font-sans">
       {/* Topo: Brand Header Executivo Google Cloud Business Assessment */}
       <div>
-        <div className="px-6 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[73px]">
+        <div className="px-5 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[73px]">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#074878] to-[#0052CC] flex items-center justify-center text-white font-black text-xs shadow-xs">
-              <Database className="w-3.5 h-3.5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-black tracking-tight text-[#074878] uppercase">
-                Business Assessment
-              </span>
-              <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase">
-                Google Cloud Data & AI
-              </span>
-            </div>
+            <img 
+              src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
+              alt="Google Cloud" 
+              className="h-8 w-auto object-contain"
+            />
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-[#074878] border border-blue-100 uppercase tracking-wider">
-              DATA ESTATE VALUE COCKPIT
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[8.5px] font-extrabold px-2 py-0.5 rounded bg-blue-50 text-[#074878] border border-blue-100 uppercase tracking-wider">
+              BUSINESS ASSESSMENT COCKPIT
             </span>
           </div>
         </div>

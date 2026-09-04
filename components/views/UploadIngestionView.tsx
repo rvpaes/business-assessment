@@ -202,7 +202,14 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-200 font-sans py-4">
       {/* 1. Header Minimalista & Direto */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3">
+        <div className="flex justify-center">
+          <img 
+            src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
+            alt="Google Cloud" 
+            className="h-10 w-auto object-contain"
+          />
+        </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#074878] text-[11px] font-black uppercase tracking-wider">
           <Database className="w-3.5 h-3.5" />
           <span>Google Cloud Business Assessment</span>
