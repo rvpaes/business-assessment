@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Bot
 } from "lucide-react";
+import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 
 interface UploadIngestionViewProps {
@@ -204,11 +205,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
       {/* 1. Header Minimalista & Direto */}
       <div className="text-center space-y-3">
         <div className="flex justify-center">
-          <img 
-            src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
-            alt="Google Cloud" 
-            className="h-10 w-auto object-contain"
-          />
+          <GoogleCloudLogo height={34} />
         </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#074878] text-[11px] font-black uppercase tracking-wider">
           <Database className="w-3.5 h-3.5" />

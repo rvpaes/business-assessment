@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { CustomerAssessment, TopUseCase, TableCatalogItem } from "@/lib/types";
 import { AgentModalData, AgentDossierModal } from "./AgentDossierModal";
+import { GoogleCloudLogo } from "../GoogleCloudLogo";
 
 interface ExecutiveDecisionViewProps {
   assessment: CustomerAssessment | null;
@@ -405,13 +406,7 @@ ORDER BY u.rank ASC;`
         {/* Topo do Banner: Pill de Conselho Estratégico + Botão Executar ao Vivo */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-blue-900/70 border border-blue-400/25 text-[11px] font-bold text-blue-200">
-            <div className="bg-white/95 px-2 py-0.5 rounded-md flex items-center shrink-0 shadow-2xs">
-              <img 
-                src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
-                alt="Google Cloud" 
-                className="h-3.5 w-auto object-contain" 
-              />
-            </div>
+            <GoogleCloudLogo height={16} variant="white_card" />
             <span className="text-amber-300 font-extrabold">CONSELHO ESTRATÉGICO</span>
             <span className="text-blue-300">•</span>
             <span className="text-blue-100 uppercase">AGENT INTELLIGENCE</span>

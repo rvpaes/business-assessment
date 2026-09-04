@@ -19,6 +19,11 @@
     color: var(--gcp-text-main);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 /* Custom Scrollbars */

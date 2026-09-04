@@ -10,6 +10,7 @@ import {
   Sparkles,
   Database
 } from "lucide-react";
+import { GoogleCloudLogo } from "./GoogleCloudLogo";
 
 export type NavigationTab = "upload" | "decision" | "cases" | "graph" | "chat";
 
@@ -68,11 +69,7 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
       <div>
         <div className="px-5 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[73px]">
           <div className="flex items-center gap-2">
-            <img 
-              src="https://logos-world.net/wp-content/uploads/2021/02/Google-Cloud-Logo.png" 
-              alt="Google Cloud" 
-              className="h-8 w-auto object-contain"
-            />
+            <GoogleCloudLogo height={28} />
           </div>
           <div className="flex items-center gap-2 mt-2">
             <span className="text-[8.5px] font-extrabold px-2 py-0.5 rounded bg-blue-50 text-[#074878] border border-blue-100 uppercase tracking-wider">
