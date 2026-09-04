@@ -1,4 +1,4 @@
-// components/ControlTowerSidebar.tsx - Sidebar Executiva Estilo Hypera Commercial Brain
+// components/ControlTowerSidebar.tsx - Sidebar Executiva de Business Assessment
 "use client";
 
 import React from "react";
@@ -8,8 +8,9 @@ import {
   BarChart3,
   Network,
   Sparkles,
-  Settings,
-  ShieldCheck
+  UploadCloud,
+  Layers,
+  Database
 } from "lucide-react";
 
 export type NavigationTab = "decision" | "cases" | "kpis" | "graph" | "chat" | "upload";
@@ -35,14 +36,14 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
     },
     {
       id: "cases" as NavigationTab,
-      label: "Missões & Campo",
+      label: "Casos de Uso & BC",
       icon: Target,
       badge: "PLANO",
       badgeColor: "bg-purple-100 text-purple-700",
     },
     {
       id: "kpis" as NavigationTab,
-      label: "KPIs & Simulador",
+      label: "KPIs & Simulador FinOps",
       icon: BarChart3,
       badge: "METAS",
       badgeColor: "bg-emerald-100 text-emerald-800",
@@ -56,43 +57,41 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
     },
     {
       id: "chat" as NavigationTab,
-      label: "Assistente Inteligente",
+      label: "Data Agent Conversacional",
       icon: Sparkles,
       badge: "IA",
       badgeColor: "bg-amber-100 text-amber-700",
     },
     {
       id: "upload" as NavigationTab,
-      label: "Configurações",
-      icon: Settings,
-      badge: "CONTA",
-      badgeColor: "bg-slate-100 text-slate-700",
+      label: "Ingestão & Metadados",
+      icon: UploadCloud,
+      badge: "ZIP",
+      badgeColor: "bg-blue-100 text-blue-700",
     },
   ];
 
   return (
     <aside className="w-64 bg-white border-r border-[#E8F1F8] flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none shadow-xs z-30 font-sans">
-      {/* Topo: Brand Header com Logo Oficial Estilo Hypera */}
+      {/* Topo: Brand Header Executivo Google Cloud Business Assessment */}
       <div>
         <div className="px-6 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[73px]">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-[#00A3E0] flex items-center justify-center shadow-xs">
-              <div className="w-2.5 h-2.5 rounded-full bg-white flex items-center justify-center">
-                <div className="w-1 h-1 rounded-full bg-[#00A3E0]" />
-              </div>
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#074878] to-[#0052CC] flex items-center justify-center text-white font-black text-xs shadow-xs">
+              <Database className="w-3.5 h-3.5" />
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-base font-black tracking-tight text-[#002B49]">
-                Hypera
+            <div className="flex flex-col">
+              <span className="text-xs font-black tracking-tight text-[#074878] uppercase">
+                Business Assessment
               </span>
-              <span className="text-[11px] font-normal italic text-[#00A3E0]">
-                pharma
+              <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase">
+                Google Cloud Data & AI
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[9px] font-extrabold tracking-wider text-[#074878] uppercase">
-              BUSINESS INSIGHTS & DEMANDA
+            <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-[#074878] border border-blue-100 uppercase tracking-wider">
+              DATA ESTATE VALUE COCKPIT
             </span>
           </div>
         </div>
@@ -130,18 +129,18 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
         </nav>
       </div>
 
-      {/* Rodapé da Sidebar: Status Operacional */}
+      {/* Rodapé da Sidebar: Status da Stack de Dados */}
       <div className="p-4 border-t border-[#E8F1F8] space-y-2 bg-slate-50/50">
         <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-500 font-medium">Status do Sistema:</span>
+          <span className="text-slate-500 font-medium">BigQuery & Storage:</span>
           <span className="text-emerald-700 font-bold flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Operacional
+            Conectado
           </span>
         </div>
         <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-500 font-medium">Dados de Mercado & Vendas:</span>
-          <span className="text-slate-700 font-bold">Atualizado Hoje</span>
+          <span className="text-slate-500 font-medium">Motor Cognitivo:</span>
+          <span className="text-[#074878] font-bold">Gemini 3.8 Flash</span>
         </div>
       </div>
     </aside>

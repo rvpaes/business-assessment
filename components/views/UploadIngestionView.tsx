@@ -5,7 +5,7 @@ import React, { useState, useRef } from "react";
 import { 
   UploadCloud, FileArchive, CheckCircle2, AlertCircle, 
   ArrowRight, HardDrive, Database, Sparkles, Copy, ExternalLink,
-  ShieldAlert, RefreshCw
+  ShieldAlert, RefreshCw, Layers, Check, Building2
 } from "lucide-react";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 
@@ -20,13 +20,27 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   onAssessmentLoaded,
   onNavigateToDebate
 }) => {
-  const [customerName, setCustomerName] = useState(assessment?.customerName || "Hypera Pharma");
+  const [customerName, setCustomerName] = useState(assessment?.customerName || "");
+  const [industry, setIndustry] = useState(assessment?.industry || "Varejo & E-commerce");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [copiedGcs, setCopiedGcs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const industriesList = [
+    "Varejo & E-commerce",
+    "Financeiro & Fintech",
+    "Farmacêutica & Saúde",
+    "Bens de Consumo & CPG",
+    "Manufatura & Indústria",
+    "Logística & Supply Chain",
+    "Telecom & Mídia",
+    "Tecnologia & SaaS",
+    "Energia & Utilities",
+    "Outro Segmento"
+  ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -52,11 +66,12 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
 
     setIsLoading(true);
     setErrorMessage("");
-    setStatusMessage("Enviando pacote para Google Cloud Storage (gs://dass-2026/business_assessment)...");
+    setStatusMessage(`Enviando pacote para Google Cloud Storage (gs://dass-2026/business_assessment)...`);
 
     try {
       const formData = new FormData();
-      formData.append("customerName", customerName);
+      formData.append("customerName", customerName.trim());
+      formData.append("industry", industry);
       formData.append("file", selectedFile);
 
       const res = await fetch("/api/upload", {
@@ -79,15 +94,19 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   };
 
   const handleLoadSample = async () => {
+    const finalCustomerName = customerName.trim() || "Empresa Modelo (Exemplo)";
     setIsLoading(true);
     setErrorMessage("");
-    setStatusMessage("Carregando metadata_assessment_organization.zip do ambiente local para GCS & BigQuery...");
+    setStatusMessage("Carregando metadata_assessment_organization.zip para GCS & BigQuery...");
 
     try {
       const res = await fetch("/api/sample", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerName })
+        body: JSON.stringify({ 
+          customerName: finalCustomerName,
+          industry: industry
+        })
       });
 
       const data = await res.json();
@@ -113,44 +132,86 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300 font-sans">
       {/* 1. Header do Módulo */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-5">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <UploadCloud className="w-6 h-6 text-blue-600" />
-          Ingestão do Assessment de Metadados & Storage GCS
+      <div className="border-b border-slate-200 pb-5">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded bg-blue-100 text-[#074878] text-[10px] font-black uppercase">
+            Fluxo de Ingestão de Assessment
+          </span>
+        </div>
+        <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 mt-1">
+          <UploadCloud className="w-6 h-6 text-[#074878]" />
+          Ingestão do Assessment de Metadados do Cliente
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Carregue o pacote ZIP gerado no ambiente do cliente. O sistema gravará o arquivo no Cloud Storage no padrão{" "}
-          <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-xs font-mono text-blue-600 dark:text-blue-400">
-            gs://dass-2026/business_assessment/datahoje_hora_nome_cliente/
-          </code>{" "}
-          e alimentará o dataset corporativo do BigQuery.
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Execute os 4 passos obrigatórios: nome do cliente, upload do arquivo ZIP, gravação no Cloud Storage (<code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono text-[#074878]">gs://dass-2026/business_assessment/datahoje_hora_nome_cliente/</code>) e análise de valor com <strong>Gemini 3.8 Flash</strong>.
         </p>
+      </div>
+
+      {/* 4 Passos Estruturados */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 1</span>
+          <div className="text-xs font-black text-slate-900 mt-0.5">Identificação do Cliente</div>
+          <p className="text-[10px] text-slate-500 mt-1">Nome corporativo e setor de atuação para contextualizar o Gemini.</p>
+        </div>
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 2</span>
+          <div className="text-xs font-black text-slate-900 mt-0.5">Upload do Pacote ZIP</div>
+          <p className="text-[10px] text-slate-500 mt-1">Envio do metadata_assessment_organization.zip gerado no cliente.</p>
+        </div>
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 3</span>
+          <div className="text-xs font-black text-slate-900 mt-0.5">GCS gs://dass-2026</div>
+          <p className="text-[10px] text-slate-500 mt-1">Gravação automática na pasta versionada com data e hora.</p>
+        </div>
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black text-[#074878] uppercase">Passo 4</span>
+          <div className="text-xs font-black text-slate-900 mt-0.5">Gemini 3.8 Flash + BQ</div>
+          <p className="text-[10px] text-slate-500 mt-1">Geração dos Casos de Uso, Business Case ROI, FinOps e Grafo GQL.</p>
+        </div>
       </div>
 
       {/* 2. Formulário de Ingestão */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-6 space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-            {/* Campo 1: Nome do Cliente */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                1. Nome do Cliente Corporativo *
-              </label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={e => setCustomerName(e.target.value)}
-                placeholder="Ex: Hypera Pharma, RaiaDrogasil, BETs Brasil"
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              />
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+            {/* Campo 1: Nome do Cliente e Indústria */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
+                  1. Nome do Cliente Corporativo *
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={e => setCustomerName(e.target.value)}
+                  placeholder="Ex: Magazine Luiza, Nubank, Petrobras, Hypera Pharma, Ambev"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-[#074878] transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Setor / Indústria do Cliente *
+                </label>
+                <select
+                  value={industry}
+                  onChange={e => setIndustry(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-[#074878] transition-all"
+                >
+                  {industriesList.map((ind) => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Campo 2: Upload de ZIP */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                2. Pacote de Metadados (.ZIP) *
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
+                2. Pacote de Metadados (.ZIP) do Cliente *
               </label>
               <input
                 type="file"
@@ -161,16 +222,16 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
               />
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition-all bg-slate-50/30 dark:bg-slate-800/30 group"
+                className="border-2 border-dashed border-slate-300 hover:border-[#074878] rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50/50 group"
               >
-                <FileArchive className="w-10 h-10 text-slate-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors" />
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo .ZIP"}
+                <FileArchive className="w-9 h-9 text-slate-400 group-hover:text-[#074878] mx-auto mb-2 transition-colors" />
+                <p className="text-xs font-bold text-slate-800">
+                  {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo .ZIP do assessment"}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-[10px] text-slate-400 mt-1">
                   {selectedFile
                     ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB selecionados`
-                    : "Arraste ou selecione o arquivo gerado pelo assessment"}
+                    : "metadata_assessment_organization.zip gerado no ambiente do cliente"}
                 </p>
               </div>
             </div>
@@ -179,18 +240,18 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
               <button
                 onClick={handleUpload}
-                disabled={isLoading || !selectedFile}
-                className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm shadow-sm transition-all"
+                disabled={isLoading || !selectedFile || !customerName.trim()}
+                className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#074878] hover:bg-[#053456] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {isLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    Processando Ingestão...
+                    <span>Processando Ingestão...</span>
                   </>
                 ) : (
                   <>
                     <UploadCloud className="w-4 h-4" />
-                    Fazer Upload & Processar
+                    <span>Enviar para GCS & BigQuery</span>
                   </>
                 )}
               </button>
@@ -198,129 +259,126 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
               <button
                 onClick={handleLoadSample}
                 disabled={isLoading}
-                className="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all"
-                title="Carrega o arquivo Downloads/metadata_assessment_organization.zip já gerado"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                title="Carregar arquivo de exemplo do diretório Downloads"
               >
-                ⚡ Usar ZIP Local de Exemplo
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Carregar Exemplo Local</span>
               </button>
             </div>
 
+            {/* Status e Mensagens de Feedback */}
             {statusMessage && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs border border-emerald-200/60 dark:border-emerald-800/60">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>{statusMessage}</span>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-medium">{statusMessage}</span>
               </div>
             )}
 
             {errorMessage && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 text-xs border border-rose-200/60 dark:border-rose-800/60">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span className="font-medium">{errorMessage}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Lado Direito: Scorecard do Assessment Processado */}
-        <div className="lg:col-span-6">
+        {/* 3. Painel de Status do Assessment Atual */}
+        <div className="lg:col-span-6 space-y-6">
           {assessment ? (
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                    Maturidade Auditada
+                  <span className="text-[10px] font-black uppercase text-[#074878]">
+                    Assessment Ativo
                   </span>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-base font-black text-slate-900">
                     {assessment.customerName}
                   </h3>
                   <p className="text-xs text-slate-500">{assessment.industry}</p>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                    {assessment.docPercentage.toFixed(1)}%
-                  </div>
-                  <span className="text-[11px] text-slate-400">Grounding IA</span>
-                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  Indexado
+                </span>
               </div>
 
-              {/* Grid de Métricas */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Tabelas Base</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              {/* Grid de Métricas do Catálogo */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Tabelas</span>
+                  <div className="text-lg font-black text-[#074878] mt-0.5">
                     {assessment.totalTables.toLocaleString()}
                   </div>
+                  <span className="text-[9px] text-slate-500">Auditadas no BQ</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Views / MVs</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {assessment.totalViews.toLocaleString()}
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Colunas Totais</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Colunas</span>
+                  <div className="text-lg font-black text-slate-900 mt-0.5">
                     {assessment.totalColumns.toLocaleString()}
                   </div>
+                  <span className="text-[9px] text-slate-500">Mapeadas</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Grafos GQL</div>
-                  <div className="text-lg font-bold text-violet-600 dark:text-violet-400">
-                    {assessment.propertyGraphsCount}
+
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Documentação</span>
+                  <div className="text-lg font-black text-emerald-600 mt-0.5">
+                    {assessment.docPercentage.toFixed(1)}%
                   </div>
+                  <span className="text-[9px] text-slate-500">Com descrição</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Data Agents</div>
-                  <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                    {assessment.dataAgentsCount}
+
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Dataplex</span>
+                  <div className="text-lg font-black text-blue-600 mt-0.5">
+                    {assessment.dataplexScansCount || "Ativo"}
                   </div>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Scans Dataplex</div>
-                  <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    {assessment.dataplexScansCount}
-                  </div>
+                  <span className="text-[9px] text-slate-500">Data Scans</span>
                 </div>
               </div>
 
-              {/* Informação do GCS */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
-                    <HardDrive className="w-3.5 h-3.5 text-emerald-600" />
-                    Caminho no Cloud Storage:
-                  </span>
+              {/* Caminho no GCS */}
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">
+                  Caminho do Pacote no Cloud Storage (GCS)
+                </span>
+                <div className="flex items-center justify-between text-xs font-mono text-[#074878] break-all bg-white p-2 rounded-xl border border-slate-200">
+                  <span>{assessment.gcsArchiveUri}</span>
                   <button
                     onClick={copyGcsPath}
-                    className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-[11px]"
+                    className="p-1 text-slate-400 hover:text-slate-700 ml-2 shrink-0 cursor-pointer"
+                    title="Copiar URI do GCS"
                   >
-                    <Copy className="w-3 h-3" />
-                    {copiedGcs ? "Copiado!" : "Copiar URI"}
+                    {copiedGcs ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <code className="block p-2 rounded bg-slate-100 dark:bg-slate-900 text-xs font-mono text-slate-800 dark:text-slate-200 break-all">
-                  {assessment.gcsArchiveUri}
-                </code>
               </div>
 
-              {/* Botão de Próxima Etapa */}
-              <button
-                onClick={onNavigateToDebate}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all hover:scale-[1.01]"
-              >
-                <span>Avançar para o Neuro-Debate Studio (NC-MAD)</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {/* Botão de Avanço para o Debate Neurocognitivo */}
+              <div className="pt-2">
+                <button
+                  onClick={onNavigateToDebate}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Executar Debate com Gemini 3.8 Flash (NC-MAD)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
-              <Database className="w-12 h-12 text-slate-300 dark:text-slate-700 mb-3" />
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Nenhum assessment carregado
-              </h4>
-              <p className="text-xs text-slate-400 max-w-xs mt-1">
-                Faça o upload do arquivo ZIP ou clique no botão rápido para carregar o exemplo local do cliente.
-              </p>
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 text-center space-y-4 shadow-xs">
+              <Database className="w-12 h-12 text-slate-300 mx-auto" />
+              <div>
+                <h4 className="text-sm font-black text-slate-900">
+                  Nenhum assessment carregado no momento
+                </h4>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  Preencha o nome do cliente e envie o arquivo .ZIP ou utilize o botão de exemplo para carregar os metadados.
+                </p>
+              </div>
             </div>
           )}
         </div>

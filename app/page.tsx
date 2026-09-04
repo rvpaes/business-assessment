@@ -257,11 +257,16 @@ export default function HomePage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header Superior Fixo com Busca e Perfil */}
         <ControlTowerHeader
-          customerName={assessment?.customerName || "Hypera Pharma"}
-          industry={assessment?.industry || "Farmacêutica & Saúde"}
-          totalTables={assessment?.totalTables || 3293}
+          customerName={assessment?.customerName || "Cliente Corporativo"}
+          industry={assessment?.industry || "Bens de Consumo & Saúde"}
+          totalTables={assessment?.totalTables || 0}
+          docPercentage={assessment?.docPercentage || 0}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+          onNavigateToUpload={() => {
+            setShowLiveDebateView(false);
+            setActiveTab("upload");
+          }}
           onSearchSubmit={(q) => {
             console.log("Busca executiva:", q);
           }}
@@ -300,8 +305,10 @@ export default function HomePage() {
                 <ExecutiveDecisionView
                   assessment={assessment}
                   topUseCases={topUseCases}
+                  tables={tables}
                   onTriggerDebate={() => setShowLiveDebateView(true)}
                   onNavigateToTab={(tab) => setActiveTab(tab as NavigationTab)}
+                  onNavigateToUpload={() => setActiveTab("upload")}
                 />
               )}
 

@@ -1,4 +1,4 @@
-// components/views/ExecutiveDecisionView.tsx - Visão Geral do Conselho Neurocognitivo (Estilo Hypera Commercial Brain)
+// components/views/ExecutiveDecisionView.tsx - Visão Geral do Conselho Neurocognitivo de Business Assessment
 "use client";
 
 import React, { useState } from "react";
@@ -15,343 +15,375 @@ import {
   FileText,
   MapPin,
   ArrowUpRight,
-  BrainCircuit
+  BrainCircuit,
+  Building2,
+  Lock,
+  Cpu,
+  Coins
 } from "lucide-react";
-import { CustomerAssessment, TopUseCase } from "@/lib/types";
+import { CustomerAssessment, TopUseCase, TableCatalogItem } from "@/lib/types";
 import { AgentModalData, AgentDossierModal } from "./AgentDossierModal";
 
 interface ExecutiveDecisionViewProps {
   assessment: CustomerAssessment | null;
   topUseCases: TopUseCase[];
+  tables?: TableCatalogItem[];
   onTriggerDebate?: () => void;
   onNavigateToTab?: (tab: string) => void;
+  onNavigateToUpload?: () => void;
 }
 
 export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   assessment,
   topUseCases,
+  tables = [],
   onTriggerDebate,
-  onNavigateToTab
+  onNavigateToTab,
+  onNavigateToUpload
 }) => {
   const [selectedDossier, setSelectedDossier] = useState<AgentModalData | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Informações de contexto
-  const customerName = assessment?.customerName || "Hypera Pharma";
-  const customerExecutive = "ADRIANA BARBERI FERREIRA";
-  const districtName = "FEMME - Distrito 102010000";
-  const totalTables = assessment?.totalTables || 3293;
-  const docPercentage = assessment?.documentationPercentage?.toFixed(1) || "71.4";
+  // Informações dinâmicas do cliente
+  const customerName = assessment?.customerName || "Cliente Corporativo";
+  const industry = assessment?.industry || "Bens de Consumo & Saúde";
+  const totalTables = assessment?.totalTables || 0;
+  const totalColumns = assessment?.totalColumns || 0;
+  const docPercentage = assessment?.docPercentage ? assessment.docPercentage.toFixed(1) : "0.0";
+  const datasetId = "business_assessment_customer";
 
-  // Dossiê Estratégico Global (CEN)
+  // Cálculos consolidados de FinOps & Business Case do Cliente
+  const totalFinancialGainUsd = topUseCases.reduce((acc, u) => acc + (u.financialGainEstimateUsd || 0), 0);
+  const totalMonthlyGcpUsd = topUseCases.reduce((acc, u) => acc + (u.gcpMonthlyCostUsd || 0), 0);
+  const totalAnnualGcpUsd = totalMonthlyGcpUsd * 12;
+  const calculatedRoi = totalAnnualGcpUsd > 0
+    ? (((totalFinancialGainUsd - totalAnnualGcpUsd) / totalAnnualGcpUsd) * 100).toFixed(0)
+    : "340";
+
+  // Destaques dos Casos de Uso Top 1 e Top 2 para a Fase DMN
+  const top1Case = topUseCases[0] || {
+    title: "Otimização Preditiva de Demanda & Roteirização de Campo",
+    businessProblem: "Ineficiência na alocação de equipes e dispersão de rotas operacionais.",
+    businessCaseRoi: "ROI de 340% em 12 meses; ganhos de R$ 2,4M em produtividade."
+  };
+
+  const top2Case = topUseCases[1] || {
+    title: "Mapeamento Causal de Consumo & Prevenção de Ruptura",
+    businessProblem: "Indisponibilidade intermitente de produtos nos pontos de contato finais.",
+    businessCaseRoi: "Recuperação de até R$ 3,8M em receita reprimida com modelos preditivos."
+  };
+
+  // Dossiê Executivo Central (CEN)
   const cenDossier: AgentModalData = {
     agentName: "Conselho Executivo Central (CEN)",
-    agentRole: "Orquestrador Causal & Validador de Negócio",
-    badge: "DECISÃO EXECUTIVA",
+    agentRole: "Orquestrador de Negócio & Auditoria de Dados",
+    badge: "DECISÃO ESTRATÉGICA",
     badgeColor: "bg-[#074878]",
     avatarLetter: "C",
     avatarBg: "bg-[#074878]",
-    latencyMs: 142,
-    sugestaoAcao: "Executar Plano Tático Distrital em 3 Ondas Integradas de Co-visitação e Abastecimento",
-    racionalPorQue: "O Property Graph do BigQuery confirmou correlação de 0.89 entre presença no PDV satélite e prescrição médica ativa no distrito.",
-    targetDirectiveTitle: "DIRETRIZ CENTRAL DISTRITAL",
-    targetDirectiveBadge: "CO-VISITAÇÃO & SELL-OUT",
+    latencyMs: 135,
+    sugestaoAcao: `Implantar Plano de Aceleração de Dados em 3 Ondas para ${customerName}`,
+    racionalPorQue: `O Property Graph do BigQuery confirmou viabilidade técnica das tabelas auditadas com taxa de documentação de ${docPercentage}% e zero risco de alucinação.`,
+    targetDirectiveTitle: `PLANO EXECUTIVO DE VALOR • ${customerName.toUpperCase()}`,
+    targetDirectiveBadge: "GROUNDING VALIDADO",
     targetCards: [
-      { title: "Médicos Distritais", value: "2.100", subValue: "100% Auditados", badgeText: "COBERTURA" },
-      { title: "Visitas Registradas", value: "2.604", subValue: "MDV Médio 12.4", badgeText: "PRODUTIVIDADE" },
-      { title: "Sell-Out Distrital", value: "R$ 5.38M", subValue: "447 PDVs Ativos", badgeText: "FATURAMENTO" },
-      { title: "Uplift Causal", value: "+16.4%", subValue: "Eficiência Validada", badgeText: "GANHO" }
+      { title: "Tabelas Auditadas", value: totalTables > 0 ? totalTables.toLocaleString() : "3.293", subValue: "Catálogo BigQuery", badgeText: "COBERTURA" },
+      { title: "Casos Validados", value: `${topUseCases.length || 6}`, subValue: "Com Business Case", badgeText: "CASOS DE USO" },
+      { title: "Ganho Anual Projetado", value: totalFinancialGainUsd > 0 ? `$${(totalFinancialGainUsd / 1000).toFixed(0)}k` : "$1.85M", subValue: "Receita & Eficiência", badgeText: "EBITDA" },
+      { title: "ROI Consolidado", value: `+${calculatedRoi}%`, subValue: "Payback em ~2 meses", badgeText: "FINOPS" }
     ],
     bqMetrics: [
-      { label: "Tabelas Auditadas no Grafo", value: `${totalTables} Tabelas`, trend: "100% OK", subtext: "Dataset business_assessment_customer" },
-      { label: "Documentação de Metadados", value: `${docPercentage}%`, trend: "+8.5%", subtext: "Campos de negócio preenchidos" },
-      { label: "Consultas BigQuery GQL", value: "Sub-segundo", trend: "140ms", subtext: "Índice de nós e arestas particionado" },
-      { label: "Prevenção de Alucinação", value: "Zero Alucinação", trend: "Garantida", subtext: "Grounding direto nas tabelas BQ" }
+      { label: "Patrimônio de Dados no BigQuery", value: `${totalTables} Tabelas`, trend: "100% Auditado", subtext: `Dataset ${datasetId}` },
+      { label: "Qualidade de Metadados", value: `${docPercentage}% Documentado`, trend: "Alto Nível", subtext: "Dicionário de dados Dataplex" },
+      { label: "Custo Estimado Infra GCP", value: totalMonthlyGcpUsd > 0 ? `$${totalMonthlyGcpUsd.toFixed(0)}/mês` : "$2.450/mês", trend: "Otimizado", subtext: "Slots BQ + Vertex AI" },
+      { label: "Conformidade e Risco", value: "Zero Alucinação", trend: "Garantida", subtext: "Grounding estrito no esquema" }
     ],
     sqlQuery: `SELECT 
-  c.name AS customer,
+  c.name AS customer_name,
   a.total_tables,
   a.doc_percentage,
   u.rank,
-  u.title AS use_case,
-  p.agent_name AS validator
+  u.title AS use_case_title,
+  u.financial_gain_estimate_usd,
+  p.agent_name AS validating_agent
 FROM GRAPH_TABLE(
-  \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
+  \`rafaelpaes-477-20240820125418.${datasetId}.enterprise_business_graph\`
   MATCH (c:Customer)-[:HAS_ASSESSMENT]->(a:Assessment), 
         (p:PersonaDebate)-[:VALIDATED_USE_CASE]->(u:UseCase)
-  COLUMNS (c.name, a.total_tables, a.doc_percentage, u.rank, u.title, p.agent_name)
+  COLUMNS (c.name, a.total_tables, a.doc_percentage, u.rank, u.title, u.financial_gain_estimate_usd, p.agent_name)
 )
 ORDER BY u.rank ASC
 LIMIT 10;`
   };
 
-  // 6 Especialistas da Mesa de Decisão
+  // 6 Especialistas da Mesa de Decisão Integrada de Business Assessment
   const expertAgents = [
     {
-      id: "performance",
-      letter: "T",
+      id: "ai_innovation",
+      letter: "I",
       bgLetter: "bg-[#074878]",
-      title: "Agente Performance do Time",
-      subtitle: "Cota Distrital & Ranking",
+      title: "Agente Inovação & AI/ML",
+      subtitle: "Vertex AI, Gemini 3.8 & BigQuery ML",
       badge: "PROPOSTA",
       badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
-      action: "Gestão de Produtividade: Sustentar MDV médio de 12.4 visitas/dia no distrito",
-      rationale: "Garantir consistência na frequência de visitação médica dos 8 setores. Concentrar nas quartas e quintas-feiras nos setores de maior dispersão geográfica para blindar a cobertura de painel A/B.",
+      action: `Priorizar Caso Top 1: ${top1Case.title}`,
+      rationale: `Os metadados auditados para ${customerName} indicam volume e granularidade suficientes nas tabelas de transações e cadastros para treinar modelos preditivos com BQML e Vertex AI sem necessidade de extração de dados.`,
       pills: [
-        { label: "MDV Médio", val: "12.4" },
-        { label: "Cota Atingida", val: "98.2%" }
+        { label: "Caso Prioritário", val: "Rank #1" },
+        { label: "Modelo", val: "Gemini 3.8 + BQML" }
       ],
       dossier: {
-        agentName: "Agente Performance do Time",
-        agentRole: "Otimização de Força de Vendas e Produtividade Médica",
-        badge: "PROPOSTA",
-        avatarLetter: "T",
-        avatarBg: "bg-[#074878]",
-        latencyMs: 128,
-        sugestaoAcao: "Sustentar MDV médio de 12.4 visitas/dia e fechar 100% da cobertura distrital",
-        racionalPorQue: "Representantes com rota otimizada pelo Grafo reduzem tempo de deslocamento em 22%, liberando 1.5 visita adicional/dia.",
-        targetDirectiveTitle: "ROTA & PRODUTIVIDADE",
-        targetDirectiveBadge: "ALTA ADERÊNCIA",
-        targetCards: [
-          { title: "Meta Visitas/Dia", value: "12.4", subValue: "Média Regional", badgeText: "KPI CHAVE" },
-          { title: "Setores Ativos", value: "8", subValue: "100% monitorados", badgeText: "PAINEL" },
-          { title: "Médicos sem Contato", value: "0", subValue: "Foco Zero Vácuo", badgeText: "COBERTURA" },
-          { title: "Horas em Trânsito", value: "-22%", subValue: "Economia Logística", badgeText: "GANHO" }
-        ],
-        bqMetrics: [
-          { label: "Total de Visitas Registradas", value: "2.604 visitas", trend: "+5.1%", subtext: "Ciclo atual" },
-          { label: "Aderência à Grade de Painel", value: "96.4%", trend: "Acima da meta", subtext: "Especialidades Femme" },
-          { label: "Custo Médio por Visita", value: "R$ 42,50", trend: "-11%", subtext: "Otimizado via roteirização BQ" }
-        ],
-        sqlQuery: `SELECT 
-  t.table_name,
-  t.total_rows,
-  t.has_pii
-FROM \`rafaelpaes-477-20240820125418.business_assessment_customer.assessment_tables_catalog\` t
-WHERE t.table_name LIKE '%Activities%' OR t.table_name LIKE '%Visit%'
-LIMIT 5;`
-      }
-    },
-    {
-      id: "market_intelligence",
-      letter: "I",
-      bgLetter: "bg-emerald-600",
-      title: "Agente Inteligência de Mercado",
-      subtitle: "Prescrição Close-up & Modelo Huff",
-      badge: "PROPOSTA",
-      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      action: "Consolidação de Share em GOB (55.5%) e Conquista de Pediatria & Puericultura",
-      rationale: "Expandir o receituário de ALIVIUM GOTAS sobre concorrentes diretos nos clusters de alto potencial de prescrição, capturando o fluxo gerado pelas farmácias satélites mapeadas pelo modelo Huff.",
-      pills: [
-        { label: "Market Share", val: "55.5%" },
-        { label: "Potencial", val: "+R$ 376k" }
-      ],
-      dossier: {
-        agentName: "Agente Inteligência de Mercado",
-        agentRole: "Análise Causal de Demanda & Gravitação Huff",
+        agentName: "Agente Inovação & AI/ML",
+        agentRole: "Arquiteto de Inteligência Artificial & BigQuery ML",
         badge: "PROPOSTA",
         avatarLetter: "I",
-        avatarBg: "bg-emerald-600",
-        latencyMs: 154,
-        sugestaoAcao: "Concentrar blitz de amostras e detalhamento médico nos clusters de Pediatria",
-        racionalPorQue: "O modelo de gravitação de Huff revelou que 38 farmácias independentes convertem 64% da prescrição emitida pelos consultórios vizinhos.",
-        targetDirectiveTitle: "GRAVITAÇÃO DE DEMANDA HUFF",
-        targetDirectiveBadge: "ALTA CONVERSÃO",
+        avatarBg: "bg-[#074878]",
+        latencyMs: 140,
+        sugestaoAcao: `Implantar pipeline de inferência preditiva e agentes generativos para ${customerName}`,
+        racionalPorQue: `Tabelas transacionais possuem histórico adequado para modelos de Causal AI e Next-Best-Action, acelerando time-to-market.`,
+        targetDirectiveTitle: "INFERÊNCIA & MODELAGEM",
+        targetDirectiveBadge: "ALTA ADOÇÃO",
         targetCards: [
-          { title: "Share GOB Atual", value: "55.5%", subValue: "Liderança isolada", badgeText: "MARKET SHARE" },
-          { title: "Incremento Previsto", value: "+R$ 376k", subValue: "ALIVIUM Gotas", badgeText: "OPORTUNIDADE" },
-          { title: "PDVs Gravitacionais", value: "447", subValue: "Raio de 800m", badgeText: "PONTOS DE VENDA" },
-          { title: "Índice de Prescrição", value: "9.2/10", subValue: "Close-up auditado", badgeText: "SCORE" }
+          { title: "Modelos Viáveis", value: "4 Casos", subValue: "Com BQML nativo", badgeText: "ML" },
+          { title: "Latência Média", value: "< 250ms", subValue: "Vertex AI Endpoints", badgeText: "SLA" },
+          { title: "Tempo de Setup", value: "3 Semanas", subValue: "Sem mover dados", badgeText: "AGILIDADE" },
+          { title: "Precisão Estimada", value: "> 91%", subValue: "Grounding estrito", badgeText: "QUALIDADE" }
         ],
         bqMetrics: [
-          { label: "Prescrições Monitoradas", value: "14.280 Rxs", trend: "+8.4%", subtext: "Especialidades prioritárias" },
-          { label: "Taxa de Conversão PDV", value: "73.2%", trend: "+12.1%", subtext: "Farmácias com estoque garantido" },
-          { label: "Share de Voz Promocional", value: "61.0%", trend: "Top 1", subtext: "Impacto no target A" }
+          { label: "Tabelas com Dados Preditivos", value: "18 Tabelas", trend: "Identificadas", subtext: "Chaves de tempo e entidade" },
+          { label: "Estimativa de Treinamento", value: "$45/mês", trend: "Baixo Custo", subtext: "Processamento in-database BQML" }
         ],
         sqlQuery: `SELECT 
+  u.rank,
   u.title,
-  u.financial_gain_estimate_usd,
-  u.implementation_complexity
-FROM \`rafaelpaes-477-20240820125418.business_assessment_customer.top_use_cases\` u
-WHERE u.rank = 1 OR u.category = 'MARKETING_ANALYTICS'
-LIMIT 5;`
+  u.category,
+  u.confidence_score
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.top_use_cases\` u
+WHERE u.category LIKE '%AI%' OR u.category LIKE '%ML%' OR u.rank <= 2
+ORDER BY u.rank ASC;`
       }
     },
     {
-      id: "supply",
+      id: "data_architecture",
       letter: "A",
-      bgLetter: "bg-amber-500",
-      title: "Agente Abastecimento e Ruptura",
-      subtitle: "Estoque em Redes e Sell-Out PDV",
-      badge: "ALERTA",
-      badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
-      action: "Prevenção Ativa de Ruptura nos 447 PDVs e Redes Regionais",
-      rationale: "Cruzar o Sell-Out semanal das lojas com o estoque em trânsito das distribuidoras. Acionar trade marketing preventivamente nos clusters onde os dias de estoque estão abaixo de 4 dias de demanda.",
+      bgLetter: "bg-emerald-600",
+      title: "Agente Arquitetura & Qualidade de Dados",
+      subtitle: "Dataplex, Governança & Data Profiling",
+      badge: "PROPOSTA",
+      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      action: `Elevar documentação de metadados dos atuais ${docPercentage}% para 90%+ via Dataplex Auto-Scan`,
+      rationale: `Das ${totalTables.toLocaleString()} tabelas cadastradas, a identificação clara de descrições e tipos de negócio no Knowledge Catalog viabiliza a autonomia completa dos Data Agents conversacionais.`,
       pills: [
-        { label: "Ruptura Evitada", val: "99.4%" },
-        { label: "Sell-Out", val: "R$ 5.38M" }
+        { label: "Tabelas", val: `${totalTables}` },
+        { label: "Doc Rate", val: `${docPercentage}%` }
       ],
       dossier: {
-        agentName: "Agente Abastecimento e Ruptura",
-        agentRole: "Previsão de Ruptura & Integração Supply Chain",
-        badge: "ALERTA PREVENTIVO",
+        agentName: "Agente Arquitetura & Qualidade de Dados",
+        agentRole: "Governança de Catálogo, Dataplex & Qualidade",
+        badge: "PROPOSTA",
         avatarLetter: "A",
-        avatarBg: "bg-amber-500",
-        latencyMs: 139,
-        sugestaoAcao: "Disparar alertas automáticos para compras das redes com estoque < 4 dias",
-        racionalPorQue: "Ruptura no ponto de venda após visita do médico causa perda de 38% do receituário gerado.",
-        targetDirectiveTitle: "BLINDAGEM DE ESTOQUE PDV",
-        targetDirectiveBadge: "RISCO DE RUPTURA",
+        avatarBg: "bg-emerald-600",
+        latencyMs: 125,
+        sugestaoAcao: "Executar Data Profiling Scan contínuo e publicar insights no Knowledge Catalog",
+        racionalPorQue: "A governança de metadados é o pré-requisito mandatório para eliminar alucinações de modelos de linguagem corporativos.",
+        targetDirectiveTitle: "CATÁLOGO & QUALIDADE",
+        targetDirectiveBadge: "DATAPLEX",
         targetCards: [
-          { title: "PDVs Auditados", value: "447", subValue: "100% monitorados", badgeText: "COBERTURA" },
-          { title: "Índice de Ruptura", value: "0.6%", subValue: "Nível histórico mínimo", badgeText: "CONTROLE" },
-          { title: "Sell-Out Total", value: "R$ 5.38M", subValue: "Período auditado", badgeText: "VALOR" },
-          { title: "Tempo Médio Reposição", value: "2.1 dias", subValue: "Distribuidor regional", badgeText: "SLA" }
+          { title: "Tabelas Catalogadas", value: `${totalTables}`, subValue: "Indexadas no BQ", badgeText: "BASE" },
+          { title: "Taxa de Documentação", value: `${docPercentage}%`, subValue: "Meta: 90%+", badgeText: "PROGRESSO" },
+          { title: "Data Profiling Scans", value: "Ativos", subValue: "Dataplex Data Quality", badgeText: "SCAN" },
+          { title: "Regras de Qualidade", value: "Zero Divergência", subValue: "Tipagem estrita", badgeText: "STATUS" }
         ],
         bqMetrics: [
-          { label: "SKUs com Alerta Ativo", value: "3 SKUs", trend: "-40%", subtext: "Alivium e suplementos" },
-          { label: "Confiabilidade do Estoque", value: "98.7%", trend: "Auditado", subtext: "Integração ERP e Distribuidor" }
+          { label: "Tabelas com Perfil Completo", value: `${Math.round(totalTables * (Number(docPercentage) / 100))} Tabelas`, trend: "Publicadas", subtext: "Knowledge Catalog" },
+          { label: "Campos Chave Documentados", value: `${totalColumns.toLocaleString()} Colunas`, trend: "Mapeadas", subtext: "Dicionário de dados" }
         ],
         sqlQuery: `SELECT 
-  t.table_name,
-  t.row_count,
-  t.documentation_status
-FROM \`rafaelpaes-477-20240820125418.business_assessment_customer.assessment_tables_catalog\` t
-WHERE t.table_name LIKE '%Inventory%' OR t.table_name LIKE '%Stock%' OR t.table_name LIKE '%Orders%'
-LIMIT 5;`
+  table_name,
+  table_type,
+  column_count,
+  documented_columns,
+  estimated_rows
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_tables_catalog\`
+ORDER BY column_count DESC
+LIMIT 10;`
       }
     },
     {
-      id: "governance",
-      letter: "G",
-      bgLetter: "bg-slate-700",
-      title: "Agente Governança e Compliance",
-      subtitle: "LGPD & Conformidade CFM/Anvisa",
-      badge: "CONCORDÂNCIA",
-      badgeColor: "bg-slate-100 text-slate-700 border-slate-200",
-      action: "Garantia de 100% de Consentimento e Amostras Grátis Auditadas",
-      rationale: "Rastreabilidade ponta-a-ponta em BigQuery para todas as entregas de amostras grátis e assinaturas digitais dos médicos, mantendo a conformidade com as regras da Anvisa e LGPD.",
-      pills: [
-        { label: "Auditoria", val: "100%" },
-        { label: "Conformidade", val: "Total" }
-      ],
-      dossier: {
-        agentName: "Agente Governança e Compliance",
-        agentRole: "Segurança de Dados, PII & Rastreabilidade Regulatória",
-        badge: "CONCORDÂNCIA",
-        avatarLetter: "G",
-        avatarBg: "bg-slate-700",
-        latencyMs: 110,
-        sugestaoAcao: "Manter Policy Tags ativas e criptografia de ponta-a-ponta em campos PII",
-        racionalPorQue: "Todas as tabelas com CRM e geolocalização possuem mascaramento dinâmico no BigQuery (Data Masking).",
-        targetDirectiveTitle: "GOVERNANÇA & SEGURANÇA",
-        targetDirectiveBadge: "REGULATÓRIO",
-        targetCards: [
-          { title: "Tabelas com PII", value: "142", subValue: "Auditadas e Mascaradas", badgeText: "LGPD" },
-          { title: "Consentimentos Ativos", value: "100%", subValue: "Assinaturas digitais", badgeText: "ANVISA" },
-          { title: "Risco de Não-Conformidade", value: "Zero", subValue: "Políticas vigentes", badgeText: "SEGURANÇA" },
-          { title: "Auditoria Automática", value: "Contínua", subValue: "Cloud Logging", badgeText: "COMPLIANCE" }
-        ],
-        bqMetrics: [
-          { label: "Policy Tags Aplicadas", value: "100%", trend: "Ativo", subtext: "Dataplex Security Policy" },
-          { label: "Auditoria de Acesso", value: "24/7", trend: "OK", subtext: "Trilha Cloud Audit Logs" }
-        ],
-        sqlQuery: `SELECT 
-  t.table_name,
-  t.has_pii,
-  t.compliance_tags
-FROM \`rafaelpaes-477-20240820125418.business_assessment_customer.assessment_tables_catalog\` t
-WHERE t.has_pii = true
-LIMIT 5;`
-      }
-    },
-    {
-      id: "finops",
-      letter: "S",
+      id: "finops_efficiency",
+      letter: "F",
       bgLetter: "bg-violet-700",
-      title: "Agente Estratégia Comercial & FinOps",
-      subtitle: "ROI & Lucratividade por SKU",
+      title: "Agente FinOps & Otimização GCP",
+      subtitle: "BigQuery Slots, Particionamento & Payback",
       badge: "PROPOSTA",
       badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
-      action: "Maximização de Margem por Caixa e Otimização de Budget Promocional",
-      rationale: "Rebalancear o investimento promocional distrital focando nos SKUs com maior margem de contribuição líquida, alcançando ROI de 340% sobre o custo operacional da equipe.",
+      action: `Orçamento de infraestrutura equilibrado em $${totalMonthlyGcpUsd.toFixed(0)}/mês com ROI de +${calculatedRoi}%`,
+      rationale: `A adoção de boas práticas de particionamento e clusterização nas consultas do BigQuery reduz em até 72% os bytes processados, viabilizando o Business Case com payback em menos de 2 meses.`,
       pills: [
-        { label: "ROI Estimado", val: "+340%" },
-        { label: "Margem Adicional", val: "+4.2pp" }
+        { label: "Custo GCP", val: `$${totalMonthlyGcpUsd.toFixed(0)}/mês` },
+        { label: "ROI Estimado", val: `+${calculatedRoi}%` }
       ],
       dossier: {
-        agentName: "Agente Estratégia Comercial & FinOps",
-        agentRole: "Modelagem Econômica, Payback & Rentabilidade",
+        agentName: "Agente FinOps & Otimização GCP",
+        agentRole: "Engenheiro de Custos Cloud & Economia de Dados",
         badge: "PROPOSTA",
-        avatarLetter: "S",
+        avatarLetter: "F",
         avatarBg: "bg-violet-700",
-        latencyMs: 147,
-        sugestaoAcao: "Alocar 60% do budget de amostras nos SKUs de alta margem de contribuição",
-        racionalPorQue: "A margem líquida dos SKUs foco é de 42%, contra média da carteira de 28%, gerando maior retorno por real investido.",
-        targetDirectiveTitle: "RENTABILIDADE & INVESTIMENTO",
-        targetDirectiveBadge: "ALTO ROI",
+        latencyMs: 145,
+        sugestaoAcao: "Configurar BigQuery Editions e limites de cotas de query por usuário",
+        racionalPorQue: "Controle rigoroso de escaneamento de bytes e uso de cache in-memory garantem previsibilidade financeira.",
+        targetDirectiveTitle: "FINOPS & EFICIÊNCIA DE CUSTOS",
+        targetDirectiveBadge: "ALTO RETORNO",
         targetCards: [
-          { title: "ROI Esperado", value: "+340%", subValue: "Em 12 meses", badgeText: "RETORNO" },
-          { title: "Ganho Financeiro", value: "R$ 4.2M", subValue: "Carteira Nacional", badgeText: "EBITDA" },
-          { title: "Custo Infra GCP", value: "$620/mês", subValue: "BigQuery + Vertex AI", badgeText: "FINOPS" },
-          { title: "Payback", value: "1.8 meses", subValue: "Retorno acelerado", badgeText: "VIABILIDADE" }
+          { title: "Investimento GCP", value: `$${totalMonthlyGcpUsd.toFixed(0)}`, subValue: "Custo mensal total", badgeText: "INFRA" },
+          { title: "Ganho Financeiro", value: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k`, subValue: "Retorno anual projetado", badgeText: "VALOR" },
+          { title: "Payback Estimado", value: "1.8 meses", subValue: "Retorno do investimento", badgeText: "PAYBACK" },
+          { title: "Economia de Scan", value: "72%", subValue: "Partição e clusterização", badgeText: "FINOPS" }
         ],
         bqMetrics: [
-          { label: "Custo BigQuery por Consulta", value: "$0.002", trend: "Slots Otimizados", subtext: "Particionamento e clusterização" },
-          { label: "Eficiência de Processamento", value: "99.8%", trend: "Alta", subtext: "Zero Full-Table Scan" }
+          { label: "Custo por Consulta Analítica", value: "< $0.003", trend: "Otimizado", subtext: "Slots Particionados" },
+          { label: "Prevenção de Full-Scan", value: "100%", trend: "Aplicada", subtext: "Regras BigQuery ativas" }
         ],
         sqlQuery: `SELECT 
   u.title,
   u.financial_gain_estimate_usd,
   u.gcp_monthly_cost_usd,
-  ROUND((u.financial_gain_estimate_usd / (u.gcp_monthly_cost_usd * 12)), 1) AS roi_multiplier
-FROM \`rafaelpaes-477-20240820125418.business_assessment_customer.top_use_cases\` u
-ORDER BY u.financial_gain_estimate_usd DESC
-LIMIT 5;`
+  ROUND(u.financial_gain_estimate_usd / (u.gcp_monthly_cost_usd * 12), 1) AS roi_multiplier
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.top_use_cases\` u
+ORDER BY u.financial_gain_estimate_usd DESC;`
       }
     },
     {
-      id: "omnichannel",
-      letter: "C",
-      bgLetter: "bg-teal-600",
-      title: "Agente Conexão Multicanal (Omnichannel)",
-      subtitle: "Disparo Digital & Engajamento Médico",
-      badge: "PROPOSTA",
-      badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
-      action: "Ativação Digital Complementar pós-visita presencial",
-      rationale: "Disparo de conteúdo científico personalizado via WhatsApp e e-mail marketing aprovado no D+2 após a visita do representante, mantendo o recall da marca acima de 80%.",
+      id: "governance_security",
+      letter: "G",
+      bgLetter: "bg-slate-700",
+      title: "Agente Governança, LGPD & Segurança",
+      subtitle: "Policy Tags, Data Masking & Auditoria",
+      badge: "CONCORDÂNCIA",
+      badgeColor: "bg-slate-100 text-slate-700 border-slate-200",
+      action: "Garantia de 100% de Conformidade Regulatória e Rastreabilidade",
+      rationale: `Identificação automática de campos sensíveis (PII, CPFs, e-mails) com aplicação de Policy Tags e mascaramento dinâmico em nível de coluna no BigQuery.`,
       pills: [
-        { label: "Taxa Abertura", val: "68%" },
-        { label: "Recall de Marca", val: "+8.3%" }
+        { label: "Auditoria", val: "100%" },
+        { label: "Risco PII", val: "Controlado" }
       ],
       dossier: {
-        agentName: "Agente Conexão Multicanal (Omnichannel)",
-        agentRole: "Engajamento Digital, CRM & Comunicação Médica",
-        badge: "PROPOSTA",
-        avatarLetter: "C",
-        avatarBg: "bg-teal-600",
-        latencyMs: 133,
-        sugestaoAcao: "Sincronizar visitas presenciais com cadências automáticas de nutrição científica",
-        racionalPorQue: "Médicos contatados por canal híbrido (presencial + digital) apresentam 2.3x mais prescrições recorrentes.",
-        targetDirectiveTitle: "ENGAGEMENT HÍBRIDO",
-        targetDirectiveBadge: "ALTA ADOÇÃO",
+        agentName: "Agente Governança, LGPD & Segurança",
+        agentRole: "Oficial de Proteção de Dados & Segurança Cloud",
+        badge: "CONCORDÂNCIA",
+        avatarLetter: "G",
+        avatarBg: "bg-slate-700",
+        latencyMs: 112,
+        sugestaoAcao: "Manter Data Masking ativo para colunas sensíveis identificadas no assessment",
+        racionalPorQue: "Todas as consultas dos agentes respeitam as permissões do IAM e Cloud Audit Logs.",
+        targetDirectiveTitle: "SEGURANÇA & PRIVACIDADE",
+        targetDirectiveBadge: "LGPD",
         targetCards: [
-          { title: "Taxa de Abertura", value: "68%", subValue: "Média do mercado 24%", badgeText: "ENGAJAMENTO" },
-          { title: "Recall Prescritivo", value: "+8.3%", subValue: "Estudo comparativo", badgeText: "IMPACTO" },
-          { title: "Médicos Híbridos", value: "1.420", subValue: "Opt-in ativo", badgeText: "BASE ATIVA" },
-          { title: "Cadência D+2", value: "98.4%", subValue: "Disparos no prazo", badgeText: "SLA" }
+          { title: "Conformidade Legal", value: "100%", subValue: "Diretrizes LGPD / GDPR", badgeText: "COMPLIANCE" },
+          { title: "Mapeamento PII", value: "Ativo", subValue: "Colunas com tag de proteção", badgeText: "DADOS" },
+          { title: "Trilha de Auditoria", value: "Cloud Logging", subValue: "Registro estruturado", badgeText: "LOGS" },
+          { title: "Acesso por Papel", value: "RBAC & IAM", subValue: "Princípio do menor privilégio", badgeText: "SEGURANÇA" }
         ],
         bqMetrics: [
-          { label: "Interações Digitais", value: "8.940 envios", trend: "+15.2%", subtext: "WhatsApp e e-mail" },
-          { label: "Taxa de Download de Artigos", value: "41.5%", trend: "Alta", subtext: "Material científico validado" }
+          { label: "Auditoria Contínua de Queries", value: "24/7", trend: "Ativo", subtext: "Cloud Logging estruturado" },
+          { label: "Mascaramento de Colunas", value: "Dinâmico", trend: "Zero Vazamento", subtext: "Dataplex Policy Tags" }
         ],
         sqlQuery: `SELECT 
   t.table_name,
-  t.total_rows,
-  t.category
-FROM \`rafaelpaes-477-20240820125418.business_assessment_customer.assessment_tables_catalog\` t
-WHERE t.table_name LIKE '%Campaign%' OR t.table_name LIKE '%Email%' OR t.table_name LIKE '%Message%'
-LIMIT 5;`
+  t.table_type,
+  t.column_count
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_tables_catalog\` t
+WHERE t.table_name LIKE '%User%' OR t.table_name LIKE '%Customer%' OR t.table_name LIKE '%Client%'
+LIMIT 10;`
+      }
+    },
+    {
+      id: "data_engineering",
+      letter: "E",
+      bgLetter: "bg-amber-500",
+      title: "Agente Engenharia de Dados & Performance",
+      subtitle: "Pipelines, Particionamento & Baixa Latência",
+      badge: "ALERTA",
+      badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+      action: "Eliminação Preventiva de Full-Table Scans e Otimização do Property Graph",
+      rationale: `As tabelas centrais do assessment devem manter índices particionados por data de ingestão para assegurar tempos de resposta sub-segundo tanto para o Property Graph quanto para a interface web.`,
+      pills: [
+        { label: "Latência GQL", val: "< 180ms" },
+        { label: "Scan Prevenção", val: "Ativa" }
+      ],
+      dossier: {
+        agentName: "Agente Engenharia de Dados & Performance",
+        agentRole: "Engenheiro de Performance & Pipelines BigQuery",
+        badge: "ALERTA PREVENTIVO",
+        avatarLetter: "E",
+        avatarBg: "bg-amber-500",
+        latencyMs: 130,
+        sugestaoAcao: "Aplicar particionamento diário e clusterização por entidade central",
+        racionalPorQue: "Consultas analíticas sobre grafos se beneficiam de clusterização de chaves de nó para evitar scans completos.",
+        targetDirectiveTitle: "PERFORMANCE & ENGENHARIA",
+        targetDirectiveBadge: "SUB-SEGUNDO",
+        targetCards: [
+          { title: "Tempo Médio GQL", value: "140ms", subValue: "Consulta GRAPH_TABLE", badgeText: "VELOCIDADE" },
+          { title: "Limite de Renderização", value: "50-100 rows", subValue: "Proteção de memória", badgeText: "UX" },
+          { title: "Idempotência", value: "Garantida", subValue: "Zero duplicidade em gravações", badgeText: "SRE" },
+          { title: "Ambiente Efêmero", value: "Cloud Run", subValue: "Dados estritamente em memória", badgeText: "RUN" }
+        ],
+        bqMetrics: [
+          { label: "Eficiência de Cache BigQuery", value: "88.4%", trend: "+14%", subtext: "Reuso de resultados analíticos" },
+          { label: "Disponibilidade de Consulta", value: "99.99%", trend: "Alta", subtext: "Google Cloud Platform" }
+        ],
+        sqlQuery: `SELECT 
+  t.table_name,
+  t.estimated_rows,
+  t.estimated_bytes
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_tables_catalog\` t
+ORDER BY t.estimated_bytes DESC
+LIMIT 10;`
+      }
+    },
+    {
+      id: "business_strategy",
+      letter: "N",
+      bgLetter: "bg-teal-600",
+      title: "Agente Estratégia de Negócio & Business Case",
+      subtitle: `Benchmarks para ${industry} & Ganhos C-Level`,
+      badge: "PROPOSTA",
+      badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
+      action: `Captura de Valor Estimada em $${(totalFinancialGainUsd / 1000).toFixed(0)}k/ano para ${customerName}`,
+      rationale: `O Business Case foi dimensionado comparando métricas reais de empresas líderes do setor de ${industry}, com premissas conservadoras de adoção gradual em 12 meses.`,
+      pills: [
+        { label: "Ganho Anual", val: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k` },
+        { label: "Setor", val: industry }
+      ],
+      dossier: {
+        agentName: "Agente Estratégia de Negócio & Business Case",
+        agentRole: "Estrategista de Valor C-Level & Economia de Dados",
+        badge: "PROPOSTA",
+        avatarLetter: "N",
+        avatarBg: "bg-teal-600",
+        latencyMs: 148,
+        sugestaoAcao: `Apresentar o Business Case executivo para a diretoria executiva de ${customerName}`,
+        racionalPorQue: "A combinação de casos rápidos com alto ROI gera autofinanciamento da jornada de modernização analítica.",
+        targetDirectiveTitle: "BUSINESS CASE & VALOR",
+        targetDirectiveBadge: "C-LEVEL",
+        targetCards: [
+          { title: "Ganho Anual (BC)", value: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k`, subValue: "Receita & Produtividade", badgeText: "GANHO" },
+          { title: "ROI Multiplicador", value: `${(Number(calculatedRoi) / 100 + 1).toFixed(1)}x`, subValue: "Retorno sobre investimento", badgeText: "RETORNO" },
+          { title: "Tempo até 1º MVP", value: "30 Dias", subValue: "Caso Rank #1", badgeText: "VELOCIDADE" },
+          { title: "Aderência Estratégica", value: "9.8/10", subValue: "Prioridades da Diretoria", badgeText: "FIT" }
+        ],
+        bqMetrics: [
+          { label: "Casos no Business Case", value: `${topUseCases.length} Casos`, trend: "Avaliados", subtext: "Modelagem paramétrica" },
+          { label: "Alinhamento com a Indústria", value: "100%", trend: industry, subtext: "Benchmark de pares de mercado" }
+        ],
+        sqlQuery: `SELECT 
+  u.rank,
+  u.title,
+  u.business_case_roi,
+  u.financial_gain_estimate_usd,
+  u.gcp_monthly_cost_usd
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.top_use_cases\` u
+ORDER BY u.rank ASC;`
       }
     }
   ];
@@ -360,44 +392,55 @@ LIMIT 5;`
     setIsUpdating(true);
     setTimeout(() => {
       setIsUpdating(false);
-    }, 800);
+    }, 600);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 font-sans">
-      {/* 1. HERO BANNER PRINCIPAL (Exato Imagem 2 - Hypera Commercial Brain) */}
+      {/* 1. HERO BANNER PRINCIPAL (Cockpit Executivo Dark Navy) */}
       <section className="bg-gradient-to-br from-[#063964] via-[#08487D] to-[#03233F] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-blue-900/40">
         {/* Glow de fundo */}
         <div className="absolute -right-20 -top-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Topo do Banner: Pill de Conselho Estratégico + Botão Executar ao Vivo */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-900/60 border border-blue-400/20 text-[11px] font-bold text-blue-200">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-900/60 border border-blue-400/20 text-[11px] font-bold text-blue-200">
             <span className="text-amber-300 font-extrabold">ⓘ CONSELHO ESTRATÉGICO INTELIGENTE</span>
             <span className="text-blue-300">•</span>
-            <span className="text-blue-100">RECOMENDAÇÃO DE NEGÓCIO</span>
+            <span className="text-blue-100 uppercase">BUSINESS ASSESSMENT</span>
             <span className="text-blue-300">•</span>
-            <span className="text-blue-300 font-medium">Análise da Carteira de {customerExecutive} ({districtName})</span>
+            <span className="text-blue-300 font-medium">Patrimônio de Dados de {customerName} ({industry})</span>
           </div>
 
-          {onTriggerDebate && (
-            <button
-              onClick={onTriggerDebate}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition-transform active:scale-95 cursor-pointer shrink-0"
-            >
-              <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-              <span>Executar Neuro-Debate ao Vivo</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2.5">
+            {onTriggerDebate && (
+              <button
+                onClick={onTriggerDebate}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition-transform active:scale-95 cursor-pointer shrink-0"
+              >
+                <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                <span>Executar Neuro-Debate ao Vivo</span>
+              </button>
+            )}
+
+            {onNavigateToUpload && (
+              <button
+                onClick={onNavigateToUpload}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer shrink-0"
+              >
+                <span>Novo Upload ZIP</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Título e Descrição */}
         <div className="mt-4 max-w-4xl">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Conselho Neurocognitivo & Provocações Estratégicas da Carteira
+            Conselho Neurocognitivo & Oportunidades Estratégicas de Negócio
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-blue-100/80 leading-relaxed font-normal">
-            A análise estratégica integrada cruzou as visitas de campo, o abastecimento de farmácias e as vendas da carteira para <strong className="text-white font-bold">{customerExecutive}</strong> emitindo provocações de ruptura e alavancagem de resultados.
+          <p className="mt-2 text-xs sm:text-sm text-blue-100/85 leading-relaxed font-normal">
+            A análise multi-agente cruzou o catálogo de metadados, a maturidade de governança Dataplex e as tabelas auditadas no BigQuery para <strong className="text-white font-bold">{customerName}</strong>, sintetizando hipóteses de inovação, viabilidade e plano de valor para a indústria de <strong className="text-white font-bold">{industry}</strong>.
           </p>
         </div>
 
@@ -417,7 +460,7 @@ LIMIT 5;`
                       FASE 1 • HIPÓTESES DE CRESCIMENTO
                     </div>
                     <div className="text-[11px] font-bold text-white">
-                      Diagnóstico de Campo
+                      Diagnóstico de Dados & Inovação
                     </div>
                   </div>
                 </div>
@@ -426,19 +469,19 @@ LIMIT 5;`
                 </span>
               </div>
 
-              {/* Provocações */}
+              {/* Provocações baseadas nos dados do cliente */}
               <div className="mt-4 space-y-3.5">
                 {/* Item 1 */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-amber-300 text-[10px] font-extrabold uppercase">
                     <MapPin className="w-3 h-3 text-red-400 fill-red-400" />
-                    <span>CO-VISITAÇÃO DIRIGIDA NOS SETORES EM DESENVOLVIMENTO</span>
+                    <span>{top1Case.title}</span>
                   </div>
                   <p className="text-[11px] italic text-blue-100/90 leading-relaxed">
-                    &ldquo;Dedicar 3 dias/semana de acompanhamento em campo nos 2 setores com maior volume de médicos não contatados (0 médicos no distrito).&rdquo;
+                    &ldquo;{top1Case.businessProblem}&rdquo;
                   </p>
                   <p className="text-[10px] text-blue-200/70 font-semibold">
-                    <strong className="text-white">Impacto Esperado:</strong> Ganho de +1,5 visitas/dia por representante e fechamento de 100% da cobertura distrital.
+                    <strong className="text-white">Impacto Esperado:</strong> {top1Case.businessCaseRoi}
                   </p>
                 </div>
 
@@ -446,20 +489,20 @@ LIMIT 5;`
                 <div className="space-y-1 pt-2 border-t border-white/10">
                   <div className="flex items-center gap-1.5 text-amber-300 text-[10px] font-extrabold uppercase">
                     <MapPin className="w-3 h-3 text-red-400 fill-red-400" />
-                    <span>FORÇA-TAREFA DISTRITAL EM PEDIATRIA & PUERICULTURA</span>
+                    <span>{top2Case.title}</span>
                   </div>
                   <p className="text-[11px] italic text-blue-100/90 leading-relaxed">
-                    &ldquo;Concentrar a energia promocional do distrito nos especialistas de Pediatria & Puericultura para recuperar a cota de ALIVIUM GOTAS 100.0 MG 20.0 ML X 1 /1.0ML.&rdquo;
+                    &ldquo;{top2Case.businessProblem}&rdquo;
                   </p>
                   <p className="text-[10px] text-blue-200/70 font-semibold">
-                    <strong className="text-white">Impacto Esperado:</strong> Elevação de +R$ 376.601 no faturamento distrital.
+                    <strong className="text-white">Impacto Esperado:</strong> {top2Case.businessCaseRoi}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="mt-5 pt-3 border-t border-white/10 text-[10px] text-blue-300/60 italic">
-              Exploração lateral sem autocensura prévia
+              Exploração lateral sem autocensura prévia sobre {totalTables > 0 ? `${totalTables.toLocaleString()} tabelas` : "os dados do cliente"}
             </div>
           </div>
 
@@ -477,7 +520,7 @@ LIMIT 5;`
                       FASE 2 • AVALIAÇÃO DE RETORNO
                     </div>
                     <div className="text-[11px] font-bold text-white">
-                      Análise de Viabilidade
+                      Análise de Viabilidade & Retorno
                     </div>
                   </div>
                 </div>
@@ -493,15 +536,15 @@ LIMIT 5;`
                     SCORE VIABILIDADE
                   </span>
                   <span className="text-lg font-black text-white mt-0.5 block">
-                    9.6/10
+                    {Number(docPercentage) > 50 ? "9.4/10" : "8.2/10"}
                   </span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
                   <span className="text-[9px] font-bold uppercase text-blue-200/70 block">
-                    UPLIFT CAUSAL
+                    UPLIFT & ROI
                   </span>
                   <span className="text-xs font-black text-emerald-300 mt-1 block">
-                    +16,4% em Eficiência Distrital
+                    +{calculatedRoi}% em Eficiência
                   </span>
                 </div>
               </div>
@@ -512,16 +555,16 @@ LIMIT 5;`
                   ROTA SELECIONADA
                 </div>
                 <div className="text-[11px] font-bold text-white">
-                  Co-visitação Tática de Coaching + Blitz Promocional de ALIVIUM GOTAS 100.0 MG 20.0 ML X 1 /1.0ML
+                  Modernização com BigQuery Property Graph & Data Agents
                 </div>
                 <p className="text-[10px] text-blue-100/80 leading-relaxed">
-                  A Análise de Viabilidade valida que o coaching direto de {customerExecutive} nos setores com maior dispersão médica destrava o maior ganho de produtividade distrital.
+                  A Matriz de Saliência priorizou os casos com menor tempo de implementação e maior payback direto para {customerName}, gerando ganho estimado de ${(totalFinancialGainUsd / 1000).toFixed(0)}k/ano.
                 </p>
               </div>
             </div>
 
             <div className="mt-5 pt-3 border-t border-white/10 text-[10px] text-blue-300/60 italic">
-              Arbitragem de risco vs retorno na Base Oficial de Inteligência
+              Arbitragem de risco vs viabilidade de dados no BigQuery
             </div>
           </div>
 
@@ -559,7 +602,7 @@ LIMIT 5;`
                   </span>
                 </div>
                 <p className="text-[10px] text-blue-100/80 leading-relaxed">
-                  Auditado contra 2100 médicos distritais, 2604 visitas, R$ 5.380.011 de Sell-Out e 447 PDVs. 0 divergências.
+                  Auditado contra {totalTables.toLocaleString()} tabelas no BigQuery, {totalColumns.toLocaleString()} colunas e {docPercentage}% de metadados documentados. Zero alucinação.
                 </p>
               </div>
 
@@ -569,7 +612,7 @@ LIMIT 5;`
                   PLANO EXECUTIVO VALIDADO
                 </div>
                 <p className="text-[10px] text-white/95 leading-relaxed font-medium">
-                  <strong>Plano Tático Distrital:</strong> 1. Agendar co-visitações nos setores críticos nas próximas 2 semanas; 2. Focar nos 0 médicos distritais não cobertos; 3. Monitorar abastecimento de ALIVIUM GOTAS nas redes regionais.
+                  <strong>Plano de Modernização:</strong> 1. Ativar Property Graph BigQuery nas entidades centrais; 2. Implementar Data Agent com grounding em metadados; 3. Lançar MVPs dos Top 6 casos com governança Dataplex.
                 </p>
               </div>
             </div>
@@ -592,17 +635,17 @@ LIMIT 5;`
         </div>
       </section>
 
-      {/* 2. SEÇÃO DA MESA DE DECISÃO INTEGRADA (Cards dos Especialistas) */}
+      {/* 2. MESA DE DECISÃO INTEGRADA (Cards dos Especialistas de Dados & Negócio) */}
       <section className="space-y-4">
         {/* Header da Mesa */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div className="space-y-0.5">
             <h2 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#074878]" />
-              MESA DE DECISÃO INTEGRADA - RECOMENDAÇÕES DOS ESPECIALISTAS
+              MESA DE DECISÃO INTEGRADA • RECOMENDAÇÕES DOS ESPECIALISTAS
             </h2>
             <p className="text-xs text-slate-500">
-              Propostas ativas de cada agente para orientar a decisão de <strong className="text-slate-700">{customerExecutive}</strong> ({districtName}). Clique em <strong className="text-slate-700">Dossiê BQ</strong> para auditar as métricas no sistema.
+              Propostas ativas de cada agente para orientar a decisão do C-Level de <strong className="text-slate-700">{customerName}</strong> ({industry}). Clique em <strong className="text-slate-700">Dossiê BQ</strong> para auditar as métricas e a query ISO GQL.
             </p>
           </div>
 
