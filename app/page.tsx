@@ -40,148 +40,10 @@ const defaultAssessment: CustomerAssessment = {
 Patrimônio de dados auditado com 3.293 tabelas no Google BigQuery, governança Dataplex e grafo de conhecimento relacional.`
 };
 
-const defaultTopUseCases: TopUseCase[] = [
-  {
-    useCaseId: "uc_01_uplift_mdv",
-    assessmentId: "asm_demo_20260904",
-    rank: 1,
-    title: "Otimização Preditiva de Rotas de Campo & Demanda Causal",
-    category: "Causal AI & Uplift",
-    businessProblem: "Dispersão de roteiro operacional das equipes em campo gerando ociosidade em setores com alto potencial de receita não atendido.",
-    solutionDescription: "Modelo causal que cruza o histórico de atendimentos e movimentações com a densidade de demanda gravitacional no BigQuery, gerando roteiros otimizados.",
-    businessCaseRoi: "ROI de 340% em 12 meses; elevação de +R$ 2.68M no faturamento anual.",
-    financialGainEstimateUsd: 480000,
-    gcpMonthlyCostUsd: 580,
-    costBreakdown: {
-      bigqueryUsd: 280,
-      vertexAiUsd: 180,
-      cloudRunUsd: 80,
-      storageUsd: 40
-    },
-    requiredTables: ["Activities", "VisitEvents", "Prescriptions_CloseUp", "Doctor_Registry"],
-    requiredColumns: ["doctor_id", "specialty", "visit_timestamp", "target_tier", "rx_share"],
-    guardrails: "Auditoria contínua; mascaramento dinâmico de dados sensíveis (Data Masking) em conformidade com LGPD.",
-    confidenceScore: 0.94,
-    status: "VALIDATED"
-  },
-  {
-    useCaseId: "uc_02_gravitacao_huff",
-    assessmentId: "asm_demo_20260904",
-    rank: 2,
-    title: "Mapeamento Gravitacional de Consumo (Modelo Huff) em PDVs",
-    category: "Marketing Analytics",
-    businessProblem: "Falta de correlação precisa entre os pontos prescritores/decisores e os 447 pontos de venda satélites onde ocorre a compra final.",
-    solutionDescription: "Algoritmo geoespacial do BigQuery Geo conectando pontos de demanda em raio de 800m aos pontos de venda para abastecimento preventivo.",
-    businessCaseRoi: "ROI de 410%; redução de 38% na perda de demanda por indisponibilidade local.",
-    financialGainEstimateUsd: 620000,
-    gcpMonthlyCostUsd: 640,
-    costBreakdown: {
-      bigqueryUsd: 320,
-      vertexAiUsd: 200,
-      cloudRunUsd: 80,
-      storageUsd: 40
-    },
-    requiredTables: ["Pharmacies_SellOut", "Prescriptions_CloseUp", "Geo_Clusters"],
-    requiredColumns: ["pdv_id", "geo_latitude", "geo_longitude", "brand_sellout", "stock_days"],
-    guardrails: "Zero alucinação em estoques; se a query retornar 0 rows, o sistema afirma ausência de dados para o critério.",
-    confidenceScore: 0.96,
-    status: "VALIDATED"
-  },
-  {
-    useCaseId: "uc_03_anti_ruptura",
-    assessmentId: "asm_demo_20260904",
-    rank: 3,
-    title: "Prevenção Ativa de Ruptura em Canais de Distribuição",
-    category: "Supply Chain & S&OP",
-    businessProblem: "Ruptura intermitente de produtos líderes nos canais regionais, neutralizando o esforço promocional e comercial da equipe.",
-    solutionDescription: "Detecção preditiva no BigQuery de desbalanceamento de estoque em trânsito e acionamento preventivo de reposição.",
-    businessCaseRoi: "Recuperação de R$ 2.1M em vendas perdidas; índice de ruptura mantido abaixo de 0.6%.",
-    financialGainEstimateUsd: 380000,
-    gcpMonthlyCostUsd: 420,
-    costBreakdown: {
-      bigqueryUsd: 220,
-      vertexAiUsd: 120,
-      cloudRunUsd: 50,
-      storageUsd: 30
-    },
-    requiredTables: ["Inventory_Distribution", "SellOut_Weekly", "SKU_Master"],
-    requiredColumns: ["sku_id", "lead_time_days", "current_stock", "safety_stock_limit"],
-    guardrails: "Alertas idempotentes enviados aos canais; execuções repetidas não duplicam pedidos no ERP.",
-    confidenceScore: 0.92,
-    status: "VALIDATED"
-  },
-  {
-    useCaseId: "uc_04_omnichannel_crm",
-    assessmentId: "asm_demo_20260904",
-    rank: 4,
-    title: "Ativação Omnichannel Personalizada Pós-Contato",
-    category: "Next-Best-Action",
-    businessProblem: "Queda expressiva de engajamento do cliente 7 dias após a interação presencial da equipe.",
-    solutionDescription: "Disparo automatizado de conteúdos técnicos aprovados via WhatsApp Business e canais digitais com taxa de abertura de 68%.",
-    businessCaseRoi: "Aumento de 8.3% no recall contínuo sustentado ao longo de 90 dias.",
-    financialGainEstimateUsd: 290000,
-    gcpMonthlyCostUsd: 380,
-    costBreakdown: {
-      bigqueryUsd: 180,
-      vertexAiUsd: 140,
-      cloudRunUsd: 40,
-      storageUsd: 20
-    },
-    requiredTables: ["Doctor_Registry", "VisitEvents", "Omnichannel_Engagements"],
-    requiredColumns: ["doctor_id", "opt_in_whatsapp", "last_visit_date", "specialty_tag"],
-    guardrails: "Opt-in obrigatório e auditado em Dataplex; zero envio sem consentimento prévio registrado.",
-    confidenceScore: 0.91,
-    status: "VALIDATED"
-  },
-  {
-    useCaseId: "uc_05_finops_sku",
-    assessmentId: "asm_demo_20260904",
-    rank: 5,
-    title: "Otimização de Margem de Contribuição & Mix de Produtos",
-    category: "FinOps & Cost",
-    businessProblem: "Alocação homogênea de investimento promocional e amostras entre produtos com margens financeiras díspares.",
-    solutionDescription: "Priorização algorítmica de incentivos nos produtos com margem de contribuição líquida superior a 40%.",
-    businessCaseRoi: "Ganho de +4.2 pontos percentuais na margem média da carteira de produtos.",
-    financialGainEstimateUsd: 340000,
-    gcpMonthlyCostUsd: 290,
-    costBreakdown: {
-      bigqueryUsd: 150,
-      vertexAiUsd: 90,
-      cloudRunUsd: 30,
-      storageUsd: 20
-    },
-    requiredTables: ["SKU_Master", "Commercial_Budget", "Sample_Distribution"],
-    requiredColumns: ["sku_id", "gross_margin_pct", "promotional_budget", "unit_cost"],
-    guardrails: "Queries SQL estritamente otimizadas com partições por ano e mês de fechamento contábil.",
-    confidenceScore: 0.95,
-    status: "VALIDATED"
-  },
-  {
-    useCaseId: "uc_06_data_agent_genie",
-    assessmentId: "asm_demo_20260904",
-    rank: 6,
-    title: "Data Agent Conversacional BigQuery com Grounding em Grafo",
-    category: "GenAI & Data Agents",
-    businessProblem: "Lentidão para lideranças obterem relatórios ad-hoc de vendas e operações.",
-    solutionDescription: "BigQuery Conversational Data Agent baseado em Gemini 3.8 Flash conectado ao Property Graph para responder perguntas de negócio em segundos.",
-    businessCaseRoi: "Redução de 85% no tempo de resposta analítica; autosserviço com zero alucinação.",
-    financialGainEstimateUsd: 210000,
-    gcpMonthlyCostUsd: 320,
-    costBreakdown: {
-      bigqueryUsd: 120,
-      vertexAiUsd: 140,
-      cloudRunUsd: 40,
-      storageUsd: 20
-    },
-    requiredTables: ["enterprise_business_graph", "assessment_tables_catalog", "top_use_cases"],
-    requiredColumns: ["table_name", "graph_node_id", "business_metric", "kpi_name"],
-    guardrails: "Tratamento elegante de empty states; streaming de respostas e limite forçado de 50 linhas em tabelas.",
-    confidenceScore: 0.97,
-    status: "VALIDATED"
-  }
-];
-
+import { getCustomerUseCases } from "@/lib/data/customer-usecases-catalog";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+
+const defaultTopUseCases: TopUseCase[] = getCustomerUseCases("Hypera Pharma");
 
 export default function HomePage() {
   // Ajuste 1: A tela "Ingestão & Metadados" é a PRIMEIRA tela por padrão!
@@ -261,6 +123,8 @@ export default function HomePage() {
       docPercentage: cust.docPercentage,
       gcsArchiveUri: cust.gcsArchiveUri || prev?.gcsArchiveUri || ""
     }));
+    const newCases = getCustomerUseCases(cust.name);
+    setTopUseCases(newCases);
     setShowLiveDebateView(false);
     setActiveTab("decision");
   };

@@ -372,60 +372,41 @@ export async function populatePropertyGraph(
   useCases: TopUseCase[],
   tables: TableCatalogItem[]
 ): Promise<PropertyGraphData> {
-  // 1. Popula as 5 tabelas de arestas relacionais no BigQuery
-  try {
-    // 1. edge_customer_assessment
-    await runOptimizedBigQueryQuery(`
+  // 1. Popula as 5 tabelas de arestas relacionais no BigQuery em background (sem bloquear UI)
+  Promise.allSettled([
+    runOptimizedBigQueryQuery(`
       INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\` (id, customer_id, assessment_id)
-      SELECT 
-          GENERATE_UUID() AS id,
-          '${assessment.customerId}',
-          '${assessment.assessmentId}'
+      SELECT GENERATE_UUID() AS id, '${assessment.customerId}', '${assessment.assessmentId}'
       FROM (SELECT 1)
       WHERE NOT EXISTS (
-          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\`
-          WHERE customer_id = '${assessment.customerId}' AND assessment_id = '${assessment.assessmentId}'
+        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\`
+        WHERE customer_id = '${assessment.customerId}' AND assessment_id = '${assessment.assessmentId}'
       );
-    `, "Populate edge_customer_assessment").catch(e => console.warn("Notice edge_customer_assessment:", e));
-
-    // 2. edge_assessment_table
-    await runOptimizedBigQueryQuery(`
+    `, "Populate edge_customer_assessment"),
+    runOptimizedBigQueryQuery(`
       INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` (id, assessment_id, table_key)
-      SELECT 
-          GENERATE_UUID() AS id,
-          '${assessment.assessmentId}',
-          t.table_key
+      SELECT GENERATE_UUID() AS id, '${assessment.assessmentId}', t.table_key
       FROM \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t
       WHERE t.assessment_id = '${assessment.assessmentId}'
         AND NOT EXISTS (
           SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` e
           WHERE e.assessment_id = '${assessment.assessmentId}' AND e.table_key = t.table_key
-      )
-      LIMIT 200;
-    `, "Populate edge_assessment_table").catch(e => console.warn("Notice edge_assessment_table:", e));
-
-    // 3. edge_customer_usecase
-    await runOptimizedBigQueryQuery(`
+        )
+      LIMIT 100;
+    `, "Populate edge_assessment_table"),
+    runOptimizedBigQueryQuery(`
       INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` (id, customer_id, use_case_id)
-      SELECT 
-          GENERATE_UUID() AS id,
-          '${assessment.customerId}',
-          u.use_case_id
+      SELECT GENERATE_UUID() AS id, '${assessment.customerId}', u.use_case_id
       FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
       WHERE u.assessment_id = '${assessment.assessmentId}'
         AND NOT EXISTS (
           SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` e
           WHERE e.customer_id = '${assessment.customerId}' AND e.use_case_id = u.use_case_id
-      );
-    `, "Populate edge_customer_usecase").catch(e => console.warn("Notice edge_customer_usecase:", e));
-
-    // 4. edge_persona_usecase
-    await runOptimizedBigQueryQuery(`
+        );
+    `, "Populate edge_customer_usecase"),
+    runOptimizedBigQueryQuery(`
       INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` (id, debate_id, use_case_id)
-      SELECT 
-          GENERATE_UUID() AS id,
-          d.debate_id,
-          u.use_case_id
+      SELECT GENERATE_UUID() AS id, d.debate_id, u.use_case_id
       FROM \`${PROJECT_ID}.${DATASET_ID}.neuro_debates\` d
       CROSS JOIN \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
       WHERE d.assessment_id = '${assessment.assessmentId}' AND u.assessment_id = '${assessment.assessmentId}'
@@ -433,17 +414,12 @@ export async function populatePropertyGraph(
         AND NOT EXISTS (
           SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` e
           WHERE e.debate_id = d.debate_id AND e.use_case_id = u.use_case_id
-      )
+        )
       LIMIT 30;
-    `, "Populate edge_persona_usecase").catch(e => console.warn("Notice edge_persona_usecase:", e));
-
-    // 5. edge_table_usecase
-    await runOptimizedBigQueryQuery(`
+    `, "Populate edge_persona_usecase"),
+    runOptimizedBigQueryQuery(`
       INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_table_usecase\` (id, table_key, use_case_id)
-      SELECT 
-          GENERATE_UUID() AS id,
-          t.table_key,
-          u.use_case_id
+      SELECT GENERATE_UUID() AS id, t.table_key, u.use_case_id
       FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u,
       UNNEST(u.required_tables) AS req_tbl
       JOIN \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t 
@@ -452,14 +428,124 @@ export async function populatePropertyGraph(
         AND NOT EXISTS (
           SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_table_usecase\` e
           WHERE e.table_key = t.table_key AND e.use_case_id = u.use_case_id
-      )
+        )
       LIMIT 50;
-    `, "Populate edge_table_usecase").catch(e => console.warn("Notice edge_table_usecase:", e));
-  } catch (e) {
-    console.warn("Aviso ao sincronizar arestas relacionais:", e);
-  }
+    `, "Populate edge_table_usecase")
+  ]).catch(e => console.warn("Aviso arestas em background:", e));
 
-  // 2. Gera dados de nós e arestas para a visualização e para o Property Graph
+  // 2. Nós Estratégicos de Nuvem (Google Cloud Platform Services)
+  const gcpServices: PropertyGraphNode[] = [
+    {
+      id: "gcp_bigquery",
+      nodeType: "GcpService",
+      name: "Google BigQuery (SQL & Vector Search)",
+      category: "Data Warehouse & BQML",
+      properties: { mrrEstimateUsd: 1200, category: "Core Analytics", tier: "Mission Critical" }
+    },
+    {
+      id: "gcp_vertex_ai",
+      nodeType: "GcpService",
+      name: "Vertex AI (Gemini 3.8 Flash)",
+      category: "GenAI & Machine Learning",
+      properties: { mrrEstimateUsd: 850, category: "AI Platform", tier: "Advanced AI" }
+    },
+    {
+      id: "gcp_dataplex",
+      nodeType: "GcpService",
+      name: "Dataplex Universal Catalog",
+      category: "Data Governance & Quality",
+      properties: { mrrEstimateUsd: 320, category: "Data Governance", tier: "Compliance" }
+    },
+    {
+      id: "gcp_cloud_run",
+      nodeType: "GcpService",
+      name: "Cloud Run Microservices",
+      category: "Serverless Compute",
+      properties: { mrrEstimateUsd: 180, category: "App Hosting", tier: "Ephemeral" }
+    }
+  ];
+
+  // 3. Metas Estratégicas do Cliente (Baseado no Segmento)
+  const isFinance = (assessment.industry || "").toLowerCase().includes("finan") || (assessment.customerName || "").toLowerCase().includes("digio");
+  const strategicGoals: PropertyGraphNode[] = isFinance ? [
+    {
+      id: "goal_default_reduction",
+      nodeType: "StrategicGoal",
+      name: "Redução de Inadimplência & Default em 90 dias",
+      category: "Risco de Crédito",
+      properties: { priority: "P1", targetKpi: "-19% Default" }
+    },
+    {
+      id: "goal_fraud_prevention",
+      nodeType: "StrategicGoal",
+      name: "Prevenção Ativa de Fraude Pix e Cartão",
+      category: "Segurança & Fraude",
+      properties: { priority: "P1", targetKpi: "$640k/ano bloqueados" }
+    },
+    {
+      id: "goal_net_margin",
+      nodeType: "StrategicGoal",
+      name: "Maximização de Margem Financeira Líquida",
+      category: "Rentabilidade",
+      properties: { priority: "P2", targetKpi: "+$580k/ano Margem" }
+    }
+  ] : [
+    {
+      id: "goal_anti_rupture",
+      nodeType: "StrategicGoal",
+      name: "Mitigação Preventiva de Ruptura em PDVs",
+      category: "Supply Chain",
+      properties: { priority: "P1", targetKpi: "Ruptura < 0.6%" }
+    },
+    {
+      id: "goal_sales_uplift",
+      nodeType: "StrategicGoal",
+      name: "Otimização de Roteiros & Demanda Causal",
+      category: "Vendas & Trade",
+      properties: { priority: "P1", targetKpi: "+R$ 2.68M Faturamento" }
+    },
+    {
+      id: "goal_sku_mix",
+      nodeType: "StrategicGoal",
+      name: "Maximização de Margem de Contribuição por SKU",
+      category: "FinOps & Comercial",
+      properties: { priority: "P2", targetKpi: "+4.2 p.p. Margem" }
+    }
+  ];
+
+  // 4. Ações de Modernização de Arquitetura Google Cloud
+  const modernizationActions: PropertyGraphNode[] = [
+    {
+      id: "act_bq_graph_indexing",
+      nodeType: "ModernizationAction",
+      name: "Ativação de Property Graph BigQuery com Índices GQL",
+      category: "Graph Analytics",
+      properties: { targetService: "BigQuery", impact: "Latência < 180ms" }
+    },
+    {
+      id: "act_data_agents_grounding",
+      nodeType: "ModernizationAction",
+      name: "Data Agents BigQuery com Grounding no Esquema",
+      category: "GenAI Analytics",
+      properties: { targetService: "Vertex AI + BigQuery", impact: "Zero Alucinação" }
+    },
+    {
+      id: "act_dataplex_policy_tags",
+      nodeType: "ModernizationAction",
+      name: "Governança com Dataplex Policy Tags & Data Profiling",
+      category: "Data Security",
+      properties: { targetService: "Dataplex", impact: "Conformidade LGPD" }
+    },
+    {
+      id: "act_streaming_ingestion",
+      nodeType: "ModernizationAction",
+      name: "Migração Batch para Ingestão Streaming BigQuery",
+      category: "Data Engineering",
+      properties: { targetService: "BigQuery Storage Write API", impact: "Sub-segundo" }
+    }
+  ];
+
+  // 5. Gera nós e arestas integrados
   const nodes: PropertyGraphNode[] = [
     {
       id: `cust_${assessment.customerId}`,
@@ -495,7 +581,10 @@ export async function populatePropertyGraph(
       name: "Agente SN (Árbitra de Saliência)",
       category: "PersonaDebate",
       properties: { role: "SN_Arbiter" }
-    }
+    },
+    ...gcpServices,
+    ...strategicGoals,
+    ...modernizationActions
   ];
 
   const edges: PropertyGraphEdge[] = [
@@ -509,7 +598,19 @@ export async function populatePropertyGraph(
     }
   ];
 
-  useCases.forEach(uc => {
+  // Conecta cliente às metas estratégicas
+  strategicGoals.forEach((goal, i) => {
+    edges.push({
+      edgeId: `e_cust_goal_${goal.id}`,
+      sourceId: `cust_${assessment.customerId}`,
+      destinationId: goal.id,
+      edgeType: "STRATEGIC_GOAL",
+      weight: 1.0 - (i * 0.1),
+      properties: {}
+    });
+  });
+
+  useCases.forEach((uc, idx) => {
     const ucId = `uc_${uc.useCaseId}`;
     nodes.push({
       id: ucId,
@@ -534,6 +635,51 @@ export async function populatePropertyGraph(
       weight: 0.95,
       properties: {}
     });
+
+    // Conecta Caso de Uso ao consumo de BigQuery e Vertex AI
+    edges.push({
+      edgeId: `e_uc_bq_${uc.useCaseId}`,
+      sourceId: ucId,
+      destinationId: "gcp_bigquery",
+      edgeType: "CONSUMES_GCP_SERVICE",
+      weight: uc.costBreakdown?.bigqueryUsd || 180,
+      properties: { service: "BigQuery", monthlyCostUsd: uc.costBreakdown?.bigqueryUsd || 180 }
+    });
+
+    edges.push({
+      edgeId: `e_uc_vertex_${uc.useCaseId}`,
+      sourceId: ucId,
+      destinationId: "gcp_vertex_ai",
+      edgeType: "CONSUMES_GCP_SERVICE",
+      weight: uc.costBreakdown?.vertexAiUsd || 140,
+      properties: { service: "Vertex AI", monthlyCostUsd: uc.costBreakdown?.vertexAiUsd || 140 }
+    });
+
+    // Conecta Caso de Uso a meta estratégica correspondente
+    const targetGoal = strategicGoals[idx % strategicGoals.length];
+    if (targetGoal) {
+      edges.push({
+        edgeId: `e_uc_goal_${uc.useCaseId}_${targetGoal.id}`,
+        sourceId: ucId,
+        destinationId: targetGoal.id,
+        edgeType: "TARGETS_GOAL",
+        weight: 0.9,
+        properties: {}
+      });
+    }
+
+    // Conecta Caso de Uso à ação de modernização recomendada
+    const targetAction = modernizationActions[idx % modernizationActions.length];
+    if (targetAction) {
+      edges.push({
+        edgeId: `e_uc_act_${uc.useCaseId}_${targetAction.id}`,
+        sourceId: ucId,
+        destinationId: targetAction.id,
+        edgeType: "RECOMMENDS_ACTION",
+        weight: 0.85,
+        properties: {}
+      });
+    }
   });
 
   tables.slice(0, 8).forEach(t => {
@@ -554,14 +700,21 @@ export async function populatePropertyGraph(
       weight: 0.8,
       properties: {}
     });
+    // Conecta tabela ao Dataplex para governança
+    edges.push({
+      edgeId: `e_tbl_dataplex_${cleanTblId}`,
+      sourceId: cleanTblId,
+      destinationId: "gcp_dataplex",
+      edgeType: "GOVERNED_BY",
+      weight: 1.0,
+      properties: {}
+    });
   });
 
-  // 3. Persistência real e idempotente no BigQuery (graph_nodes e graph_edges)
-  try {
-    await persistGraphToBigQuery(nodes, edges);
-  } catch (err) {
-    console.error("Erro ao persistir Property Graph no BigQuery:", err);
-  }
+  // 3. Persistência real e idempotente no BigQuery em background (sem bloquear retorno)
+  persistGraphToBigQuery(nodes, edges).catch(err => {
+    console.warn("Aviso ao persistir Property Graph no BigQuery:", err);
+  });
 
   return { nodes, edges };
 }

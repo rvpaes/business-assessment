@@ -69,10 +69,16 @@ LIMIT 50;`);
         return { bg: "bg-purple-600", stroke: "#9333ea", text: "text-purple-600" };
       case "UseCase":
         return { bg: "bg-indigo-600", stroke: "#4f46e5", text: "text-indigo-600" };
+      case "GcpService":
+        return { bg: "bg-amber-500", stroke: "#f59e0b", text: "text-amber-500" };
+      case "StrategicGoal":
+        return { bg: "bg-teal-600", stroke: "#0d9488", text: "text-teal-600" };
+      case "ModernizationAction":
+        return { bg: "bg-cyan-600", stroke: "#0891b2", text: "text-cyan-600" };
       case "Table":
-        return { bg: "bg-amber-600", stroke: "#d97706", text: "text-amber-600" };
-      default:
         return { bg: "bg-slate-600", stroke: "#475569", text: "text-slate-600" };
+      default:
+        return { bg: "bg-slate-500", stroke: "#64748b", text: "text-slate-500" };
     }
   };
 
@@ -80,8 +86,8 @@ LIMIT 50;`);
   const nodes = graphData.nodes || [];
   const edges = graphData.edges || [];
 
-  const width = 800;
-  const height = 500;
+  const width = 860;
+  const height = 540;
   const centerX = width / 2;
   const centerY = height / 2;
 
@@ -90,24 +96,46 @@ LIMIT 50;`);
 
   nodes.forEach((node, idx) => {
     if (node.nodeType === "Customer") {
-      nodePositions.set(node.id, { x: centerX - 120, y: centerY });
+      nodePositions.set(node.id, { x: centerX - 140, y: centerY });
     } else if (node.nodeType === "Assessment") {
-      nodePositions.set(node.id, { x: centerX + 120, y: centerY });
+      nodePositions.set(node.id, { x: centerX + 140, y: centerY });
     } else if (node.nodeType === "AgentPersona") {
-      const offset = (idx % 3) * 80 - 80;
-      nodePositions.set(node.id, { x: centerX, y: 80 + offset });
-    } else if (node.nodeType === "UseCase") {
-      const angle = (idx / 6) * Math.PI * 2;
+      const offset = (idx % 3) * 75 - 75;
+      nodePositions.set(node.id, { x: centerX, y: 65 + offset });
+    } else if (node.nodeType === "StrategicGoal") {
+      const gIdx = nodes.filter(n => n.nodeType === "StrategicGoal").indexOf(node);
+      const angle = Math.PI * 0.8 + (gIdx * 0.35);
       nodePositions.set(node.id, {
-        x: centerX + Math.cos(angle) * 260,
+        x: centerX + Math.cos(angle) * 270,
         y: centerY + Math.sin(angle) * 180
+      });
+    } else if (node.nodeType === "GcpService") {
+      const sIdx = nodes.filter(n => n.nodeType === "GcpService").indexOf(node);
+      const angle = -Math.PI * 0.25 + (sIdx * 0.35);
+      nodePositions.set(node.id, {
+        x: centerX + Math.cos(angle) * 280,
+        y: centerY + Math.sin(angle) * 190
+      });
+    } else if (node.nodeType === "ModernizationAction") {
+      const mIdx = nodes.filter(n => n.nodeType === "ModernizationAction").indexOf(node);
+      nodePositions.set(node.id, {
+        x: centerX - 130 + (mIdx * 85),
+        y: height - 55
+      });
+    } else if (node.nodeType === "UseCase") {
+      const uIdx = nodes.filter(n => n.nodeType === "UseCase").indexOf(node);
+      const angle = (uIdx / 6) * Math.PI * 2;
+      nodePositions.set(node.id, {
+        x: centerX + Math.cos(angle) * 205,
+        y: centerY + Math.sin(angle) * 145
       });
     } else {
       // Tabelas
-      const angle = (idx / 10) * Math.PI * 2;
+      const tIdx = nodes.filter(n => n.nodeType === "Table").indexOf(node);
+      const angle = (tIdx / 8) * Math.PI * 2;
       nodePositions.set(node.id, {
-        x: centerX + Math.cos(angle) * 190,
-        y: centerY + Math.sin(angle) * 140
+        x: centerX + Math.cos(angle) * 125,
+        y: centerY + Math.sin(angle) * 95
       });
     }
   });
@@ -165,31 +193,72 @@ LIMIT 50;`);
         </div>
       </div>
 
-      {/* 2. Visualizador SVG do Grafo de Conhecimento */}
+      {/* 2. Barra de Insights Executivos do Grafo */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">Topologia Ativa</span>
+          <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 mt-0.5 block">
+            {nodes.length} Nós • {edges.length} Arestas
+          </span>
+          <span className="text-[10px] text-blue-600 font-semibold">100% BigQuery GQL</span>
+        </div>
+
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">Plataforma Google Cloud</span>
+          <span className="text-base font-extrabold text-amber-600 mt-0.5 block">
+            {nodes.filter(n => n.nodeType === "GcpService").length || 4} Serviços Centrais
+          </span>
+          <span className="text-[10px] text-slate-500">BigQuery + Vertex AI</span>
+        </div>
+
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">Alinhamento Estratégico</span>
+          <span className="text-base font-extrabold text-teal-600 mt-0.5 block">
+            {nodes.filter(n => n.nodeType === "StrategicGoal").length || 3} Metas de Negócio
+          </span>
+          <span className="text-[10px] text-emerald-600 font-semibold">C-Level Impact</span>
+        </div>
+
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">Modernização Recomendada</span>
+          <span className="text-base font-extrabold text-cyan-600 mt-0.5 block">
+            {nodes.filter(n => n.nodeType === "ModernizationAction").length || 4} Ações Chave
+          </span>
+          <span className="text-[10px] text-slate-500">Particionamento & Agents</span>
+        </div>
+      </div>
+
+      {/* 3. Visualizador SVG do Grafo de Conhecimento */}
       {activeTab === "visual" ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 relative overflow-hidden">
             {/* Legenda de Tipos de Nós */}
             <div className="flex flex-wrap items-center gap-3 text-xs mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-blue-600" /> Cliente
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Cliente
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-600" /> Assessment
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-600" /> Metas Estratégicas
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-purple-600" /> Persona IA (NC-MAD)
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" /> Casos de Negócio
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-indigo-600" /> Top Caso de Uso
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Serviços GCP
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-amber-600" /> Tabela BQ
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-600" /> Modernização
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-600" /> Tabelas BQ
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600" /> Personas IA
               </span>
             </div>
 
             {/* Canvas SVG Interativo */}
-            <div className="relative w-full h-[500px] bg-slate-50/50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+            <div className="relative w-full h-[520px] bg-slate-50/50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-center">
               {nodes.length > 0 ? (
                 <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
                   <defs>
@@ -316,16 +385,66 @@ LIMIT 50;`);
           </div>
         </div>
       ) : (
-        /* Aba 2: Inspetor GQL Live */
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Terminal className="w-4 h-4 text-violet-600" />
               Consulta Nativa GQL no BigQuery (GRAPH_TABLE)
             </h3>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300 font-semibold">
-              GQL Match Operacional
+            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300 font-semibold self-start sm:self-auto">
+              ISO GQL / BigQuery Graph Nativo
             </span>
+          </div>
+
+          {/* Botões de Queries Prontas para Sellers & Arquitetos */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              onClick={() => setGqlQuery(`SELECT 
+  u.name AS use_case,
+  s.name AS gcp_service,
+  e.weight AS monthly_consumption_usd
+FROM GRAPH_TABLE(
+  \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
+  MATCH (u:UseCase)-[e:CONSUMES_GCP_SERVICE]->(s:GcpService)
+  COLUMNS (u.name, s.name, e.weight)
+)
+ORDER BY monthly_consumption_usd DESC;`)}
+              className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              1. Casos de Uso & Serviços GCP (MRR/ARR)
+            </button>
+
+            <button
+              onClick={() => setGqlQuery(`SELECT 
+  c.name AS customer,
+  g.name AS strategic_goal,
+  u.name AS use_case
+FROM GRAPH_TABLE(
+  \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
+  MATCH (c:Customer)-[:STRATEGIC_GOAL]->(g:StrategicGoal)<-[:TARGETS_GOAL]-(u:UseCase)
+  COLUMNS (c.name, g.name, u.name)
+);`)}
+              className="px-2.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              2. Metas Estratégicas & Casos de Negócio
+            </button>
+
+            <button
+              onClick={() => setGqlQuery(`SELECT 
+  u.name AS use_case,
+  m.name AS modernization_action,
+  t.name AS target_table
+FROM GRAPH_TABLE(
+  \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
+  MATCH (u:UseCase)-[:RECOMMENDS_ACTION]->(m:ModernizationAction),
+        (t:Table)-[:GOVERNED_BY]->(:GcpService)
+  COLUMNS (u.name, m.name, t.name)
+)
+LIMIT 20;`)}
+              className="px-2.5 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-900 border border-cyan-200 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              3. Ações de Modernização & Governança
+            </button>
           </div>
 
           <pre className="p-4 rounded-xl bg-slate-900 text-slate-200 text-xs font-mono overflow-x-auto border border-slate-800">

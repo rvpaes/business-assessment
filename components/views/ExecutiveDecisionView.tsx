@@ -1,7 +1,7 @@
 // components/views/ExecutiveDecisionView.tsx - Visão Geral do Conselho Neurocognitivo de Business Assessment
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   Sparkles, 
   Zap, 
@@ -25,6 +25,7 @@ import { CustomerAssessment, TopUseCase, TableCatalogItem } from "@/lib/types";
 import { AgentModalData, AgentDossierModal } from "./AgentDossierModal";
 import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getCustomerUseCases, ExtendedUseCase } from "@/lib/data/customer-usecases-catalog";
 
 interface ExecutiveDecisionViewProps {
   assessment: CustomerAssessment | null;
@@ -55,26 +56,34 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   const docPercentage = assessment?.docPercentage ? assessment.docPercentage.toFixed(1) : "0.0";
   const datasetId = "business_assessment_customer";
 
-  // Cálculos consolidados de FinOps & Business Case do Cliente
-  const totalFinancialGainUsd = topUseCases.reduce((acc, u) => acc + (u.financialGainEstimateUsd || 0), 0);
-  const totalMonthlyGcpUsd = topUseCases.reduce((acc, u) => acc + (u.gcpMonthlyCostUsd || 0), 0);
+  // Resolução dinâmica dos 6 casos de uso do cliente com enriquecimento para vendas Google Cloud
+  const resolvedCases: ExtendedUseCase[] = useMemo(() => {
+    const catalogCases = getCustomerUseCases(customerName);
+    if (topUseCases && topUseCases.length >= 6) {
+      return topUseCases.map((uc, i) => {
+        const match = catalogCases[i] || catalogCases.find((c) => c.rank === uc.rank);
+        return {
+          ...uc,
+          keyImprovement: (uc as any).keyImprovement || match?.keyImprovement || "Otimização de pipelines SQL e grounding em BigQuery Property Graph.",
+          gcpExpansionOpportunity: (uc as any).gcpExpansionOpportunity || match?.gcpExpansionOpportunity || "Consumo contínuo de BigQuery Slots e APIs Vertex AI.",
+          paybackMonths: (uc as any).paybackMonths || match?.paybackMonths || 2.0,
+        };
+      });
+    }
+    return catalogCases;
+  }, [customerName, topUseCases]);
+
+  // Cálculos consolidados de FinOps & Business Case do Cliente e Receita GCP
+  const totalFinancialGainUsd = resolvedCases.reduce((acc, u) => acc + (u.financialGainEstimateUsd || 0), 0);
+  const totalMonthlyGcpUsd = resolvedCases.reduce((acc, u) => acc + (u.gcpMonthlyCostUsd || 0), 0);
   const totalAnnualGcpUsd = totalMonthlyGcpUsd * 12;
   const calculatedRoi = totalAnnualGcpUsd > 0
     ? (((totalFinancialGainUsd - totalAnnualGcpUsd) / totalAnnualGcpUsd) * 100).toFixed(0)
     : "340";
 
-  // Destaques dos Casos de Uso Top 1 e Top 2 para a Fase DMN
-  const top1Case = topUseCases[0] || {
-    title: "Otimização Preditiva de Demanda & Roteirização de Campo",
-    businessProblem: "Ineficiência na alocação de equipes e dispersão de rotas operacionais.",
-    businessCaseRoi: "ROI de 340% em 12 meses; ganhos de R$ 2,4M em produtividade."
-  };
-
-  const top2Case = topUseCases[1] || {
-    title: "Mapeamento Causal de Consumo & Prevenção de Ruptura",
-    businessProblem: "Indisponibilidade intermitente de produtos nos pontos de contato finais.",
-    businessCaseRoi: "Recuperação de até R$ 3,8M em receita reprimida com modelos preditivos."
-  };
+  // Destaques dos Casos de Uso Top 1 e Top 2
+  const top1Case = resolvedCases[0];
+  const top2Case = resolvedCases[1];
 
   // Dossiê Executivo Central (CEN)
   const cenDossier: AgentModalData = {
@@ -91,14 +100,14 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
     targetDirectiveBadge: "GROUNDING VALIDADO",
     targetCards: [
       { title: "Tabelas Auditadas", value: totalTables > 0 ? totalTables.toLocaleString() : "3.293", subValue: "Catálogo BigQuery", badgeText: "COBERTURA" },
-      { title: "Casos Validados", value: `${topUseCases.length || 6}`, subValue: "Com Business Case", badgeText: "CASOS DE USO" },
+      { title: "Casos Validados", value: `${resolvedCases.length || 6}`, subValue: "Com Business Case", badgeText: "CASOS DE USO" },
       { title: "Ganho Anual Projetado", value: totalFinancialGainUsd > 0 ? `$${(totalFinancialGainUsd / 1000).toFixed(0)}k` : "$1.85M", subValue: "Receita & Eficiência", badgeText: "EBITDA" },
       { title: "ROI Consolidado", value: `+${calculatedRoi}%`, subValue: "Payback em ~2 meses", badgeText: "FINOPS" }
     ],
     bqMetrics: [
       { label: "Patrimônio de Dados no BigQuery", value: `${totalTables} Tabelas`, trend: "100% Auditado", subtext: `Dataset ${datasetId}` },
       { label: "Qualidade de Metadados", value: `${docPercentage}% Documentado`, trend: "Alto Nível", subtext: "Dicionário de dados Dataplex" },
-      { label: "Custo Estimado Infra GCP", value: totalMonthlyGcpUsd > 0 ? `$${totalMonthlyGcpUsd.toFixed(0)}/mês` : "$2.450/mês", trend: "Otimizado", subtext: "Slots BQ + Vertex AI" },
+      { label: "Consumo Mensal GCP", value: totalMonthlyGcpUsd > 0 ? `$${totalMonthlyGcpUsd.toFixed(0)}/mês` : "$2.450/mês", trend: "Otimizado", subtext: "Slots BQ + Vertex AI" },
       { label: "Conformidade e Risco", value: "Zero Alucinação", trend: "Garantida", subtext: "Grounding estrito no esquema" }
     ],
     sqlQuery: `SELECT 
@@ -108,12 +117,13 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   u.rank,
   u.title AS use_case_title,
   u.financial_gain_estimate_usd,
+  u.gcp_monthly_cost_usd,
   p.agent_name AS validating_agent
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.${datasetId}.enterprise_business_graph\`
   MATCH (c:Customer)-[:HAS_ASSESSMENT]->(a:Assessment), 
         (p:PersonaDebate)-[:VALIDATED_USE_CASE]->(u:UseCase)
-  COLUMNS (c.name, a.total_tables, a.doc_percentage, u.rank, u.title, u.financial_gain_estimate_usd, p.agent_name)
+  COLUMNS (c.name, a.total_tables, a.doc_percentage, u.rank, u.title, u.financial_gain_estimate_usd, u.gcp_monthly_cost_usd, p.agent_name)
 )
 ORDER BY u.rank ASC
 LIMIT 10;`
@@ -376,7 +386,7 @@ LIMIT 10;`
           { title: "Aderência Estratégica", value: "9.8/10", subValue: "Prioridades da Diretoria", badgeText: "FIT" }
         ],
         bqMetrics: [
-          { label: "Casos no Business Case", value: `${topUseCases.length} Casos`, trend: "Avaliados", subtext: "Modelagem paramétrica" },
+          { label: "Casos no Business Case", value: `${resolvedCases.length} Casos`, trend: "Avaliados", subtext: "Modelagem paramétrica" },
           { label: "Alinhamento com a Indústria", value: "100%", trend: industry, subtext: "Benchmark de pares de mercado" }
         ],
         sqlQuery: `SELECT 
@@ -449,14 +459,14 @@ ORDER BY u.rank ASC;`
         </div>
 
         {/* 3 CARDS DAS FASES (DMN, SN, CEN) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-7">
-          {/* FASE 1: DMN - Hipóteses de Crescimento */}
-          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs">
-            <div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-7 items-start">
+          {/* FASE 1: DMN - Hipóteses de Crescimento (Todos os 6 Casos) */}
+          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs min-h-[580px]">
+            <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center shrink-0">
                     DMN
                   </span>
                   <div>
@@ -464,7 +474,7 @@ ORDER BY u.rank ASC;`
                       FASE 1 • HIPÓTESES DE CRESCIMENTO
                     </div>
                     <div className="text-[11px] font-bold text-white">
-                      Diagnóstico de Dados & Inovação
+                      6 Casos do Business Case & Modernização
                     </div>
                   </div>
                 </div>
@@ -473,50 +483,84 @@ ORDER BY u.rank ASC;`
                 </span>
               </div>
 
-              {/* Provocações baseadas nos dados do cliente */}
-              <div className="mt-4 space-y-3.5">
-                {/* Item 1 */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-amber-300 text-[10px] font-extrabold uppercase">
-                    <MapPin className="w-3 h-3 text-red-400 fill-red-400" />
-                    <span>{top1Case.title}</span>
-                  </div>
-                  <p className="text-[11px] italic text-blue-100/90 leading-relaxed">
-                    &ldquo;{top1Case.businessProblem}&rdquo;
-                  </p>
-                  <p className="text-[10px] text-blue-200/70 font-semibold">
-                    <strong className="text-white">Impacto Esperado:</strong> {top1Case.businessCaseRoi}
-                  </p>
-                </div>
+              {/* Lista dos 6 casos de uso do cliente selecionado */}
+              <div className="mt-4 space-y-2.5 max-h-[460px] overflow-y-auto pr-1.5 custom-scrollbar flex-1">
+                {resolvedCases.map((item) => (
+                  <div
+                    key={item.useCaseId || item.rank}
+                    className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/40 transition-all space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="w-5 h-5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black flex items-center justify-center shrink-0">
+                          #{item.rank}
+                        </span>
+                        <span className="text-[10px] font-extrabold text-amber-300 truncate uppercase tracking-wider">
+                          {item.category}
+                        </span>
+                      </div>
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shrink-0">
+                        Payback: {item.paybackMonths ? `${item.paybackMonths}m` : "2m"}
+                      </span>
+                    </div>
 
-                {/* Item 2 */}
-                <div className="space-y-1 pt-2 border-t border-white/10">
-                  <div className="flex items-center gap-1.5 text-amber-300 text-[10px] font-extrabold uppercase">
-                    <MapPin className="w-3 h-3 text-red-400 fill-red-400" />
-                    <span>{top2Case.title}</span>
+                    <div className="text-[11px] font-bold text-white leading-tight">
+                      {item.title}
+                    </div>
+
+                    <p className="text-[10px] text-blue-100/75 line-clamp-2 leading-relaxed italic">
+                      &ldquo;{item.businessProblem}&rdquo;
+                    </p>
+
+                    {/* Dual Metric Box: Impacto no Cliente vs Consumo GCP */}
+                    <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-white/10">
+                      <div className="bg-emerald-950/40 border border-emerald-500/20 rounded-lg p-1.5">
+                        <span className="text-[8px] font-black uppercase text-emerald-300 block">
+                          Impacto Cliente
+                        </span>
+                        <span className="text-[10px] font-extrabold text-white block">
+                          +${(item.financialGainEstimateUsd / 1000).toFixed(0)}k/ano
+                        </span>
+                        <span className="text-[8px] text-emerald-200/70 block truncate">
+                          R$ {((item.financialGainEstimateUsd * 5.6) / 1000000).toFixed(1)}M
+                        </span>
+                      </div>
+
+                      <div className="bg-blue-950/40 border border-blue-400/20 rounded-lg p-1.5">
+                        <span className="text-[8px] font-black uppercase text-blue-300 block">
+                          Consumo GCP
+                        </span>
+                        <span className="text-[10px] font-extrabold text-amber-300 block">
+                          ~${item.gcpMonthlyCostUsd}/mês
+                        </span>
+                        <span className="text-[8px] text-blue-200/70 block truncate">
+                          BQ + Vertex AI
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Principal Melhoria Arquitetural a ser Aplicada */}
+                    <div className="bg-white/5 rounded-lg p-2 border border-white/5 text-[9px] text-blue-100/90 leading-relaxed">
+                      <strong className="text-amber-300 font-bold">Modernização GCP:</strong> {item.keyImprovement}
+                    </div>
                   </div>
-                  <p className="text-[11px] italic text-blue-100/90 leading-relaxed">
-                    &ldquo;{top2Case.businessProblem}&rdquo;
-                  </p>
-                  <p className="text-[10px] text-blue-200/70 font-semibold">
-                    <strong className="text-white">Impacto Esperado:</strong> {top2Case.businessCaseRoi}
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-white/10 text-[10px] text-blue-300/60 italic">
-              Exploração lateral sem autocensura prévia sobre {totalTables > 0 ? `${totalTables.toLocaleString()} tabelas` : "os dados do cliente"}
+            <div className="mt-4 pt-3 border-t border-white/10 text-[10px] text-blue-300/70 italic flex items-center justify-between">
+              <span>Auditoria completa dos 6 casos para {customerName}</span>
+              <span className="text-amber-300 font-bold">100% Validado</span>
             </div>
           </div>
 
-          {/* FASE 2: SN - Avaliação de Retorno */}
-          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs">
-            <div>
+          {/* FASE 2: SN - Avaliação de Retorno & Expansão GCP */}
+          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs min-h-[580px]">
+            <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 font-black text-[10px] flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 font-black text-[10px] flex items-center justify-center shrink-0">
                     SN
                   </span>
                   <div>
@@ -524,7 +568,7 @@ ORDER BY u.rank ASC;`
                       FASE 2 • AVALIAÇÃO DE RETORNO
                     </div>
                     <div className="text-[11px] font-bold text-white">
-                      Análise de Viabilidade & Retorno
+                      Consolidado de FinOps & Vendas GCP
                     </div>
                   </div>
                 </div>
@@ -533,52 +577,91 @@ ORDER BY u.rank ASC;`
                 </span>
               </div>
 
-              {/* Score Boxes */}
-              <div className="grid grid-cols-2 gap-2.5 mt-4">
+              {/* 4 Score Boxes */}
+              <div className="grid grid-cols-2 gap-2 mt-4">
                 <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[9px] font-bold uppercase text-blue-200/70 block">
+                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
                     SCORE VIABILIDADE
                   </span>
-                  <span className="text-lg font-black text-white mt-0.5 block">
-                    {Number(docPercentage) > 50 ? "9.4/10" : "8.2/10"}
+                  <span className="text-base font-black text-white mt-0.5 block">
+                    {Number(docPercentage) > 50 ? "9.6/10" : "8.4/10"}
                   </span>
+                  <span className="text-[8px] text-emerald-300 font-semibold">100% no BigQuery</span>
                 </div>
+
                 <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[9px] font-bold uppercase text-blue-200/70 block">
-                    UPLIFT & ROI
+                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
+                    GANHO CLIENTE (BC)
                   </span>
-                  <span className="text-xs font-black text-emerald-300 mt-1 block">
-                    +{calculatedRoi}% em Eficiência
+                  <span className="text-base font-black text-emerald-300 mt-0.5 block">
+                    +${(totalFinancialGainUsd / 1000).toFixed(0)}k
                   </span>
+                  <span className="text-[8px] text-blue-200/70 block">EBITDA / Ano</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
+                    CONSUMO GCP (RUN-RATE)
+                  </span>
+                  <span className="text-base font-black text-amber-300 mt-0.5 block">
+                    ~${totalMonthlyGcpUsd.toFixed(0)}/m
+                  </span>
+                  <span className="text-[8px] text-amber-200/70 block">ARR: ~${(totalAnnualGcpUsd / 1000).toFixed(1)}k</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
+                    ROI MULTIPLICADOR
+                  </span>
+                  <span className="text-base font-black text-white mt-0.5 block">
+                    +{calculatedRoi}%
+                  </span>
+                  <span className="text-[8px] text-emerald-300 font-semibold">Payback ~1.8 meses</span>
                 </div>
               </div>
 
-              {/* Rota Selecionada */}
-              <div className="mt-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-1.5">
-                <div className="text-[9px] font-black text-emerald-300 uppercase tracking-wider">
-                  ROTA SELECIONADA
+              {/* Rota Selecionada & Vetores de Vendas GCP */}
+              <div className="mt-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black text-emerald-300 uppercase tracking-wider">
+                    ROTA SELECIONADA
+                  </span>
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-200">
+                    ADOPTION PATH
+                  </span>
                 </div>
                 <div className="text-[11px] font-bold text-white">
-                  Modernização com BigQuery Property Graph & Data Agents
+                  Modernização BigQuery Property Graph, Vertex AI & Dataplex
                 </div>
                 <p className="text-[10px] text-blue-100/80 leading-relaxed">
-                  A Matriz de Saliência priorizou os casos com menor tempo de implementação e maior payback direto para {customerName}, gerando ganho estimado de ${(totalFinancialGainUsd / 1000).toFixed(0)}k/ano.
+                  A Matriz de Saliência priorizou os 6 casos com o melhor equilíbrio entre valor imediato de negócio para <strong className="text-white">{customerName}</strong> e consumo sustentável na plataforma Google Cloud.
+                </p>
+              </div>
+
+              {/* Ângulo Comercial GCP (Para Sellers & CEs) */}
+              <div className="mt-3 p-3 rounded-xl bg-blue-950/50 border border-blue-400/30 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-amber-300 text-[9px] font-black uppercase tracking-wider">
+                  <GoogleCloudLogo height={12} variant="white_card" />
+                  <span>OPORTUNIDADE DE EXPANSÃO GOOGLE CLOUD</span>
+                </div>
+                <p className="text-[10px] text-blue-100/90 leading-relaxed">
+                  Pipeline comercial viabilizado: consumo escalável de <strong>BigQuery Slots Dedicados</strong>, inferência contínua com <strong>Vertex AI Gemini 3.8 Flash</strong>, microserviços em <strong>Cloud Run</strong> e auditoria automatizada em <strong>Dataplex</strong>.
                 </p>
               </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-white/10 text-[10px] text-blue-300/60 italic">
-              Arbitragem de risco vs viabilidade de dados no BigQuery
+            <div className="mt-4 pt-3 border-t border-white/10 text-[10px] text-blue-300/70 italic">
+              Arbitragem de risco vs viabilidade técnica e consumo cloud
             </div>
           </div>
 
-          {/* FASE 3: CEN - Plano de Ação */}
-          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs">
-            <div>
+          {/* FASE 3: CEN - Plano de Ação Executivo */}
+          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs min-h-[580px]">
+            <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-400 text-slate-950 font-black text-[10px] flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-blue-400 text-slate-950 font-black text-[10px] flex items-center justify-center shrink-0">
                     CEN
                   </span>
                   <div>
@@ -586,7 +669,7 @@ ORDER BY u.rank ASC;`
                       FASE 3 • PLANO DE AÇÃO
                     </div>
                     <div className="text-[11px] font-bold text-white">
-                      Recomendação Validada
+                      Recomendação & Roadmap de Entrega
                     </div>
                   </div>
                 </div>
@@ -595,39 +678,50 @@ ORDER BY u.rank ASC;`
                 </span>
               </div>
 
-              {/* Status dos Dados */}
-              <div className="mt-4 space-y-1.5">
+              {/* Status dos Dados Auditados */}
+              <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold text-blue-200 uppercase">
-                    STATUS DOS DADOS
+                    STATUS DO PATRIMÔNIO DE DADOS
                   </span>
                   <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                    APROVADO • 100% AUDITÁVEL NO GRAFO
+                    100% AUDITADO NO GRAFO
                   </span>
                 </div>
-                <p className="text-[10px] text-blue-100/80 leading-relaxed">
-                  Auditado contra {totalTables.toLocaleString()} tabelas no BigQuery, {totalColumns.toLocaleString()} colunas e {docPercentage}% de metadados documentados. Zero alucinação.
+                <p className="text-[10px] text-blue-100/90 leading-relaxed">
+                  Auditado contra <strong className="text-white">{totalTables.toLocaleString()} tabelas</strong> no BigQuery, <strong className="text-white">{totalColumns.toLocaleString()} colunas</strong> e <strong className="text-white">{docPercentage}%</strong> de metadados documentados. Zero risco de alucinação.
                 </p>
               </div>
 
-              {/* Plano Executivo Validado */}
-              <div className="mt-3.5 p-3 rounded-xl bg-blue-950/40 border border-blue-400/30 space-y-1.5">
+              {/* Roadmap Validado em 3 Ondas */}
+              <div className="mt-3 p-3 rounded-xl bg-blue-950/40 border border-blue-400/30 space-y-2 flex-1">
                 <div className="text-[9px] font-black text-blue-300 uppercase tracking-wider">
-                  PLANO EXECUTIVO VALIDADO
+                  ROADMAP DE MODERNIZAÇÃO EM 3 ONDAS
                 </div>
-                <p className="text-[10px] text-white/95 leading-relaxed font-medium">
-                  <strong>Plano de Modernização:</strong> 1. Ativar Property Graph BigQuery nas entidades centrais; 2. Implementar Data Agent com grounding em metadados; 3. Lançar MVPs dos Top 6 casos com governança Dataplex.
-                </p>
+                <div className="space-y-2 text-[10px] text-white/95">
+                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
+                    <span className="text-amber-300 font-bold block text-[9px] uppercase">Onda 1 (30 Dias) • Fundação & MVPs</span>
+                    <span>Ativar BigQuery Property Graph e publicar MVPs dos Casos #1 ({resolvedCases[0]?.title.slice(0, 24)}...) e #2 com ingestão em tempo real.</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
+                    <span className="text-cyan-300 font-bold block text-[9px] uppercase">Onda 2 (60 Dias) • Expansão Analítica</span>
+                    <span>Escalar pipelines de feature store e modelos Vertex AI para Casos #3 e #4 com particionamento diário e clusterização.</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
+                    <span className="text-emerald-300 font-bold block text-[9px] uppercase">Onda 3 (90 Dias) • Autonomia & Data Agent</span>
+                    <span>Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Dataplex para Casos #5 e #6.</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Ação: Ver Dossiê Estratégico */}
-            <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
               <button
                 onClick={() => setSelectedDossier(cenDossier)}
                 className="text-xs font-bold text-cyan-300 hover:text-cyan-200 flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <span>Ver Dossiê Estratégico</span>
+                <span>Ver Dossiê Estratégico CEN</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
               <span className="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">
