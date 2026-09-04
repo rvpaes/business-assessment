@@ -22,6 +22,7 @@ interface NeuroDebateViewProps {
     auditTargets: AuditTarget[];
   }) => void;
   onNavigateToCases: () => void;
+  autoStart?: boolean;
 }
 
 export const NeuroDebateView: React.FC<NeuroDebateViewProps> = ({
@@ -32,12 +33,20 @@ export const NeuroDebateView: React.FC<NeuroDebateViewProps> = ({
   salienceMatrix,
   auditTargets,
   onDebateComplete,
-  onNavigateToCases
+  onNavigateToCases,
+  autoStart
 }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentStatus, setCurrentStatus] = useState("");
   const [activeTab, setActiveTab] = useState<"turns" | "salience" | "audit">("turns");
   const [expandedTurnId, setExpandedTurnId] = useState<string | null>(null);
+
+  // Auto-disparo do debate quando solicitado na ingestão
+  React.useEffect(() => {
+    if (autoStart && assessment && !isRunning && turns.length === 0) {
+      startDebate();
+    }
+  }, [autoStart, assessment]);
 
   const startDebate = async () => {
     if (!assessment) return;

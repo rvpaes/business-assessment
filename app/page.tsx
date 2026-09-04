@@ -192,6 +192,7 @@ export default function HomePage() {
   const [auditTargets, setAuditTargets] = useState<AuditTarget[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showLiveDebateView, setShowLiveDebateView] = useState(false);
+  const [autoStartDebate, setAutoStartDebate] = useState(false);
 
   // Carrega tabelas do BigQuery caso disponíveis
   useEffect(() => {
@@ -212,8 +213,14 @@ export default function HomePage() {
   const handleAssessmentLoaded = (loadedAssessment: CustomerAssessment, loadedTables: TableCatalogItem[]) => {
     setAssessment(loadedAssessment);
     setTables(loadedTables);
-    // Ao carregar o assessment, leva o usuário diretamente para a Visão Geral
-    setActiveTab("decision");
+    // Limpa dados de debate anterior para o novo cliente
+    setTurns([]);
+    setTopUseCases([]);
+    setSalienceMatrix([]);
+    setAuditTargets([]);
+    // Ajuste 1: Abre direto na tela de debate executando automaticamente
+    setAutoStartDebate(true);
+    setShowLiveDebateView(true);
   };
 
   const handleDebateComplete = (data: {
@@ -226,8 +233,8 @@ export default function HomePage() {
     setTopUseCases(data.topUseCases);
     setSalienceMatrix(data.salienceMatrix);
     setAuditTargets(data.auditTargets);
-    setShowLiveDebateView(false);
-    setActiveTab("decision");
+    setAutoStartDebate(false);
+    // Permanece na tela de debate para que o usuário veja a transcrição completa e os botões de ação
   };
 
   const handleRefresh = async () => {
@@ -308,6 +315,7 @@ export default function HomePage() {
                 topUseCases={topUseCases}
                 salienceMatrix={salienceMatrix}
                 auditTargets={auditTargets}
+                autoStart={autoStartDebate}
                 onDebateComplete={handleDebateComplete}
                 onNavigateToCases={() => {
                   setShowLiveDebateView(false);

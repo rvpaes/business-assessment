@@ -372,83 +372,94 @@ export async function populatePropertyGraph(
   useCases: TopUseCase[],
   tables: TableCatalogItem[]
 ): Promise<PropertyGraphData> {
-  // 1. Popula as tabelas de arestas dedicadas para o Property Graph Enterprise de 5 Nós
-  const populateEdgesSql = `
-    -- 1. edge_customer_assessment
-    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\` (id, customer_id, assessment_id)
-    SELECT 
-        GENERATE_UUID() AS id,
-        '${assessment.customerId}',
-        '${assessment.assessmentId}'
-    WHERE NOT EXISTS (
-        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\`
-        WHERE customer_id = '${assessment.customerId}' AND assessment_id = '${assessment.assessmentId}'
-    );
-
-    -- 2. edge_assessment_table
-    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` (id, assessment_id, table_key)
-    SELECT 
-        GENERATE_UUID() AS id,
-        '${assessment.assessmentId}',
-        t.table_key
-    FROM \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t
-    WHERE t.assessment_id = '${assessment.assessmentId}'
-      AND NOT EXISTS (
-        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` e
-        WHERE e.assessment_id = '${assessment.assessmentId}' AND e.table_key = t.table_key
-    )
-    LIMIT 200;
-
-    -- 3. edge_customer_usecase
-    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` (id, customer_id, use_case_id)
-    SELECT 
-        GENERATE_UUID() AS id,
-        '${assessment.customerId}',
-        u.use_case_id
-    FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
-    WHERE u.assessment_id = '${assessment.assessmentId}'
-      AND NOT EXISTS (
-        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` e
-        WHERE e.customer_id = '${assessment.customerId}' AND e.use_case_id = u.use_case_id
-    );
-
-    -- 4. edge_persona_usecase
-    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` (id, debate_id, use_case_id)
-    SELECT 
-        GENERATE_UUID() AS id,
-        d.debate_id,
-        u.use_case_id
-    FROM \`${PROJECT_ID}.${DATASET_ID}.neuro_debates\` d
-    CROSS JOIN \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
-    WHERE d.assessment_id = '${assessment.assessmentId}' AND u.assessment_id = '${assessment.assessmentId}'
-      AND d.phase = 'CEN_EXECUTIVE_VALIDATION'
-      AND NOT EXISTS (
-        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` e
-        WHERE e.debate_id = d.debate_id AND e.use_case_id = u.use_case_id
-    )
-    LIMIT 30;
-
-    -- 5. edge_table_usecase
-    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_table_usecase\` (id, table_key, use_case_id)
-    SELECT 
-        GENERATE_UUID() AS id,
-        t.table_key,
-        u.use_case_id
-    FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u,
-    UNNEST(u.required_tables) AS req_tbl
-    JOIN \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t 
-      ON t.table_name = req_tbl OR t.table_key = req_tbl
-    WHERE u.assessment_id = '${assessment.assessmentId}'
-    LIMIT 50;
-  `;
-
+  // 1. Popula as 5 tabelas de arestas relacionais no BigQuery
   try {
-    await runOptimizedBigQueryQuery(populateEdgesSql, "Populate 5 Distinct Edge Tables");
+    // 1. edge_customer_assessment
+    await runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\` (id, customer_id, assessment_id)
+      SELECT 
+          GENERATE_UUID() AS id,
+          '${assessment.customerId}',
+          '${assessment.assessmentId}'
+      FROM (SELECT 1)
+      WHERE NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\`
+          WHERE customer_id = '${assessment.customerId}' AND assessment_id = '${assessment.assessmentId}'
+      );
+    `, "Populate edge_customer_assessment").catch(e => console.warn("Notice edge_customer_assessment:", e));
+
+    // 2. edge_assessment_table
+    await runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` (id, assessment_id, table_key)
+      SELECT 
+          GENERATE_UUID() AS id,
+          '${assessment.assessmentId}',
+          t.table_key
+      FROM \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t
+      WHERE t.assessment_id = '${assessment.assessmentId}'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` e
+          WHERE e.assessment_id = '${assessment.assessmentId}' AND e.table_key = t.table_key
+      )
+      LIMIT 200;
+    `, "Populate edge_assessment_table").catch(e => console.warn("Notice edge_assessment_table:", e));
+
+    // 3. edge_customer_usecase
+    await runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` (id, customer_id, use_case_id)
+      SELECT 
+          GENERATE_UUID() AS id,
+          '${assessment.customerId}',
+          u.use_case_id
+      FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+      WHERE u.assessment_id = '${assessment.assessmentId}'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` e
+          WHERE e.customer_id = '${assessment.customerId}' AND e.use_case_id = u.use_case_id
+      );
+    `, "Populate edge_customer_usecase").catch(e => console.warn("Notice edge_customer_usecase:", e));
+
+    // 4. edge_persona_usecase
+    await runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` (id, debate_id, use_case_id)
+      SELECT 
+          GENERATE_UUID() AS id,
+          d.debate_id,
+          u.use_case_id
+      FROM \`${PROJECT_ID}.${DATASET_ID}.neuro_debates\` d
+      CROSS JOIN \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+      WHERE d.assessment_id = '${assessment.assessmentId}' AND u.assessment_id = '${assessment.assessmentId}'
+        AND d.phase = 'CEN_EXECUTIVE_VALIDATION'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` e
+          WHERE e.debate_id = d.debate_id AND e.use_case_id = u.use_case_id
+      )
+      LIMIT 30;
+    `, "Populate edge_persona_usecase").catch(e => console.warn("Notice edge_persona_usecase:", e));
+
+    // 5. edge_table_usecase
+    await runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_table_usecase\` (id, table_key, use_case_id)
+      SELECT 
+          GENERATE_UUID() AS id,
+          t.table_key,
+          u.use_case_id
+      FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u,
+      UNNEST(u.required_tables) AS req_tbl
+      JOIN \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t 
+        ON t.table_name = req_tbl OR t.table_key = req_tbl
+      WHERE u.assessment_id = '${assessment.assessmentId}'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_table_usecase\` e
+          WHERE e.table_key = t.table_key AND e.use_case_id = u.use_case_id
+      )
+      LIMIT 50;
+    `, "Populate edge_table_usecase").catch(e => console.warn("Notice edge_table_usecase:", e));
   } catch (e) {
-    console.warn("Aviso ao popular arestas distintas:", e);
+    console.warn("Aviso ao sincronizar arestas relacionais:", e);
   }
 
-  // Gera dados em memória para a visualização gráfica
+  // 2. Gera dados de nós e arestas para a visualização e para o Property Graph
   const nodes: PropertyGraphNode[] = [
     {
       id: `cust_${assessment.customerId}`,
@@ -470,12 +481,26 @@ export async function populatePropertyGraph(
       name: "Agente CEN (Engenheiro Executivo)",
       category: "PersonaDebate",
       properties: { role: "CEN_Executive_Engineer" }
+    },
+    {
+      id: "agent_dmn",
+      nodeType: "AgentPersona",
+      name: "Agente DMN (Explorador Divergente)",
+      category: "PersonaDebate",
+      properties: { role: "DMN_Explorer" }
+    },
+    {
+      id: "agent_sn",
+      nodeType: "AgentPersona",
+      name: "Agente SN (Árbitra de Saliência)",
+      category: "PersonaDebate",
+      properties: { role: "SN_Arbiter" }
     }
   ];
 
   const edges: PropertyGraphEdge[] = [
     {
-      edgeId: "e_cust_ass",
+      edgeId: `e_cust_ass_${assessment.assessmentId}`,
       sourceId: `cust_${assessment.customerId}`,
       destinationId: `ass_${assessment.assessmentId}`,
       edgeType: "OWNS",
@@ -494,70 +519,104 @@ export async function populatePropertyGraph(
       properties: { roi: uc.businessCaseRoi, gain: uc.financialGainEstimateUsd, cost: uc.gcpMonthlyCostUsd }
     });
     edges.push({
-      edgeId: `e_cen_${ucId}`,
+      edgeId: `e_cen_${uc.useCaseId}`,
       sourceId: "agent_cen",
       destinationId: ucId,
       edgeType: "VALIDATED_BY",
       weight: 1.0,
       properties: {}
     });
+    edges.push({
+      edgeId: `e_cust_${uc.useCaseId}`,
+      sourceId: `cust_${assessment.customerId}`,
+      destinationId: ucId,
+      edgeType: "BENEFITS",
+      weight: 0.95,
+      properties: {}
+    });
   });
 
   tables.slice(0, 8).forEach(t => {
-    const tblId = `tbl_${t.datasetId}_${t.tableName}`.replace(/[^a-zA-Z0-9_]/g, "_");
+    const rawTblId = `tbl_${t.datasetId}_${t.tableName}`;
+    const cleanTblId = rawTblId.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 60);
     nodes.push({
-      id: tblId,
+      id: cleanTblId,
       nodeType: "Table",
-      name: `${t.datasetId}.${t.tableName}`,
+      name: `${t.datasetId}.${t.tableName.slice(0, 35)}`,
       category: t.tableType,
       properties: { rows: t.estimatedRows, bytes: t.estimatedBytes }
     });
     edges.push({
-      edgeId: `e_ass_${tblId}`,
+      edgeId: `e_ass_${cleanTblId}`,
       sourceId: `ass_${assessment.assessmentId}`,
-      destinationId: tblId,
+      destinationId: cleanTblId,
       edgeType: "EXTRACTED_FROM",
       weight: 0.8,
       properties: {}
     });
   });
 
+  // 3. Persistência real e idempotente no BigQuery (graph_nodes e graph_edges)
+  try {
+    await persistGraphToBigQuery(nodes, edges);
+  } catch (err) {
+    console.error("Erro ao persistir Property Graph no BigQuery:", err);
+  }
+
   return { nodes, edges };
 }
 
 async function persistGraphToBigQuery(nodes: PropertyGraphNode[], edges: PropertyGraphEdge[]): Promise<void> {
-  // 1. Limpa nós e arestas antigas
-  await runOptimizedBigQueryQuery(`DELETE FROM \`${PROJECT_ID}.${DATASET_ID}.graph_edges\` WHERE 1=1;`, "Clean Edges");
-  await runOptimizedBigQueryQuery(`DELETE FROM \`${PROJECT_ID}.${DATASET_ID}.graph_nodes\` WHERE 1=1;`, "Clean Nodes");
-
-  // 2. Insere Nós
+  // 1. Insere Nós via MERGE idempotente
   if (nodes.length > 0) {
-    const nodeRows = nodes.map(n => {
-      const name = n.name.replace(/'/g, "\\'");
-      const cat = (n.category || "").replace(/'/g, "\\'");
-      const props = JSON.stringify(n.properties || {}).replace(/'/g, "\\'");
-      return `('${n.id}', '${n.nodeType}', '${name}', '${cat}', '${props}')`;
-    }).join(",\n");
+    const nodeSelects = nodes.map(n => {
+      const escId = n.id.replace(/'/g, "\\'");
+      const escType = n.nodeType.replace(/'/g, "\\'");
+      const escName = (n.name || "").replace(/'/g, "\\'").replace(/\n/g, " ");
+      const escCat = (n.category || "").replace(/'/g, "\\'").replace(/\n/g, " ");
+      const escProps = JSON.stringify(n.properties || {}).replace(/'/g, "\\'");
+      return `SELECT '${escId}' AS id, '${escType}' AS node_type, '${escName}' AS name, '${escCat}' AS category, '${escProps}' AS properties_json`;
+    }).join("\nUNION ALL\n");
 
-    const insertNodesSql = `
-      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.graph_nodes\` (id, node_type, name, category, properties_json)
-      VALUES ${nodeRows};
+    const mergeNodesSql = `
+      MERGE INTO \`${PROJECT_ID}.${DATASET_ID}.graph_nodes\` T
+      USING (
+        ${nodeSelects}
+      ) S
+      ON T.id = S.id
+      WHEN MATCHED THEN
+        UPDATE SET name = S.name, category = S.category, properties_json = S.properties_json
+      WHEN NOT MATCHED THEN
+        INSERT (id, node_type, name, category, properties_json)
+        VALUES (S.id, S.node_type, S.name, S.category, S.properties_json);
     `;
-    await runOptimizedBigQueryQuery(insertNodesSql, "Insert Graph Nodes");
+    await runOptimizedBigQueryQuery(mergeNodesSql, "Merge Graph Nodes");
   }
 
-  // 3. Insere Arestas
+  // 2. Insere Arestas via MERGE idempotente
   if (edges.length > 0) {
-    const edgeRows = edges.map(e => {
-      const props = JSON.stringify(e.properties || {}).replace(/'/g, "\\'");
-      return `('${e.edgeId}', '${e.sourceId}', '${e.destinationId}', '${e.edgeType}', ${e.weight}, '${props}')`;
-    }).join(",\n");
+    const edgeSelects = edges.map(e => {
+      const escEdgeId = e.edgeId.replace(/'/g, "\\'");
+      const escSourceId = e.sourceId.replace(/'/g, "\\'");
+      const escDestId = e.destinationId.replace(/'/g, "\\'");
+      const escEdgeType = e.edgeType.replace(/'/g, "\\'");
+      const escProps = JSON.stringify(e.properties || {}).replace(/'/g, "\\'");
+      return `SELECT '${escEdgeId}' AS edge_id, '${escSourceId}' AS source_id, '${escDestId}' AS destination_id, '${escEdgeType}' AS edge_type, CAST(${e.weight} AS FLOAT64) AS weight, '${escProps}' AS properties_json`;
+    }).join("\nUNION ALL\n");
 
-    const insertEdgesSql = `
-      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.graph_edges\` (edge_id, source_id, destination_id, edge_type, weight, properties_json)
-      VALUES ${edgeRows};
+    const mergeEdgesSql = `
+      MERGE INTO \`${PROJECT_ID}.${DATASET_ID}.graph_edges\` T
+      USING (
+        ${edgeSelects}
+      ) S
+      ON T.edge_id = S.edge_id
+      WHEN MATCHED THEN
+        UPDATE SET edge_type = S.edge_type, weight = S.weight, properties_json = S.properties_json
+      WHEN NOT MATCHED THEN
+        INSERT (edge_id, source_id, destination_id, edge_type, weight, properties_json)
+        VALUES (S.edge_id, S.source_id, S.destination_id, S.edge_type, S.weight, S.properties_json);
     `;
-    await runOptimizedBigQueryQuery(insertEdgesSql, "Insert Graph Edges");
+    await runOptimizedBigQueryQuery(mergeEdgesSql, "Merge Graph Edges");
   }
 }
 
