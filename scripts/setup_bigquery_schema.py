@@ -150,13 +150,13 @@ ddl_statements = [
     f"""
     CREATE OR REPLACE PROPERTY GRAPH `{PROJECT_ID}.{DATASET_ID}.enterprise_business_graph`
       NODE TABLES (
-        `{PROJECT_ID}.{DATASET_ID}.graph_nodes`
+        `{PROJECT_ID}.{DATASET_ID}.graph_nodes` AS graph_nodes
           KEY (id)
           LABEL Node
           PROPERTIES (id, node_type, name, category, properties_json)
       )
       EDGE TABLES (
-        `{PROJECT_ID}.{DATASET_ID}.graph_edges`
+        `{PROJECT_ID}.{DATASET_ID}.graph_edges` AS graph_edges
           KEY (edge_id)
           SOURCE KEY (source_id) REFERENCES graph_nodes (id)
           DESTINATION KEY (destination_id) REFERENCES graph_nodes (id)

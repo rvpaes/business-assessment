@@ -2,10 +2,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadAssessmentPackage } from "@/lib/gcp/storage";
 import { parseAssessmentZip } from "@/lib/parser/metadata-parser";
-import { saveAssessmentToBigQuery, logStructuredStep } from "@/lib/gcp/bigquery";
+import { saveAssessmentToBigQuery, logStructuredStep, resetAiSyntaxErrors } from "@/lib/gcp/bigquery";
 import JSZip from "jszip";
 
 export async function POST(req: NextRequest) {
+  resetAiSyntaxErrors();
   try {
     const formData = await req.formData();
     const customerName = (formData.get("customerName") as string) || "Cliente Não Informado";

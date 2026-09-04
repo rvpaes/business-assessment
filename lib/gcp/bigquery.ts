@@ -43,15 +43,25 @@ export function logStructuredStep(entry: {
 // ==========================================
 // 2. Execução Base de Queries com Tratamento de Erros e Limite de Tentativas
 // ==========================================
-let consecutiveSyntaxErrors = 0;
+let consecutiveAiSyntaxErrors = 0;
 
-export async function runOptimizedBigQueryQuery(sql: string, context: string = "Query"): Promise<any[]> {
-  if (consecutiveSyntaxErrors >= 3) {
+export function resetAiSyntaxErrors(): void {
+  consecutiveAiSyntaxErrors = 0;
+}
+
+export async function runOptimizedBigQueryQuery(
+  sql: string, 
+  context: string = "Query",
+  isAiGenerated: boolean = false
+): Promise<any[]> {
+  // Regra de Governança: Apenas se um Agente IA estiver tentando adivinhar SQL em loop
+  if (isAiGenerated && consecutiveAiSyntaxErrors >= 3) {
+    consecutiveAiSyntaxErrors = 0; // Reseta para não travar consultas subsequentes
     logStructuredStep({
       severity: "ERROR",
       phase: "GRAPH_GQL",
       toolAction: "execute_sql_halted",
-      thought: "Limite de 3 erros de sintaxe consecutivos atingido. Abortando adivinhação automática conforme regra de governança."
+      thought: "Limite de 3 erros de sintaxe consecutivos atingido pelo agente IA. Pausando tentativa automática de SQL para validação estrutural."
     });
     throw new Error("A consulta analítica falhou repetidamente. O assistente pausou a tentativa automática de SQL para validação estrutural.");
   }
@@ -77,20 +87,28 @@ export async function runOptimizedBigQueryQuery(sql: string, context: string = "
     const data: any = await res.json();
 
     if (!res.ok || data.error) {
-      consecutiveSyntaxErrors++;
+      const errMsg = data.error?.message || res.statusText || "Erro desconhecido no BigQuery";
+      const isSyntaxErr = /syntax error|unrecognized name/i.test(errMsg);
+
+      if (isAiGenerated && isSyntaxErr) {
+        consecutiveAiSyntaxErrors++;
+      }
+
       logStructuredStep({
         severity: "ERROR",
         phase: "GRAPH_GQL",
         toolAction: "bigquery_error",
         sqlQuery: sql,
-        outputSummary: data.error?.message || "Erro desconhecido no BigQuery",
-        metadata: { attempt: consecutiveSyntaxErrors, context }
+        outputSummary: errMsg,
+        metadata: { attempt: consecutiveAiSyntaxErrors, context, isAiGenerated }
       });
-      throw new Error(`Erro no BigQuery: ${data.error?.message || res.statusText}`);
+      throw new Error(`Erro no BigQuery: ${errMsg}`);
     }
 
-    // Sucesso zera o contador de erros consecutivos
-    consecutiveSyntaxErrors = 0;
+    // Sucesso zera o contador de erros consecutivos de IA
+    if (isAiGenerated) {
+      consecutiveAiSyntaxErrors = 0;
+    }
 
     const fields = data.schema?.fields || [];
     const rows = data.rows || [];
@@ -123,9 +141,6 @@ export async function runOptimizedBigQueryQuery(sql: string, context: string = "
 
     return mappedRows;
   } catch (err: any) {
-    if (!err.message?.includes("A consulta analítica falhou repetidamente")) {
-      consecutiveSyntaxErrors++;
-    }
     throw err;
   }
 }
@@ -552,16 +567,23 @@ async function persistGraphToBigQuery(nodes: PropertyGraphNode[], edges: Propert
 export async function queryGraphTableGQL(): Promise<any[]> {
   const gql = `
     SELECT 
-      src.name AS source_name,
-      src.node_type AS source_type,
-      e.edge_type AS relationship,
-      dst.name AS destination_name,
-      dst.node_type AS destination_type,
-      e.weight AS connection_weight
+      source_name,
+      source_type,
+      relationship,
+      destination_name,
+      destination_type,
+      connection_weight
     FROM GRAPH_TABLE(
       \`${PROJECT_ID}.${DATASET_ID}.enterprise_business_graph\`
       MATCH (src:Node)-[e:Edge]->(dst:Node)
-      COLUMNS (src, e, dst)
+      COLUMNS (
+        src.name AS source_name,
+        src.node_type AS source_type,
+        e.edge_type AS relationship,
+        dst.name AS destination_name,
+        dst.node_type AS destination_type,
+        e.weight AS connection_weight
+      )
     )
     LIMIT 100;
   `;
