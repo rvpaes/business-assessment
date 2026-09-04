@@ -357,137 +357,155 @@ export async function populatePropertyGraph(
   useCases: TopUseCase[],
   tables: TableCatalogItem[]
 ): Promise<PropertyGraphData> {
-  const nodes: PropertyGraphNode[] = [];
-  const edges: PropertyGraphEdge[] = [];
+  // 1. Popula as tabelas de arestas dedicadas para o Property Graph Enterprise de 5 Nós
+  const populateEdgesSql = `
+    -- 1. edge_customer_assessment
+    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\` (id, customer_id, assessment_id)
+    SELECT 
+        GENERATE_UUID() AS id,
+        '${assessment.customerId}',
+        '${assessment.assessmentId}'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_assessment\`
+        WHERE customer_id = '${assessment.customerId}' AND assessment_id = '${assessment.assessmentId}'
+    );
 
-  // Nó 1: Cliente
-  nodes.push({
-    id: `cust_${assessment.customerId}`,
-    nodeType: "Customer",
-    name: assessment.customerName,
-    category: assessment.industry,
-    properties: {
-      industry: assessment.industry,
-      assessmentId: assessment.assessmentId
+    -- 2. edge_assessment_table
+    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` (id, assessment_id, table_key)
+    SELECT 
+        GENERATE_UUID() AS id,
+        '${assessment.assessmentId}',
+        t.table_key
+    FROM \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t
+    WHERE t.assessment_id = '${assessment.assessmentId}'
+      AND NOT EXISTS (
+        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_assessment_table\` e
+        WHERE e.assessment_id = '${assessment.assessmentId}' AND e.table_key = t.table_key
+    )
+    LIMIT 200;
+
+    -- 3. edge_customer_usecase
+    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` (id, customer_id, use_case_id)
+    SELECT 
+        GENERATE_UUID() AS id,
+        '${assessment.customerId}',
+        u.use_case_id
+    FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+    WHERE u.assessment_id = '${assessment.assessmentId}'
+      AND NOT EXISTS (
+        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_customer_usecase\` e
+        WHERE e.customer_id = '${assessment.customerId}' AND e.use_case_id = u.use_case_id
+    );
+
+    -- 4. edge_persona_usecase
+    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` (id, debate_id, use_case_id)
+    SELECT 
+        GENERATE_UUID() AS id,
+        d.debate_id,
+        u.use_case_id
+    FROM \`${PROJECT_ID}.${DATASET_ID}.neuro_debates\` d
+    CROSS JOIN \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+    WHERE d.assessment_id = '${assessment.assessmentId}' AND u.assessment_id = '${assessment.assessmentId}'
+      AND d.phase = 'CEN_EXECUTIVE_VALIDATION'
+      AND NOT EXISTS (
+        SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.edge_persona_usecase\` e
+        WHERE e.debate_id = d.debate_id AND e.use_case_id = u.use_case_id
+    )
+    LIMIT 30;
+
+    -- 5. edge_table_usecase
+    INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.edge_table_usecase\` (id, table_key, use_case_id)
+    SELECT 
+        GENERATE_UUID() AS id,
+        t.table_key,
+        u.use_case_id
+    FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u,
+    UNNEST(u.required_tables) AS req_tbl
+    JOIN \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\` t 
+      ON t.table_name = req_tbl OR t.table_key = req_tbl
+    WHERE u.assessment_id = '${assessment.assessmentId}'
+    LIMIT 50;
+  `;
+
+  try {
+    await runOptimizedBigQueryQuery(populateEdgesSql, "Populate 5 Distinct Edge Tables");
+  } catch (e) {
+    console.warn("Aviso ao popular arestas distintas:", e);
+  }
+
+  // Gera dados em memória para a visualização gráfica
+  const nodes: PropertyGraphNode[] = [
+    {
+      id: `cust_${assessment.customerId}`,
+      nodeType: "Customer",
+      name: assessment.customerName,
+      category: assessment.industry,
+      properties: { industry: assessment.industry }
+    },
+    {
+      id: `ass_${assessment.assessmentId}`,
+      nodeType: "Assessment",
+      name: `Maturidade ${assessment.docPercentage.toFixed(1)}%`,
+      category: "Assessment",
+      properties: { tables: assessment.totalTables, cols: assessment.totalColumns }
+    },
+    {
+      id: "agent_cen",
+      nodeType: "AgentPersona",
+      name: "Agente CEN (Engenheiro Executivo)",
+      category: "PersonaDebate",
+      properties: { role: "CEN_Executive_Engineer" }
     }
-  });
-
-  // Nó 2: Assessment
-  nodes.push({
-    id: `ass_${assessment.assessmentId}`,
-    nodeType: "Assessment",
-    name: `Maturidade ${assessment.docPercentage.toFixed(1)}%`,
-    category: "Assessment",
-    properties: {
-      totalTables: assessment.totalTables,
-      totalColumns: assessment.totalColumns,
-      docPercentage: assessment.docPercentage
-    }
-  });
-
-  edges.push({
-    edgeId: `e_cust_ass_${assessment.assessmentId}`,
-    sourceId: `cust_${assessment.customerId}`,
-    destinationId: `ass_${assessment.assessmentId}`,
-    edgeType: "OWNS",
-    weight: 1.0,
-    properties: {}
-  });
-
-  // Nós 3: Personas do Debate
-  const personas = [
-    { id: "agent_dmn", name: "Agente DMN (Explorador Divergente)", role: "DMN_Explorer" },
-    { id: "agent_sn", name: "Agente SN (Árbitro de Saliência)", role: "SN_Arbiter" },
-    { id: "agent_cen", name: "Agente CEN (Engenheiro Executivo)", role: "CEN_Executive_Engineer" }
   ];
 
-  personas.forEach(p => {
+  const edges: PropertyGraphEdge[] = [
+    {
+      edgeId: "e_cust_ass",
+      sourceId: `cust_${assessment.customerId}`,
+      destinationId: `ass_${assessment.assessmentId}`,
+      edgeType: "OWNS",
+      weight: 1.0,
+      properties: {}
+    }
+  ];
+
+  useCases.forEach(uc => {
+    const ucId = `uc_${uc.useCaseId}`;
     nodes.push({
-      id: p.id,
-      nodeType: "AgentPersona",
-      name: p.name,
-      category: "AI Agent",
-      properties: { role: p.role }
+      id: ucId,
+      nodeType: "UseCase",
+      name: uc.title,
+      category: uc.category,
+      properties: { roi: uc.businessCaseRoi, gain: uc.financialGainEstimateUsd, cost: uc.gcpMonthlyCostUsd }
+    });
+    edges.push({
+      edgeId: `e_cen_${ucId}`,
+      sourceId: "agent_cen",
+      destinationId: ucId,
+      edgeType: "VALIDATED_BY",
+      weight: 1.0,
+      properties: {}
     });
   });
 
-  // Nós 4: Tabelas Relevantes (Amostra das top tabelas mencionadas nos use cases)
-  const referencedTables = new Set<string>();
-  useCases.forEach(uc => (uc.requiredTables || []).forEach(t => referencedTables.add(t)));
-
-  const filteredTables = tables.filter(t => referencedTables.has(t.tableName) || referencedTables.has(t.tableKey)).slice(0, 15);
-  // Se não encontrar exato, pega as top 6 com mais linhas
-  const displayTables = filteredTables.length > 0 ? filteredTables : tables.slice(0, 6);
-
-  displayTables.forEach(t => {
-    const tableNodeId = `tbl_${t.datasetId}_${t.tableName}`.replace(/[^a-zA-Z0-9_]/g, "_");
+  tables.slice(0, 8).forEach(t => {
+    const tblId = `tbl_${t.datasetId}_${t.tableName}`.replace(/[^a-zA-Z0-9_]/g, "_");
     nodes.push({
-      id: tableNodeId,
+      id: tblId,
       nodeType: "Table",
       name: `${t.datasetId}.${t.tableName}`,
-      category: t.tableType || "BASE TABLE",
-      properties: {
-        rows: t.estimatedRows,
-        bytes: t.estimatedBytes,
-        cols: t.columnCount,
-        hasScan: t.dataplexProfileScanActive
-      }
+      category: t.tableType,
+      properties: { rows: t.estimatedRows, bytes: t.estimatedBytes }
     });
-
     edges.push({
-      edgeId: `e_ass_tbl_${tableNodeId}`,
+      edgeId: `e_ass_${tblId}`,
       sourceId: `ass_${assessment.assessmentId}`,
-      destinationId: tableNodeId,
+      destinationId: tblId,
       edgeType: "EXTRACTED_FROM",
       weight: 0.8,
       properties: {}
     });
   });
-
-  // Nós 5: Top Casos de Uso
-  useCases.forEach(uc => {
-    const ucNodeId = `uc_${uc.useCaseId}`;
-    nodes.push({
-      id: ucNodeId,
-      nodeType: "UseCase",
-      name: uc.title,
-      category: uc.category,
-      properties: {
-        rank: uc.rank,
-        roi: uc.businessCaseRoi,
-        gainUsd: uc.financialGainEstimateUsd,
-        costUsd: uc.gcpMonthlyCostUsd
-      }
-    });
-
-    // Conecta o CEN ao Caso de Uso (Validado por)
-    edges.push({
-      edgeId: `e_cen_${ucNodeId}`,
-      sourceId: "agent_cen",
-      destinationId: ucNodeId,
-      edgeType: "VALIDATED_BY",
-      weight: 1.0,
-      properties: { verdict: "APPROVED" }
-    });
-
-    // Conecta tabelas aos casos de uso
-    displayTables.forEach(t => {
-      const tableNodeId = `tbl_${t.datasetId}_${t.tableName}`.replace(/[^a-zA-Z0-9_]/g, "_");
-      if ((uc.requiredTables || []).some(rt => rt.includes(t.tableName))) {
-        edges.push({
-          edgeId: `e_${tableNodeId}_${ucNodeId}`,
-          sourceId: tableNodeId,
-          destinationId: ucNodeId,
-          edgeType: "FEEDS_USE_CASE",
-          weight: 0.9,
-          properties: {}
-        });
-      }
-    });
-  });
-
-  // Salva os nós e arestas no BigQuery
-  await persistGraphToBigQuery(nodes, edges);
 
   return { nodes, edges };
 }

@@ -1,112 +1,149 @@
-// components/ControlTowerSidebar.tsx - Navegação Executiva
+// components/ControlTowerSidebar.tsx - Sidebar Executiva Estilo Hypera Commercial Brain
 "use client";
 
 import React from "react";
-import { UploadCloud, BrainCircuit, Target, Network, MessageSquareText, ChevronRight } from "lucide-react";
+import {
+  LayoutDashboard,
+  Target,
+  BarChart3,
+  Network,
+  Sparkles,
+  Settings,
+  ShieldCheck
+} from "lucide-react";
 
-export type ActiveTab = "upload" | "debate" | "cases" | "graph" | "chat";
+export type NavigationTab = "decision" | "cases" | "kpis" | "graph" | "chat" | "upload";
 
-interface ControlTowerSidebarProps {
-  activeTab: ActiveTab;
-  onSelectTab: (tab: ActiveTab) => void;
-  hasAssessment: boolean;
-  hasUseCases: boolean;
-  topCasesCount?: number;
+export interface ControlTowerSidebarProps {
+  activeTab: NavigationTab;
+  onTabChange: (tab: NavigationTab) => void;
+  casesCount?: number;
 }
 
 export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
   activeTab,
-  onSelectTab,
-  hasAssessment,
-  hasUseCases,
-  topCasesCount = 0
+  onTabChange,
+  casesCount = 6
 }) => {
   const navItems = [
     {
-      id: "upload" as ActiveTab,
-      label: "Ingestão & Metadados",
-      subtitle: "Upload ZIP & GCS Storage",
-      icon: UploadCloud,
-      badge: hasAssessment ? "Ativo" : undefined,
-      badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+      id: "decision" as NavigationTab,
+      label: "Visão Geral",
+      icon: LayoutDashboard,
+      badge: "MESA",
+      badgeColor: "bg-[#074878] text-white",
     },
     {
-      id: "debate" as ActiveTab,
-      label: "Neuro-Debate Studio",
-      subtitle: "Tripla Rede DMN / SN / CEN",
-      icon: BrainCircuit,
-      badge: hasAssessment ? "Pronto" : undefined,
-      badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
-    },
-    {
-      id: "cases" as ActiveTab,
-      label: "Top 6 Casos de Uso",
-      subtitle: "Benchmarking, BC & Custos GCP",
+      id: "cases" as NavigationTab,
+      label: "Missões & Campo",
       icon: Target,
-      badge: hasUseCases ? `${topCasesCount} casos` : undefined,
-      badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+      badge: "PLANO",
+      badgeColor: "bg-purple-100 text-purple-700",
     },
     {
-      id: "graph" as ActiveTab,
-      label: "Knowledge Graph (GQL)",
-      subtitle: "BigQuery Property Graph",
+      id: "kpis" as NavigationTab,
+      label: "KPIs & Simulador",
+      icon: BarChart3,
+      badge: "METAS",
+      badgeColor: "bg-emerald-100 text-emerald-800",
+    },
+    {
+      id: "graph" as NavigationTab,
+      label: "Property Graph GQL",
       icon: Network,
-      badge: hasUseCases ? "GQL Live" : undefined,
-      badgeColor: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300"
+      badge: "GRAFO",
+      badgeColor: "bg-violet-100 text-violet-700",
     },
     {
-      id: "chat" as ActiveTab,
-      label: "Consultor Gemini 3.8",
-      subtitle: "Chat Grounded & Guardrails",
-      icon: MessageSquareText,
+      id: "chat" as NavigationTab,
+      label: "Assistente Inteligente",
+      icon: Sparkles,
       badge: "IA",
-      badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-    }
+      badgeColor: "bg-amber-100 text-amber-700",
+    },
+    {
+      id: "upload" as NavigationTab,
+      label: "Configurações",
+      icon: Settings,
+      badge: "CONTA",
+      badgeColor: "bg-slate-100 text-slate-700",
+    },
   ];
 
   return (
-    <nav className="flex flex-row lg:flex-col gap-2 p-2 bg-slate-100/60 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-x-auto">
-      {navItems.map(item => {
-        const Icon = item.icon;
-        const isActive = activeTab === item.id;
-        return (
-          <button
-            key={item.id}
-            onClick={() => onSelectTab(item.id)}
-            className={`group flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 whitespace-nowrap lg:whitespace-normal min-w-[200px] lg:min-w-0 ${
-              isActive
-                ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm shadow-slate-200 dark:shadow-none border border-slate-200/80 dark:border-slate-700/80"
-                : "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-2 rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
-                    : "bg-slate-200/60 dark:bg-slate-800 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-200"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold flex items-center gap-2">
-                  {item.label}
-                  {item.badge && (
-                    <span className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full ${item.badgeColor}`}>
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
-                  {item.subtitle}
-                </div>
+    <aside className="w-64 bg-white border-r border-[#E8F1F8] flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none shadow-xs z-30 font-sans">
+      {/* Topo: Brand Header com Logo Oficial Estilo Hypera */}
+      <div>
+        <div className="px-6 py-4 border-b border-[#E8F1F8] flex flex-col justify-center min-h-[73px]">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-[#00A3E0] flex items-center justify-center shadow-xs">
+              <div className="w-2.5 h-2.5 rounded-full bg-white flex items-center justify-center">
+                <div className="w-1 h-1 rounded-full bg-[#00A3E0]" />
               </div>
             </div>
-            <ChevronRight className={`hidden lg:block w-4 h-4 text-slate-300 transition-transform ${isActive ? "text-blue-600 translate-x-0.5" : "opacity-0 group-hover:opacity-100"}`} />
-          </button>
-        );
-      })}
-    </nav>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base font-black tracking-tight text-[#002B49]">
+                Hypera
+              </span>
+              <span className="text-[11px] font-normal italic text-[#00A3E0]">
+                pharma
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[9px] font-extrabold tracking-wider text-[#074878] uppercase">
+              BUSINESS INSIGHTS & DEMANDA
+            </span>
+          </div>
+        </div>
+
+        {/* Itens de Navegação */}
+        <nav className="p-3 space-y-1.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                  isActive
+                    ? "bg-[#074878] text-white shadow-sm"
+                    : "text-[#5A6B7A] hover:bg-slate-50 hover:text-[#1A2733]"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[#5A6B7A]"}`} />
+                  <span>{item.label}</span>
+                </div>
+
+                <span
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                    isActive ? "bg-white/20 text-white" : item.badgeColor
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Rodapé da Sidebar: Status Operacional */}
+      <div className="p-4 border-t border-[#E8F1F8] space-y-2 bg-slate-50/50">
+        <div className="flex items-center justify-between text-[11px]">
+          <span className="text-slate-500 font-medium">Status do Sistema:</span>
+          <span className="text-emerald-700 font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Operacional
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-[11px]">
+          <span className="text-slate-500 font-medium">Dados de Mercado & Vendas:</span>
+          <span className="text-slate-700 font-bold">Atualizado Hoje</span>
+        </div>
+      </div>
+    </aside>
   );
 };
