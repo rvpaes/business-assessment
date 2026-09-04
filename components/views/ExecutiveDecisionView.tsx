@@ -126,277 +126,335 @@ FROM GRAPH_TABLE(
   COLUMNS (c.name, a.total_tables, a.doc_percentage, u.rank, u.title, u.financial_gain_estimate_usd, u.gcp_monthly_cost_usd, p.agent_name)
 )
 ORDER BY u.rank ASC
-LIMIT 10;`
+LIMIT 10;`,
+    sellerPlaybook: {
+      pitch: `Para a diretoria executiva de ${customerName}: demonstramos que a modernização analítica no Google Cloud entrega $${(totalFinancialGainUsd / 1000).toFixed(0)}k de retorno anual com apenas $${totalMonthlyGcpUsd.toFixed(0)}/mês de investimento em infraestrutura, gerando autofinanciamento completo a partir do 2º mês.`,
+      objectionHandling: `Se a diretoria questionar a prioridade orçamentária: mostre a matriz de 6 casos de uso onde a Fase 1 (Rank #1 e #2) já gera caixa suficiente para financiar toda a expansão de IA das Fases 2 e 3 sem aporte de capital novo.`,
+      closingTrigger: `Apresentar termo de compromisso anual Google Cloud com descontos CUD e início imediato pelo Caso 1 (${top1Case?.title || "Otimização Analítica"}).`,
+      targetBuyer: "CEO, CFO e Vice-Presidente de Negócios",
+      salesStage: "Estágio 5 - Assinatura de Contrato & Sponsor C-Level"
+    }
   };
 
-  // 6 Especialistas da Mesa de Decisão Integrada de Business Assessment
+  // 6 Especialistas do Google Sales Advisory Board (Cockpit de Decisão do Vendedor GCP)
   const expertAgents = [
     {
-      id: "ai_innovation",
-      letter: "I",
-      bgLetter: "bg-[#074878]",
-      title: "Agente Inovação & AI/ML",
-      subtitle: "Vertex AI, Gemini 3.8 & BigQuery ML",
-      badge: "PROPOSTA",
+      id: "competitive_win",
+      letter: "W",
+      bgLetter: "bg-blue-600",
+      title: "Agente Estratégia Competitiva & Deslocamento",
+      subtitle: "Deslocamento Databricks / AWS / Snowflake via BigQuery Serverless",
+      badge: "DESLOCAMENTO",
       badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
-      action: `Priorizar Caso Top 1: ${top1Case.title}`,
-      rationale: `Os metadados auditados para ${customerName} indicam volume e granularidade suficientes nas tabelas de transações e cadastros para treinar modelos preditivos com BQML e Vertex AI sem necessidade de extração de dados.`,
+      action: `Substituir clusters ociosos do Databricks e nós Spark por BigQuery Serverless com BQML in-database`,
+      rationale: `Databricks cobra por DBU/hora mesmo em fila de espera ociosa; o BigQuery cobra estritamente por bytes/slots consumidos, entregando redução imediata de TCO em até 48% para ${customerName}.`,
+      salesTip: "Ataque o custo invisível de clusters Databricks ligados sem processamento. Mostre que o BigQuery escala a zero automaticamente.",
       pills: [
-        { label: "Caso Prioritário", val: "Rank #1" },
-        { label: "Modelo", val: "Gemini 3.8 + BQML" }
+        { label: "TCO vs Databricks", val: "-48%" },
+        { label: "Compute Ocioso", val: "$0 no BQ" }
       ],
       dossier: {
-        agentName: "Agente Inovação & AI/ML",
-        agentRole: "Arquiteto de Inteligência Artificial & BigQuery ML",
-        badge: "PROPOSTA",
-        avatarLetter: "I",
-        avatarBg: "bg-[#074878]",
-        latencyMs: 140,
-        sugestaoAcao: `Implantar pipeline de inferência preditiva e agentes generativos para ${customerName}`,
-        racionalPorQue: `Tabelas transacionais possuem histórico adequado para modelos de Causal AI e Next-Best-Action, acelerando time-to-market.`,
-        targetDirectiveTitle: "INFERÊNCIA & MODELAGEM",
-        targetDirectiveBadge: "ALTA ADOÇÃO",
+        agentName: "Agente Estratégia Competitiva & Deslocamento",
+        agentRole: "Especialista em Competitive Win & Deslocamento de Concorrentes",
+        badge: "WIN STRATEGY",
+        avatarLetter: "W",
+        avatarBg: "bg-blue-600",
+        latencyMs: 115,
+        sugestaoAcao: `Estruturar proposta de deslocamento Databricks demonstrando zero custo de cluster ocioso`,
+        racionalPorQue: `No Databricks o cliente paga por clusters ativos aguardando carga e pipeline complexo de exportação para ML; no BigQuery o Gemini e BQML rodam diretamente sobre as ${totalTables} tabelas.`,
+        targetDirectiveTitle: "DESLOCAMENTO DO CONCORRENTE",
+        targetDirectiveBadge: "WIN RATE: 92%",
         targetCards: [
-          { title: "Modelos Viáveis", value: "4 Casos", subValue: "Com BQML nativo", badgeText: "ML" },
-          { title: "Latência Média", value: "< 250ms", subValue: "Vertex AI Endpoints", badgeText: "SLA" },
-          { title: "Tempo de Setup", value: "3 Semanas", subValue: "Sem mover dados", badgeText: "AGILIDADE" },
-          { title: "Precisão Estimada", value: "> 91%", subValue: "Grounding estrito", badgeText: "QUALIDADE" }
+          { title: "TCO Competitivo", value: "-48%", subValue: "vs Databricks DBU", badgeText: "ECONOMIA" },
+          { title: "Idle Compute Waste", value: "$0", subValue: "Zero custo ocioso BQ", badgeText: "SERVERLESS" },
+          { title: "Tempo de Migração", value: "4 a 6 Semanas", subValue: "Aceleradores BQ Migration", badgeText: "TIME-TO-VALUE" },
+          { title: "Eliminação de ETLs", value: "100%", subValue: "BQML direto nos dados", badgeText: "SIMPLICIDADE" }
         ],
         bqMetrics: [
-          { label: "Tabelas com Dados Preditivos", value: "18 Tabelas", trend: "Identificadas", subtext: "Chaves de tempo e entidade" },
-          { label: "Estimativa de Treinamento", value: "$45/mês", trend: "Baixo Custo", subtext: "Processamento in-database BQML" }
+          { label: "Economia Anual com Serverless", value: "$78k - $120k", trend: "Auditado", subtext: "Cálculo baseado em DBUs ociosos" },
+          { label: "Tabelas Prontas para BQML", value: `${totalTables} Tabelas`, trend: "100% In-Database", subtext: "Sem exportação para cluster externo" }
+        ],
+        sqlQuery: `SELECT 
+  'Databricks DBU Idle' AS incumbent_cost_component,
+  128 AS estimated_idle_hours_month,
+  48.5 AS waste_percentage,
+  'BigQuery Serverless Slots' AS gcp_replacement,
+  0.0 AS gcp_idle_cost_usd
+FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_summary\`
+LIMIT 1;`,
+        sellerPlaybook: {
+          pitch: `Hoje você paga no Databricks não apenas pelo processamento real, mas pelo tempo que os clusters ficam ligados esperando jobs. Com o BigQuery Serverless e Gemini in-database, ${customerName} elimina 100% do desperdício de infraestrutura ociosa e acelera o caso '${top1Case?.title || "Otimização Analítica"}' em menos de 30 dias sem mover dados para fora do warehouse.`,
+          objectionHandling: `Quando o cliente diz 'Já temos nossos pipelines em Spark no Databricks': responda que o BigQuery Studio executa PySpark serverless nativamente sobre as mesmas tabelas sem provisionar clusters, e o BigQuery ML substitui o MLflow com 1 única linha de SQL, cortando licenças duplicadas.`,
+          closingTrigger: `Oferecer o PoV de 30 dias com migração das 3 tabelas mais custosas do Databricks com metas de latência 40% menor e custo zero em tempo ocioso.`,
+          targetBuyer: "CDO (Chief Data Officer) & Head de Engenharia de Dados",
+          salesStage: "Estágio 2 / 3 - Validação Técnica e Disputa Competitiva"
+        }
+      }
+    },
+    {
+      id: "deal_sizing",
+      letter: "D",
+      bgLetter: "bg-indigo-600",
+      title: "Agente Engenharia de Commit & ARR Ramp",
+      subtitle: "Estruturação de Compromisso Anual, CUD e Expansão de Consumo",
+      badge: "EXPANSÃO ARR",
+      badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      action: `Estruturar contrato de commit de $${totalAnnualGcpUsd.toFixed(0)}/ano (GCP Base) com rampa de expansão para $${(totalAnnualGcpUsd * 2.2).toFixed(0)}/ano na Fase 2`,
+      rationale: `O consumo inicial de $${totalMonthlyGcpUsd.toFixed(0)}/mês cobre os casos prioritários da Fase 1 (${resolvedCases.length} casos). Ao expandir para os casos preditivos, o consumo escala com descontos de CUD de até 37%.`,
+      salesTip: "Venda o commit inicial leve ancorado na Fase 1 para fechar rápido, garantindo a cláusula de expansão de consumo para as Fases 2 e 3.",
+      pills: [
+        { label: "ARR GCP Ano 1", val: `$${totalAnnualGcpUsd.toFixed(0)}/ano` },
+        { label: "Rampa Ano 2", val: `+$${(totalAnnualGcpUsd * 1.2).toFixed(0)}` }
+      ],
+      dossier: {
+        agentName: "Agente Engenharia de Commit & ARR Ramp",
+        agentRole: "Especialista em Estruturação de Deals & Economia de Nuvem",
+        badge: "DEAL SIZING",
+        avatarLetter: "D",
+        avatarBg: "bg-indigo-600",
+        latencyMs: 128,
+        sugestaoAcao: `Apresentar proposta comercial em 2 etapas: Commit Ano 1 de $${totalAnnualGcpUsd.toFixed(0)} com rampa automática de consumo`,
+        racionalPorQue: `Diminui a barreira de aprovação de procurement inicial enquanto assegura a trajetória de ARR crescente para o território de vendas.`,
+        targetDirectiveTitle: "ESTRUTURAÇÃO COMERCIAL & ARR",
+        targetDirectiveBadge: "COMMIT OTIMIZADO",
+        targetCards: [
+          { title: "ARR Ano 1", value: `$${totalAnnualGcpUsd.toFixed(0)}`, subValue: "Compromisso base", badgeText: "BASE" },
+          { title: "ARR Ano 2 Projetado", value: `$${(totalAnnualGcpUsd * 2.2).toFixed(0)}`, subValue: "Rampa com Fase 2 e 3", badgeText: "RAMPA" },
+          { title: "Desconto CUD 1 Ano", value: "25% a 37%", subValue: "Committed Use Discount", badgeText: "MARGEM" },
+          { title: "Net Expansion Rate", value: "220%", subValue: "Projeção de 24 meses", badgeText: "EXPANSÃO" }
+        ],
+        bqMetrics: [
+          { label: "Consumo Mensal Fase 1", value: `$${totalMonthlyGcpUsd.toFixed(0)}/mês`, trend: "Fase 1", subtext: "6 casos prioritários" },
+          { label: "Previsibilidade de Consumo", value: "98.2%", trend: "Slots Fixos/Autoscale", subtext: "Proteção contra overage" }
+        ],
+        sqlQuery: `SELECT 
+  'Ano 1 - Fundação & Quick-Wins' AS deal_phase,
+  ${totalMonthlyGcpUsd.toFixed(0)} * 12 AS annual_run_rate_usd,
+  'Commit 1 Ano com CUD' AS commercial_model
+UNION ALL
+SELECT 
+  'Ano 2 - Expansão de Agentes & IA' AS deal_phase,
+  (${totalMonthlyGcpUsd.toFixed(0)} * 12) * 2.2 AS annual_run_rate_usd,
+  'Expansão de Slots + Vertex AI Endpoints' AS commercial_model;`,
+        sellerPlaybook: {
+          pitch: `Estruture um commit anual inicial escalonado em $${totalMonthlyGcpUsd.toFixed(0)}/mês focado em quick-wins de alto retorno, com cláusula de flexibilidade de slots e créditos CUD que garantem 37% de desconto automático no crescimento da Fase 2.`,
+          objectionHandling: `Se o cliente hesitar sobre volume de consumo inicial: apresente a modalidade BigQuery Editions Autoscaling com slots sob demanda com teto orçamentário configurável por projeto, eliminando qualquer risco de estouro de budget.`,
+          closingTrigger: `Garantir incentivo comercial com rampa de faturamento de 90 dias com desconto de CUD pré-aplicado desde o primeiro mês.`,
+          targetBuyer: "CFO, Diretor de Procurement e FinOps Lead",
+          salesStage: "Estágio 4 - Proposta Comercial & Negociação Contratual"
+        }
+      }
+    },
+    {
+      id: "clevel_pitch",
+      letter: "C",
+      bgLetter: "bg-teal-600",
+      title: "Agente C-Level Value & Narrativa Executiva",
+      subtitle: "Métricas de Payback, Retorno de EBITDA e Alinhamento Estratégico",
+      badge: "IMPACTO C-LEVEL",
+      badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
+      action: `Apresentar Business Case com Ganho Anual de $${(totalFinancialGainUsd / 1000).toFixed(0)}k e Payback em 1.8 Meses para ${customerName}`,
+      rationale: `Para cada $1 investido em consumo Google Cloud, a operação de ${customerName} captura $${totalAnnualGcpUsd > 0 ? Math.round(totalFinancialGainUsd / totalAnnualGcpUsd) : 72} em ganhos operacionais e novas receitas no setor de ${industry}.`,
+      salesTip: "Fale de EBITDA e fluxo de caixa, não de infraestrutura. Mostre que o projeto se paga em menos de 60 dias.",
+      pills: [
+        { label: "Ganho Anual", val: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k` },
+        { label: "Payback", val: "1.8 meses" }
+      ],
+      dossier: {
+        agentName: "Agente C-Level Value & Narrativa Executiva",
+        agentRole: "Estrategista de Valor Executivo & Economia de Negócio",
+        badge: "C-LEVEL VALUE",
+        avatarLetter: "C",
+        avatarBg: "bg-teal-600",
+        latencyMs: 142,
+        sugestaoAcao: `Conduzir reunião com CFO/CEO ancorada no múltiplo de retorno de 1:${totalAnnualGcpUsd > 0 ? Math.round(totalFinancialGainUsd / totalAnnualGcpUsd) : 72} sobre o consumo GCP`,
+        racionalPorQue: `O CFO aprova investimentos que comprovem retorno de caixa no mesmo exercício fiscal; o payback de 1.8 meses enquadra o projeto como prioridade imediata.`,
+        targetDirectiveTitle: "NARRATIVA EXECUTIVA & RETORNO",
+        targetDirectiveBadge: "EBITDA UPLIFT",
+        targetCards: [
+          { title: "Ganho Anual Projetado", value: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k`, subValue: "Receita & Produtividade", badgeText: "EBITDA" },
+          { title: "Payback do Projeto", value: "1.8 Meses", subValue: "Retorno do investimento", badgeText: "VELOCIDADE" },
+          { title: "Múltiplo de Valor", value: `1:${totalAnnualGcpUsd > 0 ? Math.round(totalFinancialGainUsd / totalAnnualGcpUsd) : 72}`, subValue: "Ganho vs Consumo GCP", badgeText: "ROI" },
+          { title: "Caso Âncora", value: "Rank #1", subValue: top1Case?.title || "Otimização Analítica", badgeText: "PRIORIDADE" }
+        ],
+        bqMetrics: [
+          { label: "Retorno sobre Investimento GCP", value: `+${calculatedRoi}%`, trend: "Auditado", subtext: "Relação Ganho Anual / Custo Cloud" },
+          { label: "Tempo até o 1º P&L Positivo", value: "< 60 Dias", trend: "Curto Prazo", subtext: "Execução da Onda 1" }
         ],
         sqlQuery: `SELECT 
   u.rank,
-  u.title,
-  u.category,
-  u.confidence_score
-FROM \`rafaelpaes-477-20240820125418.${datasetId}.top_use_cases\` u
-WHERE u.category LIKE '%AI%' OR u.category LIKE '%ML%' OR u.rank <= 2
-ORDER BY u.rank ASC;`
-      }
-    },
-    {
-      id: "data_architecture",
-      letter: "A",
-      bgLetter: "bg-emerald-600",
-      title: "Agente Arquitetura & Qualidade de Dados",
-      subtitle: "Dataplex, Governança & Data Profiling",
-      badge: "PROPOSTA",
-      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      action: `Elevar documentação de metadados dos atuais ${docPercentage}% para 90%+ via Dataplex Auto-Scan`,
-      rationale: `Das ${totalTables.toLocaleString()} tabelas cadastradas, a identificação clara de descrições e tipos de negócio no Knowledge Catalog viabiliza a autonomia completa dos Data Agents conversacionais.`,
-      pills: [
-        { label: "Tabelas", val: `${totalTables}` },
-        { label: "Doc Rate", val: `${docPercentage}%` }
-      ],
-      dossier: {
-        agentName: "Agente Arquitetura & Qualidade de Dados",
-        agentRole: "Governança de Catálogo, Dataplex & Qualidade",
-        badge: "PROPOSTA",
-        avatarLetter: "A",
-        avatarBg: "bg-emerald-600",
-        latencyMs: 125,
-        sugestaoAcao: "Executar Data Profiling Scan contínuo e publicar insights no Knowledge Catalog",
-        racionalPorQue: "A governança de metadados é o pré-requisito mandatório para eliminar alucinações de modelos de linguagem corporativos.",
-        targetDirectiveTitle: "CATÁLOGO & QUALIDADE",
-        targetDirectiveBadge: "DATAPLEX",
-        targetCards: [
-          { title: "Tabelas Catalogadas", value: `${totalTables}`, subValue: "Indexadas no BQ", badgeText: "BASE" },
-          { title: "Taxa de Documentação", value: `${docPercentage}%`, subValue: "Meta: 90%+", badgeText: "PROGRESSO" },
-          { title: "Data Profiling Scans", value: "Ativos", subValue: "Dataplex Data Quality", badgeText: "SCAN" },
-          { title: "Regras de Qualidade", value: "Zero Divergência", subValue: "Tipagem estrita", badgeText: "STATUS" }
-        ],
-        bqMetrics: [
-          { label: "Tabelas com Perfil Completo", value: `${Math.round(totalTables * (Number(docPercentage) / 100))} Tabelas`, trend: "Publicadas", subtext: "Knowledge Catalog" },
-          { label: "Campos Chave Documentados", value: `${totalColumns.toLocaleString()} Colunas`, trend: "Mapeadas", subtext: "Dicionário de dados" }
-        ],
-        sqlQuery: `SELECT 
-  table_name,
-  table_type,
-  column_count,
-  documented_columns,
-  estimated_rows
-FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_tables_catalog\`
-ORDER BY column_count DESC
-LIMIT 10;`
-      }
-    },
-    {
-      id: "finops_efficiency",
-      letter: "F",
-      bgLetter: "bg-violet-700",
-      title: "Agente FinOps & Otimização GCP",
-      subtitle: "BigQuery Slots, Particionamento & Payback",
-      badge: "PROPOSTA",
-      badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
-      action: `Orçamento de infraestrutura equilibrado em $${totalMonthlyGcpUsd.toFixed(0)}/mês com ROI de +${calculatedRoi}%`,
-      rationale: `A adoção de boas práticas de particionamento e clusterização nas consultas do BigQuery reduz em até 72% os bytes processados, viabilizando o Business Case com payback em menos de 2 meses.`,
-      pills: [
-        { label: "Custo GCP", val: `$${totalMonthlyGcpUsd.toFixed(0)}/mês` },
-        { label: "ROI Estimado", val: `+${calculatedRoi}%` }
-      ],
-      dossier: {
-        agentName: "Agente FinOps & Otimização GCP",
-        agentRole: "Engenheiro de Custos Cloud & Economia de Dados",
-        badge: "PROPOSTA",
-        avatarLetter: "F",
-        avatarBg: "bg-violet-700",
-        latencyMs: 145,
-        sugestaoAcao: "Configurar BigQuery Editions e limites de cotas de query por usuário",
-        racionalPorQue: "Controle rigoroso de escaneamento de bytes e uso de cache in-memory garantem previsibilidade financeira.",
-        targetDirectiveTitle: "FINOPS & EFICIÊNCIA DE CUSTOS",
-        targetDirectiveBadge: "ALTO RETORNO",
-        targetCards: [
-          { title: "Investimento GCP", value: `$${totalMonthlyGcpUsd.toFixed(0)}`, subValue: "Custo mensal total", badgeText: "INFRA" },
-          { title: "Ganho Financeiro", value: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k`, subValue: "Retorno anual projetado", badgeText: "VALOR" },
-          { title: "Payback Estimado", value: "1.8 meses", subValue: "Retorno do investimento", badgeText: "PAYBACK" },
-          { title: "Economia de Scan", value: "72%", subValue: "Partição e clusterização", badgeText: "FINOPS" }
-        ],
-        bqMetrics: [
-          { label: "Custo por Consulta Analítica", value: "< $0.003", trend: "Otimizado", subtext: "Slots Particionados" },
-          { label: "Prevenção de Full-Scan", value: "100%", trend: "Aplicada", subtext: "Regras BigQuery ativas" }
-        ],
-        sqlQuery: `SELECT 
   u.title,
   u.financial_gain_estimate_usd,
   u.gcp_monthly_cost_usd,
-  ROUND(u.financial_gain_estimate_usd / (u.gcp_monthly_cost_usd * 12), 1) AS roi_multiplier
+  ROUND(u.financial_gain_estimate_usd / (u.gcp_monthly_cost_usd * 12), 1) AS value_to_cloud_ratio
 FROM \`rafaelpaes-477-20240820125418.${datasetId}.top_use_cases\` u
-ORDER BY u.financial_gain_estimate_usd DESC;`
+ORDER BY u.rank ASC;`,
+        sellerPlaybook: {
+          pitch: `Sr. CFO/CEO, este projeto não é sobre trocar tecnologia; é sobre destravar $${(totalFinancialGainUsd / 1000).toFixed(0)}k de retorno anual para ${customerName} com um investimento em Google Cloud de apenas $${totalMonthlyGcpUsd.toFixed(0)}/mês. O projeto se paga integralmente em menos de 2 meses.`,
+          objectionHandling: `Se o C-Level questionar 'Como garanto que o retorno projetado de $${(totalFinancialGainUsd / 1000).toFixed(0)}k vai se concretizar?': demonstre que a metodologia divide os ${resolvedCases.length} casos em ondas curtas de 30 dias, onde o Caso 1 (${top1Case?.title || "Otimização Analítica"}) já entrega os primeiros resultados mensuráveis no D+30.`,
+          closingTrigger: `Agendar Workshop Executivo de 1 hora com o sponsor de negócio e o time de FinOps para assinar o termo de intenção com base no Business Case auditado.`,
+          targetBuyer: "CEO, CFO e Diretor de Linha de Negócio (Business Sponsor)",
+          salesStage: "Estágio 1 / 3 - Alinhamento Executivo & Defesa de Valor"
+        }
       }
     },
     {
-      id: "governance_security",
-      letter: "G",
-      bgLetter: "bg-slate-700",
-      title: "Agente Governança, LGPD & Segurança",
-      subtitle: "Policy Tags, Data Masking & Auditoria",
-      badge: "CONCORDÂNCIA",
-      badgeColor: "bg-slate-100 text-slate-700 border-slate-200",
-      action: "Garantia de 100% de Conformidade Regulatória e Rastreabilidade",
-      rationale: `Identificação automática de campos sensíveis (PII, CPFs, e-mails) com aplicação de Policy Tags e mascaramento dinâmico em nível de coluna no BigQuery.`,
+      id: "solution_architecture",
+      letter: "S",
+      bgLetter: "bg-emerald-600",
+      title: "Agente Arquitetura Integrada & Empacotamento de SKUs",
+      subtitle: "Stack Completo: BigQuery Enterprise + Vertex AI Gemini 3.8 + Dataplex",
+      badge: "OFERTA INTEGRADA",
+      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      action: `Consolidar 4 ferramentas legadas (ETL externo, MLflow, Catálogo terceiro e Vector DB) em 1 único SKU Google Cloud`,
+      rationale: `Ao unificar BigQuery com Dataplex e Vertex AI, o cliente elimina custos de licença terceiros (como Snowflake, Collibra ou APIs avulsas da OpenAI), simplificando a gestão e aumentando a margem comercial do Google.`,
+      salesTip: "Mostre o ganho de consolidação de fornecedores: 1 única fatura Google elimina 4 contratos de software dispersos.",
       pills: [
-        { label: "Auditoria", val: "100%" },
-        { label: "Risco PII", val: "Controlado" }
+        { label: "SKUs Unificados", val: "3 em 1" },
+        { label: "Ferramentas Eliminadas", val: "4 Legadas" }
       ],
       dossier: {
-        agentName: "Agente Governança, LGPD & Segurança",
-        agentRole: "Oficial de Proteção de Dados & Segurança Cloud",
-        badge: "CONCORDÂNCIA",
-        avatarLetter: "G",
-        avatarBg: "bg-slate-700",
-        latencyMs: 112,
-        sugestaoAcao: "Manter Data Masking ativo para colunas sensíveis identificadas no assessment",
-        racionalPorQue: "Todas as consultas dos agentes respeitam as permissões do IAM e Cloud Audit Logs.",
-        targetDirectiveTitle: "SEGURANÇA & PRIVACIDADE",
-        targetDirectiveBadge: "LGPD",
+        agentName: "Agente Arquitetura Integrada & Empacotamento de SKUs",
+        agentRole: "Arquiteto de Soluções Google Cloud & Packaging de SKUs",
+        badge: "INTEGRATED STACK",
+        avatarLetter: "S",
+        avatarBg: "bg-emerald-600",
+        latencyMs: 132,
+        sugestaoAcao: `Apresentar pacote de solução unificada: BigQuery Enterprise + Dataplex Governança + Vertex AI Studio`,
+        racionalPorQue: `Reduz custos de licenciamento e elimina integrações frágeis mantidas por pipelines manuais do cliente.`,
+        targetDirectiveTitle: "TOPOLOGIA INTEGRADA & SKUS",
+        targetDirectiveBadge: "STACK GOOGLE CLOUD",
         targetCards: [
-          { title: "Conformidade Legal", value: "100%", subValue: "Diretrizes LGPD / GDPR", badgeText: "COMPLIANCE" },
-          { title: "Mapeamento PII", value: "Ativo", subValue: "Colunas com tag de proteção", badgeText: "DADOS" },
-          { title: "Trilha de Auditoria", value: "Cloud Logging", subValue: "Registro estruturado", badgeText: "LOGS" },
-          { title: "Acesso por Papel", value: "RBAC & IAM", subValue: "Princípio do menor privilégio", badgeText: "SEGURANÇA" }
+          { title: "SKUs Integrados", value: "3 Pilares", subValue: "BQ + Vertex + Dataplex", badgeText: "SOLUÇÃO" },
+          { title: "Ferramentas Deslocadas", value: "4 Licenças", subValue: "ETL, MLflow, Catálogo, Vector", badgeText: "CONSOLIDAÇÃO" },
+          { title: "Tempo de Implantação", value: "Semanas", subValue: "Zero setup de infra", badgeText: "AGILIDADE" },
+          { title: "SLA Contratual", value: "99.99%", subValue: "Garantia Google Cloud", badgeText: "ENTERPRISE" }
         ],
         bqMetrics: [
-          { label: "Auditoria Contínua de Queries", value: "24/7", trend: "Ativo", subtext: "Cloud Logging estruturado" },
-          { label: "Mascaramento de Colunas", value: "Dinâmico", trend: "Zero Vazamento", subtext: "Dataplex Policy Tags" }
+          { label: "Tabelas no Catálogo Dataplex", value: `${totalTables} Tabelas`, trend: "Nativo", subtext: "Zero licença Collibra/Alation" },
+          { label: "Modelos In-Database BQML", value: "Suporte Total", trend: "Nativo", subtext: "Zero licença MLflow dedicada" }
         ],
         sqlQuery: `SELECT 
-  t.table_name,
-  t.table_type,
-  t.column_count
-FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_tables_catalog\` t
-WHERE t.table_name LIKE '%User%' OR t.table_name LIKE '%Customer%' OR t.table_name LIKE '%Client%'
-LIMIT 10;`
+  'Data Warehouse & Analytics' AS capability,
+  'BigQuery Enterprise Edition' AS google_sku,
+  'Databricks SQL / Snowflake' AS replaced_vendor
+UNION ALL
+SELECT 
+  'Enterprise Search & GenAI' AS capability,
+  'Vertex AI Gemini 3.8 + Search' AS google_sku,
+  'OpenAI APIs + Pinecone Vector DB' AS replaced_vendor
+UNION ALL
+SELECT 
+  'Governance & Lineage' AS capability,
+  'Dataplex Universal Catalog' AS google_sku,
+  'Collibra / Alation' AS replaced_vendor;`,
+        sellerPlaybook: {
+          pitch: `Com o Google Cloud, ${customerName} não precisa comprar um banco vetorial separado, uma ferramenta de catálogo como Collibra e pagar APIs avulsas de LLM. O BigQuery reúne vetores nativos, o Dataplex cobre catalogação com 0 licença extra, e o Vertex AI traz o Gemini 3.8 totalmente integrado com controle corporativo.`,
+          objectionHandling: `Quando o arquiteto do cliente disser 'Queremos usar ferramentas especializadas para cada camada': mostre que a integração nativa BigQuery + Vertex AI elimina pipelines frágeis de exportação e reduz o tempo de desenvolvimento em 65%.`,
+          closingTrigger: `Oferecer Architecture Review Session conjunta com o Google Cloud Office of the CTO (OCTO) para validar a topologia corporativa.`,
+          targetBuyer: "CTO, Enterprise Architect e Head de Plataforma de Dados",
+          salesStage: "Estágio 3 - Arquitetura de Solução & Validação Técnica"
+        }
       }
     },
     {
-      id: "data_engineering",
-      letter: "E",
-      bgLetter: "bg-amber-500",
-      title: "Agente Engenharia de Dados & Performance",
-      subtitle: "Pipelines, Particionamento & Baixa Latência",
-      badge: "ALERTA",
+      id: "closing_accelerators",
+      letter: "A",
+      bgLetter: "bg-amber-600",
+      title: "Agente Aceleradores de Fechamento & Créditos GCP",
+      subtitle: "Incentivos de Migração (DASS), PoV Guiado de 30 Dias e Financiamento",
+      badge: "INCENTIVOS GCP",
       badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
-      action: "Eliminação Preventiva de Full-Table Scans e Otimização do Property Graph",
-      rationale: `As tabelas centrais do assessment devem manter índices particionados por data de ingestão para assegurar tempos de resposta sub-segundo tanto para o Property Graph quanto para a interface web.`,
+      action: `Alocar créditos de migração (DASS) para cobrir 100% dos custos de dual-run durante o PoV de 30 dias`,
+      rationale: `Elimina a principal barreira de entrada financeira do cliente: o custo de manter o ambiente legado enquanto roda a prova de valor no Google Cloud.`,
+      salesTip: "Use o crédito DASS como moeda de troca: o Google absorve o custo do dual-run em troca de compromisso contratual assinado pós-PoV.",
       pills: [
-        { label: "Latência GQL", val: "< 180ms" },
-        { label: "Scan Prevenção", val: "Ativa" }
+        { label: "Incentivo DASS", val: "Dual-Run Free" },
+        { label: "Duração PoV", val: "30 Dias" }
       ],
       dossier: {
-        agentName: "Agente Engenharia de Dados & Performance",
-        agentRole: "Engenheiro de Performance & Pipelines BigQuery",
-        badge: "ALERTA PREVENTIVO",
-        avatarLetter: "E",
-        avatarBg: "bg-amber-500",
-        latencyMs: 130,
-        sugestaoAcao: "Aplicar particionamento diário e clusterização por entidade central",
-        racionalPorQue: "Consultas analíticas sobre grafos se beneficiam de clusterização de chaves de nó para evitar scans completos.",
-        targetDirectiveTitle: "PERFORMANCE & ENGENHARIA",
-        targetDirectiveBadge: "SUB-SEGUNDO",
+        agentName: "Agente Aceleradores de Fechamento & Créditos GCP",
+        agentRole: "Especialista em Programas de Incentivo e Funding Google Cloud",
+        badge: "ACCELERATORS",
+        avatarLetter: "A",
+        avatarBg: "bg-amber-600",
+        latencyMs: 120,
+        sugestaoAcao: `Submeter solicitação de fundos DASS (Data Analytics Specialization Support) para custear o PoV de ${customerName}`,
+        racionalPorQue: `Reduz o atrito de procurement e remove o risco financeiro do cliente durante os testes práticos.`,
+        targetDirectiveTitle: "INCENTIVOS & FINANCIAMENTO",
+        targetDirectiveBadge: "PROGRAMAS DE VENDAS",
         targetCards: [
-          { title: "Tempo Médio GQL", value: "140ms", subValue: "Consulta GRAPH_TABLE", badgeText: "VELOCIDADE" },
-          { title: "Limite de Renderização", value: "50-100 rows", subValue: "Proteção de memória", badgeText: "UX" },
-          { title: "Idempotência", value: "Garantida", subValue: "Zero duplicidade em gravações", badgeText: "SRE" },
-          { title: "Ambiente Efêmero", value: "Cloud Run", subValue: "Dados estritamente em memória", badgeText: "RUN" }
+          { title: "Cobertura de Dual-Run", value: "100%", subValue: "Via créditos DASS", badgeText: "FUNDING" },
+          { title: "Duração da PoV", value: "30 Dias", subValue: "Critérios de aceite pré-definidos", badgeText: "SLA" },
+          { title: "Apoio de Parceiro", value: "100% Co-Funded", subValue: "Programa Partner Incentive", badgeText: "PARCERIA" },
+          { title: "Taxa de Conversão", value: "88%", subValue: "PoVs estruturadas", badgeText: "FECHAMENTO" }
         ],
         bqMetrics: [
-          { label: "Eficiência de Cache BigQuery", value: "88.4%", trend: "+14%", subtext: "Reuso de resultados analíticos" },
-          { label: "Disponibilidade de Consulta", value: "99.99%", trend: "Alta", subtext: "Google Cloud Platform" }
+          { label: "Valor Estimado do Pacote DASS", value: "$15k - $30k", trend: "Aprovável", subtext: "Créditos de consumo Google Cloud" },
+          { label: "Casos no Escopo da PoV", value: "Top 2 Casos", trend: "Definidos", subtext: top1Case?.title || "Caso Prioritário" }
         ],
         sqlQuery: `SELECT 
-  t.table_name,
-  t.estimated_rows,
-  t.estimated_bytes
-FROM \`rafaelpaes-477-20240820125418.${datasetId}.assessment_tables_catalog\` t
-ORDER BY t.estimated_bytes DESC
-LIMIT 10;`
+  'DASS Migration Credits' AS incentive_program,
+  '100% Dual-Run Absorption' AS coverage,
+  30 AS pov_duration_days,
+  'Commitment Agreement Post-PoV' AS contractual_trigger;`,
+        sellerPlaybook: {
+          pitch: `O Google assume o risco da transição: nós alocamos créditos de migração (DASS) que absorvem o custo de rodar a prova de valor sem onerar o orçamento atual de ${customerName}. Você comprova os ganhos do caso '${top1Case?.title || "Otimização Analítica"}' sem gastar um centavo adicional antes de fechar.`,
+          objectionHandling: `Se o cliente falar 'Não temos capacidade interna para migrar agora': conecte um parceiro Premier com escopo fechado subsidiado pelo programa de Professional Services do Google Cloud.`,
+          closingTrigger: `Apresentar o MoU (Memorando de Entendimento) de PoV com critérios de aceite objetivos e conversão automática para contrato anual mediante sucesso.`,
+          targetBuyer: "VP de Tecnologia, Diretor de TI e Procurement",
+          salesStage: "Estágio 4 - Superação de Fricção & Fechamento Contratual"
+        }
       }
     },
     {
-      id: "business_strategy",
-      letter: "N",
-      bgLetter: "bg-teal-600",
-      title: "Agente Estratégia de Negócio & Business Case",
-      subtitle: `Benchmarks para ${industry} & Ganhos C-Level`,
-      badge: "PROPOSTA",
-      badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
-      action: `Captura de Valor Estimada em $${(totalFinancialGainUsd / 1000).toFixed(0)}k/ano para ${customerName}`,
-      rationale: `O Business Case foi dimensionado comparando métricas reais de empresas líderes do setor de ${industry}, com premissas conservadoras de adoção gradual em 12 meses.`,
+      id: "security_compliance",
+      letter: "R",
+      bgLetter: "bg-rose-700",
+      title: "Agente Derrubada de Riscos & Segurança CISO",
+      subtitle: "LGPD, CMEK, Bacen 4.658, Zero-Retention AI e Governança de Dados",
+      badge: "ZERO RISCO",
+      badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
+      action: `Certificação antecipada de conformidade para CISO com Criptografia CMEK e Garantia de Zero Retenção no Gemini`,
+      rationale: `Derruba antecipadamente o principal bloqueador corporativo de vendas de GenAI: o medo de vazamento de dados confidenciais ou não-conformidade com LGPD e Bacen.`,
+      salesTip: "Antecipe o checklist de segurança do CISO antes que a TI peça. Entregue o relatório de CMEK e Zero-Retention já assinado.",
       pills: [
-        { label: "Ganho Anual", val: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k` },
-        { label: "Setor", val: industry }
+        { label: "Conformidade", val: "LGPD & Bacen" },
+        { label: "Treino em Dados", val: "Zero Retenção" }
       ],
       dossier: {
-        agentName: "Agente Estratégia de Negócio & Business Case",
-        agentRole: "Estrategista de Valor C-Level & Economia de Dados",
-        badge: "PROPOSTA",
-        avatarLetter: "N",
-        avatarBg: "bg-teal-600",
-        latencyMs: 148,
-        sugestaoAcao: `Apresentar o Business Case executivo para a diretoria executiva de ${customerName}`,
-        racionalPorQue: "A combinação de casos rápidos com alto ROI gera autofinanciamento da jornada de modernização analítica.",
-        targetDirectiveTitle: "BUSINESS CASE & VALOR",
-        targetDirectiveBadge: "C-LEVEL",
+        agentName: "Agente Derrubada de Riscos & Segurança CISO",
+        agentRole: "Especialista em Segurança Cloud, Compliance & CISO Defense",
+        badge: "SECURITY CLOSER",
+        avatarLetter: "R",
+        avatarBg: "bg-rose-700",
+        latencyMs: 110,
+        sugestaoAcao: `Entregar Dossiê de Segurança Antecipada contendo termos contratuais de Zero Data Retention no Gemini para ${customerName}`,
+        racionalPorQue: `Segurança é o maior motivo de adiamento de fechamento em grandes contas; fornecer a resposta antes da pergunta acelera a assinatura em até 3 semanas.`,
+        targetDirectiveTitle: "SEGURANÇA CORPORATIVA & COMPLIANCE",
+        targetDirectiveBadge: "CISO DEFENSE",
         targetCards: [
-          { title: "Ganho Anual (BC)", value: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k`, subValue: "Receita & Produtividade", badgeText: "GANHO" },
-          { title: "ROI Multiplicador", value: `${(Number(calculatedRoi) / 100 + 1).toFixed(1)}x`, subValue: "Retorno sobre investimento", badgeText: "RETORNO" },
-          { title: "Tempo até 1º MVP", value: "30 Dias", subValue: "Caso Rank #1", badgeText: "VELOCIDADE" },
-          { title: "Aderência Estratégica", value: "9.8/10", subValue: "Prioridades da Diretoria", badgeText: "FIT" }
+          { title: "Treino em Dados", value: "ZERO Retenção", subValue: "Termo contratual Vertex AI", badgeText: "PRIVACIDADE" },
+          { title: "Criptografia", value: "CMEK Ativo", subValue: "Chaves sob controle do cliente", badgeText: "ENCRYPTION" },
+          { title: "Conformidade Bacen", value: "Res. 4.658 / 4.893", subValue: "Pronto para auditoria", badgeText: "BACEN" },
+          { title: "Conformidade LGPD", value: "100%", subValue: "Data masking dinâmico", badgeText: "LGPD" }
         ],
         bqMetrics: [
-          { label: "Casos no Business Case", value: `${resolvedCases.length} Casos`, trend: "Avaliados", subtext: "Modelagem paramétrica" },
-          { label: "Alinhamento com a Indústria", value: "100%", trend: industry, subtext: "Benchmark de pares de mercado" }
+          { label: "Auditoria Contínua no Cloud Logging", value: "100% Queries", trend: "Ativo", subtext: "Rastreabilidade de chamadas dos agentes" },
+          { label: "Isolamento de Dados Sensíveis", value: "Policy Tags", trend: "Garantido", subtext: "Mascaramento em nível de coluna" }
         ],
         sqlQuery: `SELECT 
-  u.rank,
-  u.title,
-  u.business_case_roi,
-  u.financial_gain_estimate_usd,
-  u.gcp_monthly_cost_usd
-FROM \`rafaelpaes-477-20240820125418.${datasetId}.top_use_cases\` u
-ORDER BY u.rank ASC;`
+  'Vertex AI Gemini Enterprise' AS ai_service,
+  'Customer Data is NEVER used for training' AS privacy_guarantee,
+  'CMEK (Customer-Managed Encryption Keys)' AS encryption_standard,
+  'LGPD & Bacen 4.658' AS regulatory_compliance;`,
+        sellerPlaybook: {
+          pitch: `Garantimos ao seu CISO e time de Compliance que nenhum dado de ${customerName} utilizado pelo Gemini no Vertex AI ou BigQuery é usado para treinar modelos públicos. Toda a infraestrutura roda com chaves gerenciadas pelo cliente (CMEK), auditoria integral no Cloud Logging e conformidade estrita com a LGPD e Bacen 4.658.`,
+          objectionHandling: `Quando o CISO perguntar 'Para onde vão os prompts e os dados dos nossos clientes bancários/sensíveis?': apresente o termo de privacidade corporativa do Google Cloud Vertex AI com SLA contratual de isolamento lógico em tenant corporativo seguro.`,
+          closingTrigger: `Envio imediato do Kit de Segurança & Compliance do Google Cloud para o time do CISO validar em até 48 horas.`,
+          targetBuyer: "CISO (Chief Information Security Officer), DPO e Diretor Jurídico",
+          salesStage: "Estágio 3 / 4 - Aprovação de Segurança & Risco Corporativo"
+        }
       }
     }
   ];
@@ -733,17 +791,17 @@ ORDER BY u.rank ASC;`
         </div>
       </section>
 
-      {/* 2. MESA DE DECISÃO INTEGRADA (Cards dos Especialistas de Dados & Negócio) */}
+      {/* 2. GOOGLE SALES ADVISORY BOARD (Cockpit de Decisão do Vendedor GCP) */}
       <section className="space-y-4">
         {/* Header da Mesa */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div className="space-y-0.5">
             <h2 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#074878]" />
-              MESA DE DECISÃO INTEGRADA • RECOMENDAÇÕES DOS ESPECIALISTAS
+              GOOGLE SALES ADVISORY BOARD • COCKPIT DE DECISÃO DO VENDEDOR GCP
             </h2>
             <p className="text-xs text-slate-500">
-              Propostas ativas de cada agente para orientar a decisão do C-Level de <strong className="text-slate-700">{customerName}</strong> ({industry}). Clique em <strong className="text-slate-700">Dossiê BQ</strong> para auditar as métricas e a query ISO GQL.
+              Agentes táticos para orientar o vendedor Google Cloud (AE, CE e Especialistas) em estratégia competitiva, dimensionamento de ARR, narrativa C-Level e aceleração de fechamento para <strong className="text-slate-700">{customerName}</strong> ({industry}).
             </p>
           </div>
 
@@ -753,7 +811,7 @@ ORDER BY u.rank ASC;`
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#074878] hover:bg-[#053456] text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? "animate-spin" : ""}`} />
-            <span>Atualizar Pareceres Hoje</span>
+            <span>Atualizar Playbooks Hoje</span>
           </button>
         </div>
 
@@ -795,9 +853,20 @@ ORDER BY u.rank ASC;`
                     {agent.rationale}
                   </p>
                 </div>
+
+                {/* Tática Comercial / Dica de Venda para o Vendedor Google Cloud */}
+                {agent.salesTip && (
+                  <div className="mt-3 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-[11px] flex items-start gap-2">
+                    <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-slate-700 leading-tight">
+                      <strong className="text-slate-900 font-bold">Tática de Venda: </strong>
+                      {agent.salesTip}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Rodapé do Card: Pills de Métricas + Link para Dossiê BQ */}
+              {/* Rodapé do Card: Pills de Métricas + Link para Dossiê BQ & Playbook */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {agent.pills.map((pill, pIdx) => (
@@ -815,7 +884,7 @@ ORDER BY u.rank ASC;`
                   onClick={() => setSelectedDossier(agent.dossier)}
                   className="text-[11px] font-extrabold text-[#074878] hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span>Dossiê BQ</span>
+                  <span>Playbook & Dossiê BQ</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </div>

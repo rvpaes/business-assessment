@@ -2,7 +2,16 @@
 "use client";
 
 import React from "react";
-import { X, Database, Terminal, ShieldCheck, TrendingUp, CheckCircle2, Layers } from "lucide-react";
+import { X, Database, Terminal, ShieldCheck, TrendingUp, CheckCircle2, Layers, Briefcase, Zap, Target, Award } from "lucide-react";
+import { GoogleCloudLogo } from "../GoogleCloudLogo";
+
+export interface SellerPlaybook {
+  pitch: string;
+  objectionHandling: string;
+  closingTrigger: string;
+  targetBuyer: string;
+  salesStage: string;
+}
 
 export interface AgentModalData {
   agentName: string;
@@ -19,6 +28,7 @@ export interface AgentModalData {
   targetCards: { title: string; value: string; subValue: string; badgeText: string }[];
   bqMetrics: { label: string; value: string; trend?: string; subtext?: string }[];
   sqlQuery: string;
+  sellerPlaybook?: SellerPlaybook;
 }
 
 interface AgentDossierModalProps {
@@ -41,31 +51,87 @@ export const AgentDossierModal: React.FC<AgentDossierModalProps> = ({ data, onCl
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-black text-slate-900">{data.agentName}</h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#074878] text-white">
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-[#074878] text-white">
                   {data.badge}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">{data.agentRole} • Latência BQ: {data.latencyMs || 140}ms</p>
+              <p className="text-xs text-slate-500">{data.agentRole} • BigQuery SLA: {data.latencyMs || 140}ms</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-6 text-xs">
+          {/* Playbook Tático do Vendedor Google Cloud (se presente) */}
+          {data.sellerPlaybook && (
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-950 to-[#074878] text-white space-y-3.5 border border-blue-800/60 shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <GoogleCloudLogo height={15} variant="white_card" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
+                    PLAYBOOK TÁTICO DO VENDEDOR GOOGLE CLOUD
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-900/80 text-blue-200 border border-blue-700/50">
+                    {data.sellerPlaybook.targetBuyer}
+                  </span>
+                  <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-400 text-slate-950">
+                    {data.sellerPlaybook.salesStage}
+                  </span>
+                </div>
+              </div>
+
+              {/* Pitch */}
+              <div className="space-y-1">
+                <span className="text-[9px] font-extrabold uppercase text-cyan-300 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-cyan-300 fill-cyan-300" />
+                  O QUE FALAR NA REUNIÃO COM A DIRETORIA (PITCH)
+                </span>
+                <p className="text-xs text-blue-50 leading-relaxed font-medium">
+                  &ldquo;{data.sellerPlaybook.pitch}&rdquo;
+                </p>
+              </div>
+
+              {/* Objeção & Fechamento */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-blue-800/60">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-extrabold uppercase text-amber-300 flex items-center gap-1">
+                    <Target className="w-3 h-3 text-amber-300" />
+                    COMO NEUTRALIZAR O INCUMBENT
+                  </span>
+                  <p className="text-[11px] text-blue-100/90 leading-relaxed">
+                    {data.sellerPlaybook.objectionHandling}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[9px] font-extrabold uppercase text-emerald-300 flex items-center gap-1">
+                    <Award className="w-3 h-3 text-emerald-300" />
+                    GATILHO DE FECHAMENTO CONTRATUAL
+                  </span>
+                  <p className="text-[11px] text-emerald-100/90 leading-relaxed">
+                    {data.sellerPlaybook.closingTrigger}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Racional Estratégico */}
-          <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100 space-y-1.5">
             <span className="text-[10px] font-black uppercase tracking-wider text-[#074878]">
               {data.targetDirectiveTitle} • {data.targetDirectiveBadge}
             </span>
             <p className="text-xs font-bold text-slate-900">{data.sugestaoAcao}</p>
             <p className="text-[11px] text-slate-600">
-              <strong>Racional do Grafo:</strong> {data.racionalPorQue}
+              <strong>Racional do Grafo & Telemetria:</strong> {data.racionalPorQue}
             </p>
           </div>
 
