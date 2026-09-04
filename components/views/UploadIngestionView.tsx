@@ -1,7 +1,7 @@
 // components/views/UploadIngestionView.tsx - Ingestão com Detecção de Setor por Gemini & Info Adicional
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { 
   UploadCloud, 
   FileArchive, 
@@ -40,6 +40,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [isDetectingSector, setIsDetectingSector] = useState(false);
   const [sectorDetectedByAi, setSectorDetectedByAi] = useState(false);
+  const [sectorRationale, setSectorRationale] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
@@ -75,15 +76,18 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyName: targetName,
-          websiteUrl: targetUrl,
-          additionalInfo: additionalInfo
+          companyName: targetName.trim(),
+          websiteUrl: targetUrl.trim(),
+          additionalInfo: additionalInfo.trim()
         })
       });
       const data = await res.json();
       if (data.industry) {
         setIndustry(data.industry);
         setSectorDetectedByAi(true);
+        if (data.rationale) {
+          setSectorRationale(data.rationale);
+        }
       }
     } catch (e) {
       console.warn("Falha ao detectar setor automaticamente:", e);
@@ -91,6 +95,21 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
       setIsDetectingSector(false);
     }
   };
+
+  // Auto-detecção dinâmica ao digitar Nome da Empresa ou URL (Debounce de 500ms)
+  useEffect(() => {
+    const trimmedName = customerName.trim();
+    const trimmedUrl = websiteUrl.trim();
+
+    // Dispara a busca inteligente se houver nome ou URL
+    if (trimmedName.length < 2 && trimmedUrl.length < 5) return;
+
+    const timer = setTimeout(() => {
+      handleDetectIndustry(trimmedName, trimmedUrl);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [customerName, websiteUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -235,15 +254,15 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
 
             {/* Indicador de Identificação de Setor por IA */}
             {isDetectingSector && (
-              <span className="text-[10px] font-bold text-[#074878] flex items-center gap-1 animate-pulse">
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                Identificando setor com Gemini...
+              <span className="text-[10px] font-bold text-[#074878] flex items-center gap-1.5 animate-pulse bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                <RefreshCw className="w-3 h-3 animate-spin text-[#074878]" />
+                Analisando setor com IA...
               </span>
             )}
             {sectorDetectedByAi && !isDetectingSector && (
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
                 <Sparkles className="w-3 h-3 text-emerald-600" />
-                Setor identificado por IA
+                <span>Identificado: <strong className="font-extrabold">{industry}</strong></span>
               </span>
             )}
           </div>
@@ -263,7 +282,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                   setSectorDetectedByAi(false);
                 }}
                 onBlur={() => handleDetectIndustry()}
-                placeholder="Ex: Nubank, Ambev, Magazine Luiza, Hypera"
+                placeholder="Ex: Nubank, Digio, Ambev, Magazine Luiza, Hypera"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all"
               />
             </div>
@@ -300,8 +319,17 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 disabled={isDetectingSector || (!customerName && !websiteUrl)}
                 className="text-[10px] font-bold text-[#074878] hover:underline inline-flex items-center gap-1 disabled:opacity-50 cursor-pointer"
               >
-                <Bot className="w-3 h-3" />
-                <span>Reclassificar com IA</span>
+                {isDetectingSector ? (
+                  <>
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Identificando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Bot className="w-3 h-3" />
+                    <span>Reclassificar com IA</span>
+                  </>
+                )}
               </button>
             </div>
             <select
