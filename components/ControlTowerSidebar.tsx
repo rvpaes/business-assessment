@@ -117,14 +117,14 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
       {/* Rodapé da Sidebar: Status da Stack de Dados */}
       <div className="p-4 border-t border-[#E8F1F8] space-y-2 bg-slate-50/50">
         <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-500 font-medium">BigQuery & Storage:</span>
+          <span className="text-slate-500 font-medium">{t("sidebarStorage")}</span>
           <span className="text-emerald-700 font-bold flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Conectado
+            {t("sidebarConnected")}
           </span>
         </div>
         <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-500 font-medium">Motor Cognitivo:</span>
+          <span className="text-slate-500 font-medium">{t("sidebarCognitive")}</span>
           <span className="text-[#074878] font-bold">Gemini 3.8 Flash</span>
         </div>
       </div>

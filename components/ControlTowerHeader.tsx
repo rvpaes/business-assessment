@@ -121,7 +121,7 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
               <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-[#074878]" : ""}`} />
             </div>
             <span className="text-[10px] text-slate-500 font-medium">
-              {totalTables > 0 ? `${totalTables.toLocaleString()} Tabelas Auditadas • ${docPercentage.toFixed(1)}% Documentado` : "Aguardando Ingestão de ZIP"}
+              {totalTables > 0 ? `${totalTables.toLocaleString()} ${t("auditedTables")} • ${docPercentage.toFixed(1)}% ${t("documented")}` : t("waitingZipIngestion")}
             </span>
           </div>
         </button>
@@ -131,13 +131,13 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
           <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in duration-150">
             <div className="px-3 py-2 border-b border-slate-100">
               <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-                Selecionar Cliente Auditado
+                {t("selectedCustomerTitle")}
               </span>
               <input
                 type="text"
                 value={filterQuery}
                 onChange={e => setFilterQuery(e.target.value)}
-                placeholder="Filtrar por nome ou setor..."
+                placeholder={t("searchCustomer")}
                 className="w-full mt-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-800 outline-none focus:border-[#074878]"
                 onClick={e => e.stopPropagation()}
               />
@@ -168,7 +168,7 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400">
-                        {cust.totalTables.toLocaleString()} Tabelas • {cust.docPercentage.toFixed(1)}% Doc
+                        {cust.totalTables.toLocaleString()} {t("tables")} • {cust.docPercentage.toFixed(1)}% Doc
                       </p>
                     </div>
 
@@ -190,7 +190,7 @@ export const ControlTowerHeader: React.FC<ControlTowerHeaderProps> = ({
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#074878] hover:bg-[#053456] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>+ Ingerir Novo Cliente (Upload ZIP)</span>
+                <span>{t("ingestNew")}</span>
               </button>
             </div>
           </div>

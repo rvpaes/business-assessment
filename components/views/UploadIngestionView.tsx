@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface UploadIngestionViewProps {
   assessment: CustomerAssessment | null;
@@ -34,6 +35,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   onNavigateToDashboard,
   onNavigateToCases
 }) => {
+  const { t } = useLanguage();
   const [customerName, setCustomerName] = useState(assessment?.customerName || "");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState(assessment?.industry || "Varejo & E-commerce");
@@ -115,7 +117,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!file.name.endsWith(".zip")) {
-        setErrorMessage("Por favor, selecione um arquivo no formato .zip.");
+        setErrorMessage(t("errZipOnly"));
         return;
       }
       setSelectedFile(file);
@@ -138,7 +140,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (!file.name.endsWith(".zip")) {
-        setErrorMessage("Por favor, selecione um arquivo no formato .zip.");
+        setErrorMessage(t("errZipOnly"));
         return;
       }
       setSelectedFile(file);
@@ -148,17 +150,17 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
 
   const handleUpload = async () => {
     if (!customerName.trim()) {
-      setErrorMessage("Por favor, informe o nome do cliente antes de prosseguir.");
+      setErrorMessage(t("errClientRequired"));
       return;
     }
     if (!selectedFile) {
-      setErrorMessage("Por favor, adicione o arquivo .ZIP de metadados.");
+      setErrorMessage(t("errZipRequired"));
       return;
     }
 
     setIsLoading(true);
     setErrorMessage("");
-    setStatusMessage("Salvando no Google Cloud Storage e indexando no BigQuery...");
+    setStatusMessage(t("msgSavingGcsBq"));
 
     try {
       const formData = new FormData();
@@ -178,7 +180,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         throw new Error(data.error || "Falha no processamento do arquivo.");
       }
 
-      setStatusMessage("Assessment e metadados indexados com sucesso!");
+      setStatusMessage(t("msgAssessmentSuccess"));
       onAssessmentLoaded(data.assessment, data.topTablesSample || []);
     } catch (err: any) {
       setErrorMessage(err.message || "Erro durante o upload do pacote.");
@@ -191,7 +193,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     const finalCustomerName = customerName.trim() || "Hypera Pharma";
     setIsLoading(true);
     setErrorMessage("");
-    setStatusMessage("Carregando pacote de exemplo para Cloud Storage & BigQuery...");
+    setStatusMessage(t("msgLoadingSample"));
 
     try {
       const res = await fetch("/api/sample", {
@@ -210,7 +212,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
         throw new Error(data.error || "Falha ao carregar arquivo de exemplo.");
       }
 
-      setStatusMessage("Demonstração carregada com sucesso!");
+      setStatusMessage(t("msgSampleSuccess"));
       onAssessmentLoaded(data.assessment, data.topTablesSample || []);
     } catch (err: any) {
       setErrorMessage(err.message || "Erro ao carregar o exemplo local.");
@@ -231,10 +233,10 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           <span>Google Cloud Business Assessment</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Inicie o Assessment de Negócio
+          {t("startBusinessAssessmentTitle")}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
-          Informe os dados da empresa e faça o upload do arquivo <code className="text-[#074878] font-bold">.ZIP</code> de metadados para calcular os Casos de Uso com Gemini 3.8 Flash e gerar o Grafo BigQuery.
+          {t("startBusinessAssessmentSub")}
         </p>
       </div>
 
@@ -248,7 +250,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 1
               </span>
               <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
-                Quem é o cliente?
+                {t("whoIsCustomer")}
               </h2>
             </div>
 
@@ -256,13 +258,13 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             {isDetectingSector && (
               <span className="text-[10px] font-bold text-[#074878] flex items-center gap-1.5 animate-pulse bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
                 <RefreshCw className="w-3 h-3 animate-spin text-[#074878]" />
-                Analisando setor com IA...
+                {t("analyzingIndustryAI")}
               </span>
             )}
             {sectorDetectedByAi && !isDetectingSector && (
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
                 <Sparkles className="w-3 h-3 text-emerald-600" />
-                <span>Identificado: <strong className="font-extrabold">{industry}</strong></span>
+                <span>{t("identifiedIndustry")} <strong className="font-extrabold">{industry}</strong></span>
               </span>
             )}
           </div>
@@ -272,7 +274,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             <div>
               <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                Nome da Empresa / Cliente *
+                {t("companyNameLabel")}
               </label>
               <input
                 type="text"
@@ -282,7 +284,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                   setSectorDetectedByAi(false);
                 }}
                 onBlur={() => handleDetectIndustry()}
-                placeholder="Ex: Nubank, Digio, Ambev, Magazine Luiza, Hypera"
+                placeholder={t("companyPlaceholder")}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all"
               />
             </div>
@@ -291,7 +293,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             <div>
               <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
                 <Globe className="w-3.5 h-3.5 text-slate-400" />
-                Website / URL do Cliente
+                {t("customerWebsiteLabel")}
               </label>
               <input
                 type="url"
@@ -301,7 +303,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                   setSectorDetectedByAi(false);
                 }}
                 onBlur={() => handleDetectIndustry()}
-                placeholder="Ex: https://www.cliente.com.br"
+                placeholder={t("websiteUrlPlaceholder")}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all"
               />
             </div>
@@ -311,7 +313,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[11px] font-bold text-slate-600">
-                Setor / Indústria (Classificado por Gemini 3.8 Flash) *
+                {t("industryLabel")}
               </label>
               <button
                 type="button"
@@ -322,12 +324,12 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 {isDetectingSector ? (
                   <>
                     <RefreshCw className="w-3 h-3 animate-spin" />
-                    <span>Identificando...</span>
+                    <span>{t("identifyingIndustry")}</span>
                   </>
                 ) : (
                   <>
                     <Bot className="w-3 h-3" />
-                    <span>Reclassificar com IA</span>
+                    <span>{t("reclassifyWithAI")}</span>
                   </>
                 )}
               </button>
@@ -350,17 +352,17 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           <div>
             <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              Informações Estratégicas Adicionais (Opcional para o Prompt)
+              {t("strategicInfoLabel")}
             </label>
             <textarea
               value={additionalInfo}
               onChange={(e) => setAdditionalInfo(e.target.value)}
               rows={3}
-              placeholder="Ex: Foco prioritário em redução de custos de nuvem e FinOps, expansão de novos canais digitais omnichannel, conformidade estrita com LGPD e prevenção de perdas de estoque..."
+              placeholder={t("strategicInfoPlaceholder")}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#074878]/20 focus:border-[#074878] transition-all resize-none"
             />
             <p className="text-[10px] text-slate-400 mt-1">
-              Estas informações serão injetadas diretamente nas instruções do debate multi-agente NC-MAD.
+              {t("strategicInfoHelp")}
             </p>
           </div>
         </div>
@@ -372,7 +374,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
               2
             </span>
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
-              Arquivo de Metadados (.ZIP)
+              {t("metadataZipTitle")}
             </h2>
           </div>
 
@@ -405,7 +407,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 <div>
                   <p className="text-xs font-extrabold text-slate-900">{selectedFile.name}</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Clique para substituir o arquivo
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {t("clickToReplace")}
                   </p>
                 </div>
               </div>
@@ -416,10 +418,10 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-800">
-                    Arraste o arquivo <span className="font-extrabold text-[#074878]">.ZIP</span> aqui ou clique para buscar
+                    {t("dragZipTitle")}
                   </p>
                   <p className="text-[10px] text-slate-400 mt-0.5">
-                    Pacote gerado pelo extrator no ambiente do cliente (ex: metadata_assessment_organization.zip)
+                    {t("dragZipDesc")}
                   </p>
                 </div>
               </div>
@@ -452,11 +454,11 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             {isLoading ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Processando com Gemini 3.8 Flash...</span>
+                <span>{t("processingGemini")}</span>
               </>
             ) : (
               <>
-                <span>Iniciar Assessment com Gemini 3.8 Flash</span>
+                <span>{t("startAssessmentBtn")}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -469,7 +471,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
               className="text-xs font-bold text-[#074878] hover:text-blue-800 hover:underline inline-flex items-center gap-1.5 cursor-pointer transition-colors py-1"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Experimentar com pacote de exemplo (1 clique)</span>
+              <span>{t("trySamplePackage")}</span>
             </button>
           </div>
         </div>
@@ -481,7 +483,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
               <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider block">
-                Assessment Atualmente Carregado
+                {t("currentAssessmentLoaded")}
               </span>
               <div className="flex items-center gap-2 mt-0.5">
                 <h3 className="text-base font-extrabold text-slate-900">{assessment.customerName}</h3>
@@ -494,26 +496,26 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Indexado no BigQuery
+                {t("indexedInBigQuery")}
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Tabelas</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">{t("tables")}</span>
               <div className="text-base font-black text-[#074878] mt-0.5">
                 {assessment.totalTables.toLocaleString()}
               </div>
             </div>
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Colunas</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">{t("columns")}</span>
               <div className="text-base font-black text-slate-900 mt-0.5">
                 {assessment.totalColumns.toLocaleString()}
               </div>
             </div>
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Documentação</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">{t("documentation")}</span>
               <div className="text-base font-black text-emerald-600 mt-0.5">
                 {assessment.docPercentage.toFixed(1)}%
               </div>
@@ -527,7 +529,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 onClick={onNavigateToDashboard}
                 className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#074878] hover:bg-[#053456] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Acessar Agent Intelligence</span>
+                <span>{t("accessIntelligence")}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             )}
@@ -537,7 +539,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
                 onClick={onNavigateToCases}
                 className="w-full sm:flex-1 py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Ver Casos de Uso & Retorno (BC)</span>
+                <span>{t("viewUseCasesRoi")}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             )}

@@ -24,6 +24,7 @@ import {
 import { CustomerAssessment, TopUseCase, TableCatalogItem } from "@/lib/types";
 import { AgentModalData, AgentDossierModal } from "./AgentDossierModal";
 import { GoogleCloudLogo } from "../GoogleCloudLogo";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface ExecutiveDecisionViewProps {
   assessment: CustomerAssessment | null;
@@ -42,6 +43,7 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   onNavigateToTab,
   onNavigateToUpload
 }) => {
+  const { t } = useLanguage();
   const [selectedDossier, setSelectedDossier] = useState<AgentModalData | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -407,9 +409,9 @@ ORDER BY u.rank ASC;`
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-blue-900/70 border border-blue-400/25 text-[11px] font-bold text-blue-200">
             <GoogleCloudLogo height={16} variant="white_card" />
-            <span className="text-amber-300 font-extrabold">CONSELHO ESTRATÉGICO</span>
+            <span className="text-amber-300 font-extrabold">{t("strategicCouncil")}</span>
             <span className="text-blue-300">•</span>
-            <span className="text-blue-100 uppercase">AGENT INTELLIGENCE</span>
+            <span className="text-blue-100 uppercase">{t("tabDecision")}</span>
             <span className="text-blue-300">•</span>
             <span className="text-blue-300 font-medium">{customerName} ({industry})</span>
           </div>
@@ -421,7 +423,7 @@ ORDER BY u.rank ASC;`
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition-transform active:scale-95 cursor-pointer shrink-0"
               >
                 <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                <span>Executar Neuro-Debate ao Vivo</span>
+                <span>{t("runLiveDebate")}</span>
               </button>
             )}
 
@@ -430,7 +432,7 @@ ORDER BY u.rank ASC;`
                 onClick={onNavigateToUpload}
                 className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer shrink-0"
               >
-                <span>Novo Upload ZIP</span>
+                <span>{t("newZipUpload")}</span>
               </button>
             )}
           </div>
@@ -439,7 +441,7 @@ ORDER BY u.rank ASC;`
         {/* Título e Descrição */}
         <div className="mt-4 max-w-4xl">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Agent Intelligence: Conselho Neurocognitivo & Decisão Estratégica
+            {t("decisionHeroTitle")}
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-blue-100/85 leading-relaxed font-normal">
             A análise multi-agente cruzou o catálogo de metadados, a maturidade de governança Dataplex e as tabelas auditadas no BigQuery para <strong className="text-white font-bold">{customerName}</strong>, sintetizando hipóteses de inovação, viabilidade e plano de valor para a indústria de <strong className="text-white font-bold">{industry}</strong>.
