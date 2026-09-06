@@ -785,20 +785,63 @@ export async function queryGraphTableGQL(): Promise<any[]> {
       destination_name,
       destination_type,
       connection_weight
-    FROM GRAPH_TABLE(
-      \`${PROJECT_ID}.${DATASET_ID}.enterprise_business_graph\`
-      MATCH (src:Node)-[e:Edge]->(dst:Node)
-      COLUMNS (
-        src.name AS source_name,
-        src.node_type AS source_type,
-        e.edge_type AS relationship,
-        dst.name AS destination_name,
-        dst.node_type AS destination_type,
-        e.weight AS connection_weight
+    FROM (
+      SELECT 
+        u.title AS source_name,
+        'UseCase' AS source_type,
+        'CONSUMES_GCP_SERVICE' AS relationship,
+        s.service_name AS destination_name,
+        'GcpService' AS destination_type,
+        cs.monthly_cost_usd AS connection_weight
+      FROM GRAPH_TABLE(
+        \`${PROJECT_ID}.${DATASET_ID}.enterprise_business_graph\`
+        MATCH (u:UseCase)-[cs:CONSUMES_GCP_SERVICE]->(s:GcpService)
+        COLUMNS (u.title, s.service_name, cs.monthly_cost_usd)
+      )
+      UNION ALL
+      SELECT 
+        c.name AS source_name,
+        'Customer' AS source_type,
+        'HAS_ASSESSMENT' AS relationship,
+        a.customer_name AS destination_name,
+        'Assessment' AS destination_type,
+        CAST(a.total_tables AS FLOAT64) AS connection_weight
+      FROM GRAPH_TABLE(
+        \`${PROJECT_ID}.${DATASET_ID}.enterprise_business_graph\`
+        MATCH (c:Customer)-[:HAS_ASSESSMENT]->(a:Assessment)
+        COLUMNS (c.name, a.customer_name, a.total_tables)
+      )
+      UNION ALL
+      SELECT 
+        u.title AS source_name,
+        'UseCase' AS source_type,
+        'ACHIEVES_GOAL' AS relationship,
+        g.goal_name AS destination_name,
+        'StrategicGoal' AS destination_type,
+        ug.expected_annual_gain_usd AS connection_weight
+      FROM GRAPH_TABLE(
+        \`${PROJECT_ID}.${DATASET_ID}.enterprise_business_graph\`
+        MATCH (u:UseCase)-[ug:ACHIEVES_GOAL]->(g:StrategicGoal)
+        COLUMNS (u.title, g.goal_name, ug.expected_annual_gain_usd)
+      )
+      UNION ALL
+      SELECT 
+        p.agent_name AS source_name,
+        'PersonaDebate' AS source_type,
+        'VALIDATED_USE_CASE' AS relationship,
+        u.title AS destination_name,
+        'UseCase' AS destination_type,
+        p.consensus_weight AS connection_weight
+      FROM GRAPH_TABLE(
+        \`${PROJECT_ID}.${DATASET_ID}.enterprise_business_graph\`
+        MATCH (p:PersonaDebate)-[:VALIDATED_USE_CASE]->(u:UseCase)
+        COLUMNS (p.agent_name, u.title, p.consensus_weight)
       )
     )
+    ORDER BY connection_weight DESC
     LIMIT 100;
   `;
 
   return await runOptimizedBigQueryQuery(gql, "GQL GRAPH_TABLE Match Query");
 }
+

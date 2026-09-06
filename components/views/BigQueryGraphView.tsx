@@ -18,19 +18,25 @@ export const BigQueryGraphView: React.FC<BigQueryGraphViewProps> = ({
   const [graphData, setGraphData] = useState<PropertyGraphData>(initialGraphData || { nodes: [], edges: [] });
   const [selectedNode, setSelectedNode] = useState<PropertyGraphNode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExecutingGql, setIsExecutingGql] = useState(false);
+  const [gqlError, setGqlError] = useState<string | null>(null);
   const [gqlQuery, setGqlQuery] = useState(`SELECT 
-  src.name AS source_name,
-  src.node_type AS source_type,
-  e.edge_type AS relationship,
-  dst.name AS destination_name,
-  dst.node_type AS destination_type,
-  e.weight AS connection_weight
+  customer_name,
+  use_case_title,
+  gcp_service_name,
+  estimated_monthly_consumption_usd
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
-  MATCH (src:Node)-[e:Edge]->(dst:Node)
-  COLUMNS (src, e, dst)
+  MATCH (c:Customer)-[:INVESTS_IN]->(u:UseCase)-[e:CONSUMES_GCP_SERVICE]->(s:GcpService)
+  COLUMNS (
+    c.name AS customer_name,
+    u.title AS use_case_title,
+    s.service_name AS gcp_service_name,
+    e.estimated_monthly_consumption_usd AS estimated_monthly_consumption_usd
+  )
 )
-LIMIT 50;`);
+ORDER BY estimated_monthly_consumption_usd DESC
+LIMIT 10;`);
   const [gqlResults, setGqlResults] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"visual" | "gql">("visual");
 
@@ -41,7 +47,7 @@ LIMIT 50;`);
       const data = await res.json();
       if (data.graph) {
         setGraphData(data.graph);
-        if (data.gqlMatches) {
+        if (data.gqlMatches && data.gqlMatches.length > 0) {
           setGqlResults(data.gqlMatches);
         }
       }
@@ -49,6 +55,29 @@ LIMIT 50;`);
       console.error("Erro ao carregar grafo:", e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const executeCustomGql = async (queryToRun?: string) => {
+    const q = (queryToRun || gqlQuery).trim();
+    if (!q) return;
+    setIsExecutingGql(true);
+    setGqlError(null);
+    try {
+      const res = await fetch("/api/bigquery/graph", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Falha na execução da consulta GQL");
+      }
+      setGqlResults(data.results || []);
+    } catch (err: any) {
+      setGqlError(err.message || "Erro desconhecido na execução GQL");
+    } finally {
+      setIsExecutingGql(false);
     }
   };
 
@@ -65,7 +94,9 @@ LIMIT 50;`);
         return { bg: "bg-blue-600", stroke: "#2563eb", text: "text-blue-600" };
       case "Assessment":
         return { bg: "bg-emerald-600", stroke: "#059669", text: "text-emerald-600" };
+      case "PersonaDebate":
       case "AgentPersona":
+      case "Agent":
         return { bg: "bg-purple-600", stroke: "#9333ea", text: "text-purple-600" };
       case "UseCase":
         return { bg: "bg-indigo-600", stroke: "#4f46e5", text: "text-indigo-600" };
@@ -75,6 +106,7 @@ LIMIT 50;`);
         return { bg: "bg-teal-600", stroke: "#0d9488", text: "text-teal-600" };
       case "ModernizationAction":
         return { bg: "bg-cyan-600", stroke: "#0891b2", text: "text-cyan-600" };
+      case "TableCatalog":
       case "Table":
         return { bg: "bg-slate-600", stroke: "#475569", text: "text-slate-600" };
       default:
@@ -86,8 +118,8 @@ LIMIT 50;`);
   const nodes = graphData.nodes || [];
   const edges = graphData.edges || [];
 
-  const width = 860;
-  const height = 540;
+  const width = 920;
+  const height = 560;
   const centerX = width / 2;
   const centerY = height / 2;
 
@@ -96,46 +128,54 @@ LIMIT 50;`);
 
   nodes.forEach((node, idx) => {
     if (node.nodeType === "Customer") {
-      nodePositions.set(node.id, { x: centerX - 140, y: centerY });
+      nodePositions.set(node.id, { x: centerX - 160, y: centerY });
     } else if (node.nodeType === "Assessment") {
-      nodePositions.set(node.id, { x: centerX + 140, y: centerY });
-    } else if (node.nodeType === "AgentPersona") {
-      const offset = (idx % 3) * 75 - 75;
-      nodePositions.set(node.id, { x: centerX, y: 65 + offset });
+      nodePositions.set(node.id, { x: centerX + 160, y: centerY });
+    } else if (node.nodeType === "PersonaDebate" || node.nodeType === "AgentPersona" || node.nodeType === "Agent") {
+      const pNodes = nodes.filter(n => n.nodeType === "PersonaDebate" || n.nodeType === "AgentPersona" || n.nodeType === "Agent");
+      const aIdx = pNodes.indexOf(node);
+      const span = pNodes.length > 1 ? (aIdx / (pNodes.length - 1)) * 480 - 240 : 0;
+      nodePositions.set(node.id, { x: centerX + span, y: 50 });
     } else if (node.nodeType === "StrategicGoal") {
-      const gIdx = nodes.filter(n => n.nodeType === "StrategicGoal").indexOf(node);
-      const angle = Math.PI * 0.8 + (gIdx * 0.35);
+      const gNodes = nodes.filter(n => n.nodeType === "StrategicGoal");
+      const gIdx = gNodes.indexOf(node);
+      const angle = Math.PI * 0.75 + (gIdx * 0.35);
       nodePositions.set(node.id, {
-        x: centerX + Math.cos(angle) * 270,
-        y: centerY + Math.sin(angle) * 180
+        x: centerX + Math.cos(angle) * 310,
+        y: centerY + Math.sin(angle) * 200
       });
     } else if (node.nodeType === "GcpService") {
-      const sIdx = nodes.filter(n => n.nodeType === "GcpService").indexOf(node);
-      const angle = -Math.PI * 0.25 + (sIdx * 0.35);
+      const sNodes = nodes.filter(n => n.nodeType === "GcpService");
+      const sIdx = sNodes.indexOf(node);
+      const angle = -Math.PI * 0.28 + (sIdx * 0.28);
       nodePositions.set(node.id, {
-        x: centerX + Math.cos(angle) * 280,
-        y: centerY + Math.sin(angle) * 190
+        x: centerX + Math.cos(angle) * 320,
+        y: centerY + Math.sin(angle) * 210
       });
     } else if (node.nodeType === "ModernizationAction") {
-      const mIdx = nodes.filter(n => n.nodeType === "ModernizationAction").indexOf(node);
+      const mNodes = nodes.filter(n => n.nodeType === "ModernizationAction");
+      const mIdx = mNodes.indexOf(node);
+      const span = mNodes.length > 1 ? (mIdx / (mNodes.length - 1)) * 520 - 260 : 0;
       nodePositions.set(node.id, {
-        x: centerX - 130 + (mIdx * 85),
-        y: height - 55
+        x: centerX + span,
+        y: height - 50
       });
     } else if (node.nodeType === "UseCase") {
-      const uIdx = nodes.filter(n => n.nodeType === "UseCase").indexOf(node);
-      const angle = (uIdx / 6) * Math.PI * 2;
+      const uNodes = nodes.filter(n => n.nodeType === "UseCase");
+      const uIdx = uNodes.indexOf(node);
+      const angle = (uIdx / Math.max(uNodes.length, 1)) * Math.PI * 2;
       nodePositions.set(node.id, {
-        x: centerX + Math.cos(angle) * 205,
-        y: centerY + Math.sin(angle) * 145
+        x: centerX + Math.cos(angle) * 210,
+        y: centerY + Math.sin(angle) * 140
       });
     } else {
-      // Tabelas
-      const tIdx = nodes.filter(n => n.nodeType === "Table").indexOf(node);
-      const angle = (tIdx / 8) * Math.PI * 2;
+      // TableCatalog / Tabelas
+      const tNodes = nodes.filter(n => n.nodeType === "TableCatalog" || n.nodeType === "Table");
+      const tIdx = tNodes.indexOf(node);
+      const angle = (tIdx / Math.max(tNodes.length, 1)) * Math.PI * 2;
       nodePositions.set(node.id, {
-        x: centerX + Math.cos(angle) * 125,
-        y: centerY + Math.sin(angle) * 95
+        x: centerX + Math.cos(angle) * 110,
+        y: centerY + Math.sin(angle) * 75
       });
     }
   });
@@ -399,82 +439,202 @@ LIMIT 50;`);
           {/* Botões de Queries Prontas para Sellers & Arquitetos */}
           <div className="flex flex-wrap gap-2 pt-1">
             <button
-              onClick={() => setGqlQuery(`SELECT 
-  u.name AS use_case,
-  s.name AS gcp_service,
-  e.weight AS monthly_consumption_usd
+              onClick={() => {
+                const q = `SELECT 
+  customer_name,
+  use_case_title,
+  gcp_service_name,
+  estimated_monthly_consumption_usd
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
-  MATCH (u:UseCase)-[e:CONSUMES_GCP_SERVICE]->(s:GcpService)
-  COLUMNS (u.name, s.name, e.weight)
+  MATCH (c:Customer)-[:INVESTS_IN]->(u:UseCase)-[e:CONSUMES_GCP_SERVICE]->(s:GcpService)
+  COLUMNS (
+    c.name AS customer_name,
+    u.title AS use_case_title,
+    s.service_name AS gcp_service_name,
+    e.estimated_monthly_consumption_usd AS estimated_monthly_consumption_usd
+  )
 )
-ORDER BY monthly_consumption_usd DESC;`)}
+ORDER BY estimated_monthly_consumption_usd DESC
+LIMIT 10;`;
+                setGqlQuery(q);
+                executeCustomGql(q);
+              }}
               className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold cursor-pointer transition-colors"
             >
-              1. Casos de Uso & Serviços GCP (MRR/ARR)
+              1. Casos de Uso & Serviços GCP (MRR)
             </button>
 
             <button
-              onClick={() => setGqlQuery(`SELECT 
-  c.name AS customer,
-  g.name AS strategic_goal,
-  u.name AS use_case
+              onClick={() => {
+                const q = `SELECT 
+  customer_name,
+  goal_name,
+  target_metric,
+  use_case_title
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
-  MATCH (c:Customer)-[:STRATEGIC_GOAL]->(g:StrategicGoal)<-[:TARGETS_GOAL]-(u:UseCase)
-  COLUMNS (c.name, g.name, u.name)
-);`)}
+  MATCH (c:Customer)-[:TARGETS_GOAL]->(g:StrategicGoal)<-[:ACHIEVES_GOAL]-(u:UseCase)
+  COLUMNS (
+    c.name AS customer_name,
+    g.goal_name AS goal_name,
+    g.target_metric AS target_metric,
+    u.title AS use_case_title
+  )
+)
+LIMIT 10;`;
+                setGqlQuery(q);
+                executeCustomGql(q);
+              }}
               className="px-2.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 text-xs font-semibold cursor-pointer transition-colors"
             >
-              2. Metas Estratégicas & Casos de Negócio
+              2. Metas Estratégicas C-Level
             </button>
 
             <button
-              onClick={() => setGqlQuery(`SELECT 
-  u.name AS use_case,
-  m.name AS modernization_action,
-  t.name AS target_table
+              onClick={() => {
+                const q = `SELECT 
+  use_case_title,
+  action_title,
+  expected_gain,
+  table_name,
+  gcp_service_name
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
   MATCH (u:UseCase)-[:RECOMMENDS_ACTION]->(m:ModernizationAction),
-        (t:Table)-[:GOVERNED_BY]->(:GcpService)
-  COLUMNS (u.name, m.name, t.name)
+        (t:TableCatalog)-[:GOVERNED_BY]->(s:GcpService)
+  COLUMNS (
+    u.title AS use_case_title,
+    m.title AS action_title,
+    m.expected_gain AS expected_gain,
+    t.table_name AS table_name,
+    s.service_name AS gcp_service_name
+  )
 )
-LIMIT 20;`)}
+LIMIT 10;`;
+                setGqlQuery(q);
+                executeCustomGql(q);
+              }}
               className="px-2.5 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-900 border border-cyan-200 text-xs font-semibold cursor-pointer transition-colors"
             >
               3. Ações de Modernização & Governança
             </button>
+
+            <button
+              onClick={() => {
+                const q = `SELECT 
+  agent_name,
+  agent_role,
+  use_case_title,
+  recommendation_focus
+FROM GRAPH_TABLE(
+  \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
+  MATCH (a:PersonaDebate)-[v:VALIDATED_USE_CASE]->(u:UseCase)
+  COLUMNS (
+    a.agent_name AS agent_name,
+    a.role AS agent_role,
+    u.title AS use_case_title,
+    v.recommendation_focus AS recommendation_focus
+  )
+)
+LIMIT 10;`;
+                setGqlQuery(q);
+                executeCustomGql(q);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              4. Validação por Personas Google Advisory
+            </button>
+
+            <button
+              onClick={() => {
+                const q = `GRAPH \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
+MATCH (c:Customer)-[:INVESTS_IN]->(u:UseCase)
+RETURN c.name AS customer, u.title AS use_case
+LIMIT 10;`;
+                setGqlQuery(q);
+                executeCustomGql(q);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              5. Standalone ISO GQL (Nativo)
+            </button>
           </div>
 
-          <pre className="p-4 rounded-xl bg-slate-900 text-slate-200 text-xs font-mono overflow-x-auto border border-slate-800">
-            {gqlQuery}
-          </pre>
+          {/* Editor de GQL com Ação de Execução */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">Query GQL (Editável):</span>
+              <button
+                onClick={() => executeCustomGql()}
+                disabled={isExecutingGql}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Terminal className={`w-3.5 h-3.5 ${isExecutingGql ? "animate-spin" : ""}`} />
+                {isExecutingGql ? "Executando no BigQuery..." : "Executar Consulta no BigQuery"}
+              </button>
+            </div>
+
+            <textarea
+              value={gqlQuery}
+              onChange={(e) => setGqlQuery(e.target.value)}
+              rows={8}
+              className="w-full p-3.5 rounded-xl bg-slate-900 text-emerald-400 text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 font-medium leading-relaxed resize-y"
+            />
+          </div>
+
+          {gqlError && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+              <strong>Erro na execução GQL:</strong> {gqlError}
+            </div>
+          )}
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-              Resultados Retornados pelo BigQuery ({gqlResults.length} linhas casadas)
-            </h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Resultados Retornados pelo BigQuery ({gqlResults.length} linhas casadas)
+              </h4>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Dataset: business_assessment_customer
+              </span>
+            </div>
+
             {gqlResults.length > 0 ? (
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-500">
+                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
                     <tr>
-                      <th className="p-3">Origem (src.name)</th>
-                      <th className="p-3">Tipo Origem</th>
-                      <th className="p-3">Relacionamento (e.edge_type)</th>
-                      <th className="p-3">Destino (dst.name)</th>
-                      <th className="p-3">Tipo Destino</th>
+                      {Object.keys(gqlResults[0]).map((colKey) => (
+                        <th key={colKey} className="p-3 capitalize font-mono text-[11px]">
+                          {colKey.replace(/_/g, " ")}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {gqlResults.map((r, i) => (
+                    {gqlResults.map((row, i) => (
                       <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                        <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{r.source_name}</td>
-                        <td className="p-3 text-slate-500">{r.source_type}</td>
-                        <td className="p-3 font-mono text-violet-600 dark:text-violet-400 font-bold">{r.relationship}</td>
-                        <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{r.destination_name}</td>
-                        <td className="p-3 text-slate-500">{r.destination_type}</td>
+                        {Object.keys(gqlResults[0]).map((colKey) => {
+                          const val = row[colKey];
+                          const isNumeric = typeof val === "number";
+                          const isCurrency = colKey.includes("usd") || colKey.includes("cost") || colKey.includes("consumption");
+
+                          return (
+                            <td key={colKey} className="p-3 text-slate-800 dark:text-slate-200 font-medium">
+                              {isCurrency && isNumeric ? (
+                                <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                                  ${val.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                                </span>
+                              ) : isNumeric ? (
+                                <span className="font-mono text-slate-700 dark:text-slate-300">
+                                  {val.toLocaleString("en-US")}
+                                </span>
+                              ) : (
+                                String(val ?? "-")
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -482,7 +642,7 @@ LIMIT 20;`)}
               </div>
             ) : (
               <div className="p-8 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                Nenhum nó conectado retornado ainda na consulta GQL. Popule o grafo executando o debate.
+                Nenhum nó conectado retornado para esta consulta GQL. Clique em um dos botões acima para executar uma consulta pré-configurada.
               </div>
             )}
           </div>
