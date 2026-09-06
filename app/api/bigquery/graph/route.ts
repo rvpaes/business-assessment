@@ -154,7 +154,8 @@ export async function GET(req: NextRequest) {
         dataplexScansCount: 42,
         propertyGraphsCount: 1,
         dataAgentsCount: 2,
-        gcsArchiveUri: ""
+        gcsArchiveUri: "",
+        summaryMarkdown: ""
       };
 
       const customerCases = getCustomerUseCases(activeCustomerName);

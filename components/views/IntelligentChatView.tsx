@@ -18,6 +18,7 @@ interface Message {
   generatedSql?: string;
   queryResults?: any[];
   querySchema?: any[];
+  catalogMetadata?: any[];
   followupQuestions?: string[];
   source?: "bigquery_data_agent" | "gemini_3_8_fallback";
   jobId?: string;
@@ -64,10 +65,10 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
   }, [messages, typingText]);
 
   const quickPrompts = [
-    "Quais dos 6 casos de uso possuem o maior ROI estimado?",
-    "Qual a estimativa de consumo mensal em GCP e o breakdown por serviço?",
-    "Quais serviços GCP são consumidos pelos casos no Grafo de Conhecimento?",
-    "Como o caso de Mitigação de Fraude gera economia financeira?"
+    "Quais casos de uso conectam diretamente à meta de maior retorno no Grafo?",
+    "Qual o consumo mensal de serviços GCP (BigQuery, Vertex AI, Dataplex) no Grafo?",
+    "Como o Dataplex Knowledge Catalog audita as tabelas e protege dados com PII?",
+    "Quais tabelas do catálogo alimentam o Caso #1 prioritário?"
   ];
 
   const toggleSql = (msgId: string) => {
@@ -141,6 +142,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
               generatedSql: data.generatedSql,
               queryResults: data.queryResults,
               querySchema: data.querySchema,
+              catalogMetadata: data.catalogMetadata,
               followupQuestions: data.followupQuestions,
               source: data.source,
               jobId: data.jobId,
@@ -262,7 +264,22 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
                   </div>
                 )}
 
-                {/* 2. SQL Gerado no BigQuery pelo Data Agent (Collapsible) */}
+                {/* Metadados Dataplex Knowledge Catalog */}
+                {msg.catalogMetadata && msg.catalogMetadata.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50/70 border border-violet-200 text-violet-900 text-[11px] font-medium">
+                    <span className="font-bold flex items-center gap-1 text-violet-700">
+                      <Layers className="w-3.5 h-3.5" /> Dataplex Knowledge Catalog:
+                    </span>
+                    <span>{msg.catalogMetadata.length} tabelas auditadas</span>
+                    <span className="text-violet-400">•</span>
+                    <span className="text-violet-700 font-mono text-[10px]">
+                      {msg.catalogMetadata.slice(0, 3).map((c: any) => c.tableName).join(", ")}
+                      {msg.catalogMetadata.length > 3 ? ` (+${msg.catalogMetadata.length - 3})` : ""}
+                    </span>
+                  </div>
+                )}
+
+                {/* 2. GQL / SQL Gerado no BigQuery pelo Data Agent (Collapsible) */}
                 {msg.generatedSql && (
                   <div className="border border-blue-200 rounded-xl overflow-hidden bg-white text-xs shadow-2xs">
                     <div className="px-3 py-2 bg-blue-50/80 flex items-center justify-between">
@@ -271,22 +288,24 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
                         className="flex items-center gap-2 text-xs font-bold text-[#074878] hover:text-blue-900 cursor-pointer"
                       >
                         <Database className="w-3.5 h-3.5" />
-                        <span>SQL Nativo Gerado pelo Data Agent (BigQuery)</span>
+                        <span>
+                          {msg.generatedSql.includes("GRAPH_TABLE") 
+                            ? "Consulta ISO GQL no Property Graph (BigQuery)" 
+                            : "SQL Nativo Gerado pelo Data Agent (BigQuery)"}
+                        </span>
                         {expandedSql[msg.id] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                       </button>
 
                       <div className="flex items-center gap-2">
-                        {msg.jobId && (
-                          <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">
-                            Job: {msg.jobId.slice(-8)}
-                          </span>
-                        )}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-[#074878] border border-blue-200">
+                          {msg.generatedSql.includes("GRAPH_TABLE") ? "ISO GQL (Graph)" : "SQL"}
+                        </span>
                         <button
                           onClick={() => copyToClipboard(msg.generatedSql!, msg.id)}
                           className="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-[11px] font-semibold text-slate-700 border border-slate-200 flex items-center gap-1 cursor-pointer"
                         >
                           {copiedSqlId === msg.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedSqlId === msg.id ? "Copiado" : "Copiar SQL"}</span>
+                          <span>{copiedSqlId === msg.id ? "Copiado" : "Copiar"}</span>
                         </button>
                       </div>
                     </div>

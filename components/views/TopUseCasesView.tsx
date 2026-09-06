@@ -26,6 +26,7 @@ import { TopUseCase, CustomerAssessment } from "@/lib/types";
 import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSimilarGoogleCloudCustomerStories } from "@/lib/gcp/customer-stories";
+import { UseCaseTerraformModal } from "./UseCaseTerraformModal";
 
 interface TopUseCasesViewProps {
   useCases: TopUseCase[];
@@ -43,6 +44,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [activeModalCase, setActiveModalCase] = useState<TopUseCase | null>(null);
+  const [terraformModalCase, setTerraformModalCase] = useState<TopUseCase | null>(null);
 
   const customerName = assessment?.customerName || "Cliente Corporativo";
   const industry = assessment?.industry || "Bens de Consumo & Saúde";
@@ -220,13 +222,21 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
               </div>
 
               {/* Rodapé do Card */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-[10px] font-bold text-slate-400">
-                  {useCase.requiredTables?.length || 3} Tabelas Auditadas
-                </span>
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTerraformModalCase(useCase);
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:scale-105"
+                  title="Gerar Pipeline Terraform (Multi-Engine BigQuery Studio & Dataplex)"
+                >
+                  <Cpu className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Pipeline Terraform</span>
+                </button>
 
                 <span className="text-xs font-black text-[#074878] group-hover:underline flex items-center gap-0.5">
-                  <span>Ver Detalhes do Caso</span>
+                  <span>Ver Detalhes</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </div>
@@ -459,13 +469,24 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
               </div>
 
               {/* Rodapé do Modal */}
-              <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-b-3xl">
-                <span className="text-[11px] text-slate-500">
-                  {t("confidenceScoreLabel")}: <strong>{(activeModalCase.confidenceScore * 100).toFixed(0)}%</strong>
-                </span>
+              <div className="p-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 rounded-b-3xl">
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-slate-500">
+                    {t("confidenceScoreLabel")}: <strong>{(activeModalCase.confidenceScore * 100).toFixed(0)}%</strong>
+                  </span>
+                  <button
+                    onClick={() => {
+                      setTerraformModalCase(activeModalCase);
+                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#074878] to-purple-800 hover:from-[#053456] hover:to-purple-900 text-white text-xs font-bold shadow-xs transition-all cursor-pointer hover:scale-105"
+                  >
+                    <Cpu className="w-3.5 h-3.5" />
+                    <span>Gerar Pipeline Terraform (Multi-Engine)</span>
+                  </button>
+                </div>
                 <button
                   onClick={() => setActiveModalCase(null)}
-                  className="px-5 py-2 rounded-xl bg-[#074878] hover:bg-[#053456] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs shadow-xs transition-colors cursor-pointer"
                 >
                   {t("closeBtn")}
                 </button>
@@ -474,6 +495,15 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
           </div>
         );
       })()}
+
+      {/* 6. MODAL TERRAFORM MULTI-ENGINE PIPELINE */}
+      <UseCaseTerraformModal
+        useCase={terraformModalCase}
+        customerName={customerName}
+        industry={industry}
+        isOpen={!!terraformModalCase}
+        onClose={() => setTerraformModalCase(null)}
+      />
     </div>
   );
 };

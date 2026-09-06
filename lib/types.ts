@@ -102,19 +102,53 @@ export interface NeuroDebateTurn {
   timestamp: string;
 }
 
+export type PropertyGraphNodeType = 
+  | "Customer" 
+  | "Assessment" 
+  | "Dataset" 
+  | "Table" 
+  | "TableCatalog" 
+  | "UseCase" 
+  | "AgentPersona" 
+  | "PersonaDebate" 
+  | "GcpService" 
+  | "StrategicGoal" 
+  | "ModernizationAction";
+
 export interface PropertyGraphNode {
   id: string;
-  nodeType: "Customer" | "Assessment" | "Dataset" | "Table" | "UseCase" | "AgentPersona";
+  nodeType: PropertyGraphNodeType;
   name: string;
   category: string;
   properties: Record<string, any>;
 }
 
+export type PropertyGraphEdgeType = 
+  | "OWNS" 
+  | "EXTRACTED_FROM" 
+  | "FEEDS_USE_CASE" 
+  | "DEBATED_BY" 
+  | "GOVERNS"
+  | "STRATEGIC_GOAL"
+  | "VALIDATED_BY"
+  | "BENEFITS"
+  | "CONSUMES_GCP_SERVICE"
+  | "TARGETS_GOAL"
+  | "RECOMMENDS_ACTION"
+  | "GOVERNED_BY"
+  | "HAS_ASSESSMENT"
+  | "AUDITS_TABLE"
+  | "EMPOWERS_USE_CASE"
+  | "VALIDATED_USE_CASE"
+  | "INVESTS_IN"
+  | "ACHIEVES_GOAL"
+  | string;
+
 export interface PropertyGraphEdge {
   edgeId: string;
   sourceId: string;
   destinationId: string;
-  edgeType: "OWNS" | "EXTRACTED_FROM" | "FEEDS_USE_CASE" | "DEBATED_BY" | "GOVERNS";
+  edgeType: PropertyGraphEdgeType;
   weight: number;
   properties: Record<string, any>;
 }
@@ -123,3 +157,4 @@ export interface PropertyGraphData {
   nodes: PropertyGraphNode[];
   edges: PropertyGraphEdge[];
 }
+

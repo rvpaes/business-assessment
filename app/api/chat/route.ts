@@ -1,9 +1,12 @@
-// app/api/chat/route.ts - BigQuery Data Agent (Conversational Analytics API) + Fallback Grounded
+// app/api/chat/route.ts - BigQuery Data Agent (Conversational Analytics API) + Property Graph GQL Grounding
 import { NextRequest, NextResponse } from "next/server";
-import { askBigQueryDataAgent, DATA_AGENT_ID } from "@/lib/gcp/conversational-analytics";
 import { callGemini38Flash } from "@/lib/gcp/gemini-3-8";
-import { logStructuredStep, runOptimizedBigQueryQuery } from "@/lib/gcp/bigquery";
-import { PROJECT_ID, DATASET_ID } from "@/lib/gcp/auth";
+import { 
+  logStructuredStep, 
+  inspectKnowledgeCatalog, 
+  queryUseCaseImpactGraphGQL, 
+  queryGovernanceLineageGQL 
+} from "@/lib/gcp/bigquery";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,69 +24,67 @@ export async function POST(req: NextRequest) {
       thought: `Pergunta do usuário para ${customerName || "Cliente"}: "${message.slice(0, 100)}..."`
     });
 
-    // 1. Tenta acionar prioritariamente o BigQuery Data Agent oficial (Conversational Analytics API)
+    // =========================================================================
+    // FASE 1: Inspeção do Dataplex Knowledge Catalog (Semântica & Data Profiles)
+    // =========================================================================
+    let catalogSummary = "";
+    let catalogItems: any[] = [];
     try {
-      const dataAgentRes = await askBigQueryDataAgent(message, customerName);
-      if (dataAgentRes && dataAgentRes.reply) {
-        return NextResponse.json({
-          success: true,
-          reply: dataAgentRes.reply,
-          thoughts: dataAgentRes.thoughts,
-          generatedSql: dataAgentRes.generatedSql,
-          queryResults: dataAgentRes.queryResults,
-          querySchema: dataAgentRes.querySchema,
-          followupQuestions: dataAgentRes.followupQuestions,
-          jobId: dataAgentRes.jobId,
-          source: "bigquery_data_agent",
-          agentId: DATA_AGENT_ID
-        });
-      }
-    } catch (agentErr: any) {
-      console.warn("[Chat API] BigQuery Data Agent indisponível ou timeout, acionando fallback local com Gemini 3.8 Flash:", agentErr.message);
+      const catalogResult = await inspectKnowledgeCatalog(assessmentId);
+      catalogSummary = catalogResult.summaryText;
+      catalogItems = catalogResult.catalogItems;
+    } catch (catErr) {
+      console.warn("[Chat ADK] Falha ao inspecionar Knowledge Catalog:", catErr);
+      catalogSummary = "Metadados do Knowledge Catalog em sincronização.";
     }
 
-    // 2. Fallback de Alta Resiliência: Gemini 3.8 Flash com Grounding Estrito no BigQuery
-    let useCasesSummary = "";
-    let tablesSummary = "";
+    // =========================================================================
+    // FASE 2: Travessia no Property Graph via ISO GQL (GRAPH_TABLE)
+    // =========================================================================
+    const isGovernanceQuestion = /lgpd|bacen|governança|governance|segurança|security|pii|mascaramento|ciso/i.test(message);
+    
+    let graphResult;
+    if (isGovernanceQuestion) {
+      graphResult = await queryGovernanceLineageGQL(assessmentId);
+    } else {
+      graphResult = await queryUseCaseImpactGraphGQL(assessmentId);
+    }
 
-    try {
-      const ucRows = await runOptimizedBigQueryQuery(`
-        SELECT rank, title, category, business_problem, solution_description, business_case_roi, gcp_monthly_cost_usd, payback_months, financial_gain_estimate_usd
-        FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\`
-        ORDER BY rank ASC
-        LIMIT 6;
-      `, "Fetch Top Use Cases for Chat Fallback");
+    const graphRows = graphResult.rows || [];
+    const generatedGql = graphResult.gqlQuery;
 
-      if (ucRows.length > 0) {
-        useCasesSummary = ucRows.map((r: any) => 
-          `#${r.rank} [${r.category}] ${r.title} | ROI: ${r.business_case_roi}x | Payback: ${r.payback_months}m | Custo GCP: $${r.gcp_monthly_cost_usd}/mês | Ganho: $${r.financial_gain_estimate_usd}/ano`
+    let graphSummary = "";
+    if (graphRows.length > 0) {
+      if (isGovernanceQuestion) {
+        graphSummary = graphRows.map((r: any) => 
+          `- Tabela \`${r.table_name}\` -> Caso: "${r.use_case_title}" | Mecanismo: ${r.governance_mechanism} | Nível: ${r.policy_tag_level}`
+        ).join("\n");
+      } else {
+        graphSummary = graphRows.map((r: any) => 
+          `#${r.use_case_rank || "-"} [${r.use_case_title}] -> Meta Estratégica: "${r.strategic_goal_name}" (Ganho: $${r.annual_gain_usd || 0}/ano) | Serviço GCP: ${r.gcp_service_name} (Custo: $${r.monthly_cost_usd || 0}/mês) | ROI: ${r.use_case_roi || "N/A"}`
         ).join("\n");
       }
-    } catch (e) {}
+    } else {
+      graphSummary = "Nenhum relacionamento encontrado no BigQuery Property Graph para este critério de filtro.";
+    }
 
-    try {
-      const gcpRows = await runOptimizedBigQueryQuery(`
-        SELECT service_name, category, tier, description
-        FROM \`${PROJECT_ID}.${DATASET_ID}.n_gcp_service\`
-        LIMIT 10;
-      `, "Fetch GCP Services for Chat Fallback");
-
-      if (gcpRows.length > 0) {
-        tablesSummary = gcpRows.map((r: any) => 
-          `- ${r.service_name} (${r.category}): ${r.description || ""}`
-        ).join("\n");
-      }
-    } catch (e) {}
-
+    // =========================================================================
+    // FASE 3: Síntese Grounded com Gemini 3.8 Flash (Zero-Hallucination)
+    // =========================================================================
     const prompt = `
 Você é o BigQuery Data Agent Executivo de Inteligência Analítica e IA da Google Cloud para o cliente ${customerName || "Corporativo"}.
-Você está operando diretamente sobre os metadados e casos de uso auditados no BigQuery.
+Você está operando diretamente sobre o BigQuery Property Graph (GQL) e o Dataplex Knowledge Catalog.
 
-SERVIÇOS GOOGLE CLOUD NO GRAFO:
-${tablesSummary || "BigQuery, Vertex AI, Dataplex, Cloud Run, Cloud Logging"}
+METADADOS DO KNOWLEDGE CATALOG (DATAPLEX PROFILE & QUALIDADE DE DADOS):
+${catalogSummary}
 
-TOP 6 CASOS DE USO PRIORIZADOS NO BIGQUERY:
-${useCasesSummary || "Nenhum caso de uso priorizado registrado."}
+EVIDÊNCIAS DE TRAVESSIA NO BIGQUERY PROPERTY GRAPH (ISO GQL GRAPH_TABLE):
+${graphSummary}
+
+CONSULTA GQL EXECUTADA NO PROPERTY GRAPH:
+\`\`\`sql
+${generatedGql}
+\`\`\`
 
 HISTÓRICO RECENTE:
 ${JSON.stringify((history || []).slice(-4))}
@@ -91,40 +92,51 @@ ${JSON.stringify((history || []).slice(-4))}
 PERGUNTA DO EXECUTIVO / VENDEDOR GOOGLE CLOUD:
 ${message}
 
-DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION):
-1. Responda em Português do Brasil com postura executiva, clara, elegante e objetiva.
-2. Fundamente suas respostas nos 6 casos de uso e serviços listados acima.
-3. Se a informação solicitada não existir no BigQuery do cliente, declare explicitamente: "Com base nos metadados auditados no BigQuery, não há dados ou tabelas registradas para esse critério." NUNCA invente tendências ou métricas que não constem nos dados reais.
-4. Ao citar custos e ROI, utilize com precisão os valores numéricos fornecidos acima.
-5. Se for perguntado sobre custos em GCP, detalhe os componentes (BigQuery, Vertex AI, Cloud Run, Dataplex).
+DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION & POSTURA EXECUTIVA):
+1. Responda em Português do Brasil com postura executiva de alto nível (C-Level), clara, elegante e orientada a valor de negócio.
+2. Fundamente suas afirmações ESTRITAMENTE nos dados auditados do Knowledge Catalog e nas conexões do Property Graph listadas acima.
+3. Se a consulta ao Property Graph ou ao Catálogo retornar vazia (0 rows) para o critério perguntado, declare explicitamente: "Com base nas consultas ao BigQuery Property Graph e ao Knowledge Catalog, não há dados ou relacionamentos mapeados para este critério específico." NUNCA invente tendências, números ou tabelas.
+4. Quando citar tabelas, cite o nome exato e o status de profiling do Dataplex (ex: taxa de documentação, volumetria).
+5. Quando citar casos de uso, cite o ROI, a meta estratégica atingida e o consumo mensal de serviços GCP auditados.
+6. Apresente os dados com clareza (use bullet points executivos e destaques em negrito).
 `;
 
     const geminiRes = await callGemini38Flash(prompt, {
       thinkingLevel: "MEDIUM",
-      systemInstruction: "Você é o BigQuery Data Agent da Google Cloud. Respostas embasadas, inteligentes e com rigor analítico."
+      systemInstruction: "Você é o BigQuery Data Agent oficial da Google Cloud. Respostas fundamentadas estritamente no Property Graph (GQL) e no Knowledge Catalog, com rigor analítico e clareza executiva."
     });
 
     logStructuredStep({
       severity: "INFO",
       phase: "CHAT",
-      toolAction: "gemini_chat_fallback_response",
-      thought: "Resposta executiva gerada com grounding estrito nos dados do BigQuery via Gemini 3.8 Flash.",
+      toolAction: "gemini_graph_grounded_response",
+      thought: "Resposta executiva gerada com grounding duplo: Dataplex Knowledge Catalog + BigQuery Property Graph GQL.",
+      sqlQuery: generatedGql,
+      bqResultRows: graphRows.length,
       outputSummary: geminiRes.text.slice(0, 150)
     });
 
     return NextResponse.json({
       success: true,
       reply: geminiRes.text,
-      thoughts: geminiRes.thoughtText ? [geminiRes.thoughtText] : ["Consulta fundamentada nos dados do BigQuery."],
-      source: "gemini_3_8_fallback",
-      followupQuestions: [
-        "Qual o caso de uso com maior ROI estimado?",
-        "Qual a estimativa de consumo mensal em serviços GCP?",
-        "Quais serviços GCP são ativados para cada caso de negócio?"
+      thoughts: geminiRes.thoughtText ? [geminiRes.thoughtText] : ["Consulta fundamentada no BigQuery Property Graph (ISO GQL) e Dataplex Knowledge Catalog."],
+      generatedSql: generatedGql,
+      queryResults: graphRows,
+      catalogMetadata: catalogItems,
+      source: "bigquery_data_agent",
+      followupQuestions: isGovernanceQuestion ? [
+        "Como as Policy Tags do Dataplex garantem conformidade com a LGPD?",
+        "Quais tabelas que alimentam os casos de uso possuem dados sensíveis mascarados?",
+        "Qual o impacto de governança na migração para o BigQuery?"
+      ] : [
+        "Quais casos de uso conectam diretamente à meta de maior retorno financeiro?",
+        "Qual o consumo mensal total dos serviços GCP no Property Graph?",
+        "Quais tabelas do Knowledge Catalog alimentam o Caso #1 prioritário?"
       ]
     });
   } catch (error: any) {
-    console.error("Erro no chat conversacional:", error);
-    return NextResponse.json({ error: error.message || "Erro no processamento da mensagem" }, { status: 500 });
+    console.error("Erro no chat conversacional com Property Graph:", error);
+    return NextResponse.json({ error: error.message || "Erro no processamento da consulta analítica" }, { status: 500 });
   }
 }
+

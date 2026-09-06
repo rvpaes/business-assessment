@@ -44,7 +44,7 @@ export async function uploadBufferToGcs(
       "Content-Type": contentType,
       "Content-Length": buffer.length.toString()
     },
-    body: buffer
+    body: new Uint8Array(buffer)
   });
 
   if (!response.ok) {

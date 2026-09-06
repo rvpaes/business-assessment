@@ -1,6 +1,12 @@
 // lib/agents/neuro-debate-orchestrator.ts - Orquestrador NC-MAD (Triple Network Multi-Agent Debate)
 import { callGemini38Flash } from "../gcp/gemini-3-8";
-import { logStructuredStep, saveTopUseCasesToBigQuery, saveNeuroDebateTurnsToBigQuery, populatePropertyGraph } from "../gcp/bigquery";
+import { 
+  logStructuredStep, 
+  saveTopUseCasesToBigQuery, 
+  saveNeuroDebateTurnsToBigQuery, 
+  populatePropertyGraph,
+  inspectKnowledgeCatalog 
+} from "../gcp/bigquery";
 import { CustomerAssessment, TableCatalogItem, TopUseCase, NeuroDebateTurn, SalienceItem, AuditTarget } from "../types";
 
 export interface NeuroDebateResult {
@@ -23,6 +29,15 @@ export async function runNeuroDebatePipeline(
   onProgress?: DebateProgressCallback
 ): Promise<NeuroDebateResult> {
   const turns: NeuroDebateTurn[] = [];
+
+  // 1. Inspeção Prévia no Knowledge Catalog (Dataplex Profiles & Qualidade)
+  let catalogContextStr = "";
+  try {
+    const catalogResult = await inspectKnowledgeCatalog(assessment.assessmentId);
+    catalogContextStr = catalogResult.summaryText;
+  } catch (catErr) {
+    console.warn("Aviso ao carregar Knowledge Catalog para o debate:", catErr);
+  }
 
   // Amostra estruturada das tabelas reais do cliente para Grounding Estrito
   const tableSummaryList = tables.slice(0, 30).map(t => ({
@@ -49,7 +64,7 @@ export async function runNeuroDebatePipeline(
     severity: "INFO",
     phase: "DMN_IDEATION",
     agentName: "DMN_Explorer",
-    thought: "Iniciando ideação lateral livre sem autocensura prévia baseada estritamente nas tabelas auditadas do cliente."
+    thought: "Iniciando ideação lateral livre sem autocensura prévia baseada no Knowledge Catalog e tabelas auditadas."
   });
 
   const dmnPrompt = `
@@ -61,7 +76,11 @@ INFORMAÇÕES DO CLIENTE AUDITADO:
 - Indústria Principal: ${assessment.industry}${assessment.websiteUrl ? `\n- Website / Domínio: ${assessment.websiteUrl}` : ""}${assessment.additionalInfo ? `\n- CONTEXTO ESTRATÉGICO & DIRETRIZES FORNECIDAS PELO USUÁRIO:\n  ${assessment.additionalInfo}` : ""}
 - Total de Tabelas: ${assessment.totalTables} | Views: ${assessment.totalViews} | Colunas: ${assessment.totalColumns}
 - % Documentação de Colunas: ${assessment.docPercentage}%
-- TABELAS E DATASETS REAIS DISPONÍVEIS NO BIGQUERY (GROUNDING):
+
+METADADOS DO KNOWLEDGE CATALOG (DATAPLEX PROFILE & QUALIDADE DE DADOS):
+${catalogContextStr || "Em catalogação"}
+
+TABELAS E DATASETS REAIS DISPONÍVEIS NO BIGQUERY (GROUNDING):
 ${tablesContextStr}
 
 SUA TAREFA:
@@ -125,6 +144,9 @@ ${dmnResponse.text}
 
 TABELAS REAIS NO BIGQUERY DO CLIENTE:
 ${tablesContextStr}
+
+METADADOS & DATA PROFILE DO KNOWLEDGE CATALOG (AVALIE COMPLETUDE E QUALIDADE):
+${catalogContextStr || "Em catalogação"}
 
 SUA TAREFA:
 1. Purgar propostas inviáveis ou que dependam de dados inexistentes.
@@ -222,6 +244,9 @@ CONTEXTO DO CLIENTE:
 - Indústria: ${assessment.industry}${assessment.websiteUrl ? `\n- Website: ${assessment.websiteUrl}` : ""}${assessment.additionalInfo ? `\n- DIRETRIZES ESTRATÉGICAS PRIORITÁRIAS:\n  ${assessment.additionalInfo}` : ""}
 - Tabelas Reais:
 ${tablesContextStr}
+
+- Metadados do Knowledge Catalog (Dataplex Profiles & Qualidade):
+${catalogContextStr || "Em catalogação"}
 
 PROPOSTAS SELECIONADAS PELO SN:
 ${JSON.stringify(salienceMatrix.filter(s => s.selected), null, 2)}
