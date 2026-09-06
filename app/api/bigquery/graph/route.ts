@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
   try {
     const customerNameParam = req.nextUrl.searchParams.get("customerName") || "";
     
-    // Helper para timeout rápido de 2000ms para manter SLA sub-segundo
-    const withTimeout = <T>(promise: Promise<T>, ms: number = 2000): Promise<T> => {
+    // Helper para timeout resiliente para consultas BigQuery
+    const withTimeout = <T>(promise: Promise<T>, ms: number = 8000): Promise<T> => {
       return Promise.race([
         promise,
         new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timeout BQ")), ms))
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     // 1. Executa consulta GQL oficial via GRAPH_TABLE para provar funcionalidade de Graph no BigQuery
     let gqlResults: any[] = [];
     try {
-      gqlResults = await withTimeout(queryGraphTableGQL(), 1800);
+      gqlResults = await withTimeout(queryGraphTableGQL(), 8000);
     } catch (gqlErr) {
       console.warn("GQL GRAPH_TABLE query notice:", gqlErr);
     }
@@ -74,8 +74,8 @@ export async function GET(req: NextRequest) {
     `;
 
     const [nodesRows, edgesRows] = await Promise.all([
-      withTimeout(runOptimizedBigQueryQuery(nodesSql, "Fetch Graph Nodes"), 2500).catch(() => []),
-      withTimeout(runOptimizedBigQueryQuery(edgesSql, "Fetch Graph Edges"), 2500).catch(() => [])
+      withTimeout(runOptimizedBigQueryQuery(nodesSql, "Fetch Graph Nodes"), 8000).catch(() => []),
+      withTimeout(runOptimizedBigQueryQuery(edgesSql, "Fetch Graph Edges"), 8000).catch(() => [])
     ]);
 
     let nodes: PropertyGraphNode[] = nodesRows.map((r: any) => {
