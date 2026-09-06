@@ -176,7 +176,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-lg bg-blue-400/20 text-blue-200 text-[10px] font-black border border-blue-300/30 uppercase tracking-wider">
-                CASO #{useCase.rank} • {useCase.category}
+                CASO {useCase.rank} • {useCase.category}
               </span>
               <span className="px-2 py-0.5 rounded bg-emerald-400/20 text-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1 border border-emerald-300/30">
                 <Cpu className="w-3 h-3" /> Motor: {bundle.engineBreakdown.primaryEngine}

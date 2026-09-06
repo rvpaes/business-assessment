@@ -13,7 +13,7 @@ import {
 import { GoogleCloudLogo } from "./GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export type NavigationTab = "upload" | "decision" | "cases" | "graph" | "chat";
+export type NavigationTab = "upload" | "decision" | "cases" | "chat";
 
 export interface ControlTowerSidebarProps {
   activeTab: NavigationTab;
@@ -49,13 +49,6 @@ export const ControlTowerSidebar: React.FC<ControlTowerSidebarProps> = ({
       icon: Target,
       badge: "CASES",
       badgeColor: "bg-purple-100 text-purple-700",
-    },
-    {
-      id: "graph" as NavigationTab,
-      label: t("tabGraph"),
-      icon: Network,
-      badge: "GRAFO",
-      badgeColor: "bg-violet-100 text-violet-700",
     },
     {
       id: "chat" as NavigationTab,

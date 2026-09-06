@@ -129,7 +129,7 @@ ORDER BY u.rank ASC
 LIMIT 10;`,
     sellerPlaybook: {
       pitch: `Para a diretoria executiva de ${customerName}: demonstramos que a modernização analítica no Google Cloud entrega $${(totalFinancialGainUsd / 1000).toFixed(0)}k de retorno anual com apenas $${totalMonthlyGcpUsd.toFixed(0)}/mês de investimento em infraestrutura, gerando autofinanciamento completo a partir do 2º mês.`,
-      objectionHandling: `Se a diretoria questionar a prioridade orçamentária: mostre a matriz de 6 casos de uso onde a Fase 1 (Rank #1 e #2) já gera caixa suficiente para financiar toda a expansão de IA das Fases 2 e 3 sem aporte de capital novo.`,
+      objectionHandling: `Se a diretoria questionar a prioridade orçamentária: mostre a matriz de 6 casos de uso onde a Fase 1 (Rank 1 e 2) já gera caixa suficiente para financiar toda a expansão de IA das Fases 2 e 3 sem aporte de capital novo.`,
       closingTrigger: `Apresentar termo de compromisso anual Google Cloud com descontos CUD e início imediato pelo Caso 1 (${top1Case?.title || "Otimização Analítica"}).`,
       targetBuyer: "CEO, CFO e Vice-Presidente de Negócios",
       salesStage: "Estágio 5 - Assinatura de Contrato & Sponsor C-Level"
@@ -275,7 +275,7 @@ SELECT
           { title: "Ganho Anual Projetado", value: `$${(totalFinancialGainUsd / 1000).toFixed(0)}k`, subValue: "Receita & Produtividade", badgeText: "EBITDA" },
           { title: "Payback do Projeto", value: "1.8 Meses", subValue: "Retorno do investimento", badgeText: "VELOCIDADE" },
           { title: "Múltiplo de Valor", value: `1:${totalAnnualGcpUsd > 0 ? Math.round(totalFinancialGainUsd / totalAnnualGcpUsd) : 72}`, subValue: "Ganho vs Consumo GCP", badgeText: "ROI" },
-          { title: "Caso Âncora", value: "Rank #1", subValue: top1Case?.title || "Otimização Analítica", badgeText: "PRIORIDADE" }
+          { title: "Caso Âncora", value: "Rank 1", subValue: top1Case?.title || "Otimização Analítica", badgeText: "PRIORIDADE" }
         ],
         bqMetrics: [
           { label: "Retorno sobre Investimento GCP", value: `+${calculatedRoi}%`, trend: "Auditado", subtext: "Relação Ganho Anual / Custo Cloud" },
@@ -551,7 +551,7 @@ SELECT
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="w-5 h-5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black flex items-center justify-center shrink-0">
-                          #{item.rank}
+                          {item.rank}
                         </span>
                         <span className="text-[10px] font-extrabold text-amber-300 truncate uppercase tracking-wider">
                           {item.category}
@@ -759,15 +759,15 @@ SELECT
                 <div className="space-y-2 text-[10px] text-white/95">
                   <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
                     <span className="text-amber-300 font-bold block text-[9px] uppercase">Onda 1 (30 Dias) • Fundação & MVPs</span>
-                    <span>Ativar BigQuery Property Graph e publicar MVPs dos Casos #1 ({resolvedCases[0]?.title.slice(0, 24)}...) e #2 com ingestão em tempo real.</span>
+                    <span>Ativar BigQuery Property Graph e publicar MVPs dos Casos 1 ({resolvedCases[0]?.title.slice(0, 24)}...) e 2 com ingestão em tempo real.</span>
                   </div>
                   <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
                     <span className="text-cyan-300 font-bold block text-[9px] uppercase">Onda 2 (60 Dias) • Expansão Analítica</span>
-                    <span>Escalar pipelines de feature store e modelos Vertex AI para Casos #3 e #4 com particionamento diário e clusterização.</span>
+                    <span>Escalar pipelines de feature store e modelos Vertex AI para Casos 3 e 4 com particionamento diário e clusterização.</span>
                   </div>
                   <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
                     <span className="text-emerald-300 font-bold block text-[9px] uppercase">Onda 3 (90 Dias) • Autonomia & Data Agent</span>
-                    <span>Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Dataplex para Casos #5 e #6.</span>
+                    <span>Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Dataplex para Casos 5 e 6.</span>
                   </div>
                 </div>
               </div>

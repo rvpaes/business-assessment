@@ -68,7 +68,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
     "Quais casos de uso conectam diretamente à meta de maior retorno no Grafo?",
     "Qual o consumo mensal de serviços GCP (BigQuery, Vertex AI, Dataplex) no Grafo?",
     "Como o Dataplex Knowledge Catalog audita as tabelas e protege dados com PII?",
-    "Quais tabelas do catálogo alimentam o Caso #1 prioritário?"
+    "Quais tabelas do catálogo alimentam o Caso 1 prioritário?"
   ];
 
   const toggleSql = (msgId: string) => {

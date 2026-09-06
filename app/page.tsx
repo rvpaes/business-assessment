@@ -213,17 +213,12 @@ export default function HomePage() {
                   />
                 )}
 
-                {/* Ajuste 4: Aba "cases" com Cards e Modal de Detalhamento */}
+                {/* Aba "cases" com Cards e Modal de Detalhamento */}
                 {activeTab === "cases" && (
                   <TopUseCasesView
                     useCases={topUseCases}
                     assessment={assessment}
-                    onNavigateToGraph={() => setActiveTab("graph")}
                   />
-                )}
-
-                {activeTab === "graph" && (
-                  <BigQueryGraphView />
                 )}
 
                 {activeTab === "chat" && (

@@ -131,7 +131,7 @@ DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION & POSTURA EXECUTIVA):
       ] : [
         "Quais casos de uso conectam diretamente à meta de maior retorno financeiro?",
         "Qual o consumo mensal total dos serviços GCP no Property Graph?",
-        "Quais tabelas do Knowledge Catalog alimentam o Caso #1 prioritário?"
+        "Quais tabelas do Knowledge Catalog alimentam o Caso 1 prioritário?"
       ]
     });
   } catch (error: any) {
