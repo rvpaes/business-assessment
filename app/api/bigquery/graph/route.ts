@@ -74,14 +74,8 @@ export async function GET(req: NextRequest) {
     `;
 
     const [nodesRows, edgesRows] = await Promise.all([
-      withTimeout(runOptimizedBigQueryQuery(nodesSql, "Fetch Graph Nodes"), 2500).catch(async () => {
-        // Fallback de contingência para graph_nodes
-        return await runOptimizedBigQueryQuery(`SELECT id, node_type, name, category, properties_json FROM \`${PROJECT_ID}.${DATASET_ID}.graph_nodes\` LIMIT 200`, "Fallback Nodes").catch(() => []);
-      }),
-      withTimeout(runOptimizedBigQueryQuery(edgesSql, "Fetch Graph Edges"), 2500).catch(async () => {
-        // Fallback de contingência para graph_edges
-        return await runOptimizedBigQueryQuery(`SELECT edge_id, source_id, destination_id, edge_type, weight, properties_json FROM \`${PROJECT_ID}.${DATASET_ID}.graph_edges\` LIMIT 300`, "Fallback Edges").catch(() => []);
-      })
+      withTimeout(runOptimizedBigQueryQuery(nodesSql, "Fetch Graph Nodes"), 2500).catch(() => []),
+      withTimeout(runOptimizedBigQueryQuery(edgesSql, "Fetch Graph Edges"), 2500).catch(() => [])
     ]);
 
     let nodes: PropertyGraphNode[] = nodesRows.map((r: any) => {

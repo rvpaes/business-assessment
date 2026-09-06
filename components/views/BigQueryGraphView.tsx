@@ -24,7 +24,7 @@ export const BigQueryGraphView: React.FC<BigQueryGraphViewProps> = ({
   customer_name,
   use_case_title,
   gcp_service_name,
-  estimated_monthly_consumption_usd
+  monthly_cost_usd
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
   MATCH (c:Customer)-[:INVESTS_IN]->(u:UseCase)-[e:CONSUMES_GCP_SERVICE]->(s:GcpService)
@@ -32,10 +32,10 @@ FROM GRAPH_TABLE(
     c.name AS customer_name,
     u.title AS use_case_title,
     s.service_name AS gcp_service_name,
-    e.estimated_monthly_consumption_usd AS estimated_monthly_consumption_usd
+    e.monthly_cost_usd AS monthly_cost_usd
   )
 )
-ORDER BY estimated_monthly_consumption_usd DESC
+ORDER BY monthly_cost_usd DESC
 LIMIT 10;`);
   const [gqlResults, setGqlResults] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"visual" | "gql">("visual");
@@ -444,7 +444,7 @@ LIMIT 10;`);
   customer_name,
   use_case_title,
   gcp_service_name,
-  estimated_monthly_consumption_usd
+  monthly_cost_usd
 FROM GRAPH_TABLE(
   \`rafaelpaes-477-20240820125418.business_assessment_customer.enterprise_business_graph\`
   MATCH (c:Customer)-[:INVESTS_IN]->(u:UseCase)-[e:CONSUMES_GCP_SERVICE]->(s:GcpService)
@@ -452,10 +452,10 @@ FROM GRAPH_TABLE(
     c.name AS customer_name,
     u.title AS use_case_title,
     s.service_name AS gcp_service_name,
-    e.estimated_monthly_consumption_usd AS estimated_monthly_consumption_usd
+    e.monthly_cost_usd AS monthly_cost_usd
   )
 )
-ORDER BY estimated_monthly_consumption_usd DESC
+ORDER BY monthly_cost_usd DESC
 LIMIT 10;`;
                 setGqlQuery(q);
                 executeCustomGql(q);
