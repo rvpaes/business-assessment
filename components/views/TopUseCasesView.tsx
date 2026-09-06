@@ -250,122 +250,124 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
         const similarStories = getSimilarGoogleCloudCustomerStories(activeModalCase, industry);
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150 font-sans">
+            <div className="bg-white rounded-3xl max-w-5xl lg:max-w-6xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200">
               {/* Header do Modal */}
-              <div className="p-6 border-b border-slate-100 flex items-start justify-between sticky top-0 bg-white z-10">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#074878] text-[10px] font-black border border-blue-100 uppercase">
+              <div className="p-6 sm:p-8 border-b border-slate-100 flex items-start justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg bg-blue-50 text-[#074878] text-xs font-black border border-blue-100 uppercase tracking-wide">
                       CASO DE USO #{activeModalCase.rank}
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold uppercase">
+                    <span className="px-3 py-1 rounded-lg bg-purple-50 text-purple-700 text-xs font-bold uppercase tracking-wide">
                       {activeModalCase.category}
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Grounding BigQuery
+                    <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold uppercase flex items-center gap-1.5 tracking-wide">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Grounding BigQuery
                     </span>
                   </div>
-                  <h2 className="text-lg font-black text-slate-900">{activeModalCase.title}</h2>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
+                    {activeModalCase.title}
+                  </h2>
                 </div>
 
                 <button
                   onClick={() => setActiveModalCase(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="p-2.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-4"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
               {/* Conteúdo Detalhado */}
-              <div className="p-6 space-y-6 text-xs text-slate-700">
+              <div className="p-6 sm:p-8 space-y-6 text-slate-700">
                 {/* 1. Problema de Negócio & Solução Proposta */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                    <span className="text-xs font-black uppercase text-slate-500 tracking-wider block">
                       {t("bottleneckLabel")}
                     </span>
-                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                    <p className="text-sm sm:text-[15px] text-slate-800 leading-relaxed font-medium">
                       {activeModalCase.businessProblem}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                    <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider block">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                    <span className="text-xs font-black uppercase text-[#074878] tracking-wider block">
                       {t("solutionLabel")}
                     </span>
-                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                    <p className="text-sm sm:text-[15px] text-slate-800 leading-relaxed font-medium">
                       {activeModalCase.solutionDescription}
                     </p>
                   </div>
                 </div>
 
                 {/* 2. Destaque dos Retornos (Cliente vs Google) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Retorno do Cliente */}
-                  <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">
+                      <span className="text-xs font-black uppercase text-emerald-800 tracking-wider">
                         {t("clientGainsLabel")}
                       </span>
-                      <DollarSign className="w-4 h-4 text-emerald-600" />
+                      <DollarSign className="w-5 h-5 text-emerald-600" />
                     </div>
-                    <div className="text-xl font-black text-emerald-700">
-                      +${(activeModalCase.financialGainEstimateUsd / 1000).toFixed(0)}k <span className="text-xs font-normal text-emerald-800">/ ano</span>
+                    <div className="text-2xl sm:text-3xl font-black text-emerald-700">
+                      +${(activeModalCase.financialGainEstimateUsd / 1000).toFixed(0)}k <span className="text-sm font-normal text-emerald-800">/ ano</span>
                     </div>
-                    <p className="text-[11px] text-emerald-900 font-semibold leading-snug">
+                    <p className="text-xs sm:text-sm text-emerald-950 font-semibold leading-relaxed">
                       {activeModalCase.businessCaseRoi}
                     </p>
-                    <div className="pt-2 border-t border-emerald-200 text-[10px] text-emerald-800 space-y-1">
-                      <div>• Impacto direto no EBITDA da organização</div>
+                    <div className="pt-3 border-t border-emerald-200 text-xs text-emerald-800 space-y-1.5 font-medium">
+                      <div>• Impacto direto no EBITDA e margem de contribuição da organização</div>
                       <div>• Payback estimado em menos de 2 meses</div>
-                      <div>• Alavanca de produtividade e redução de perdas</div>
+                      <div>• Alavanca comprovada de produtividade e redução de perdas</div>
                     </div>
                   </div>
 
                   {/* Retorno / Custo Google Cloud */}
-                  <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-2">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider">
+                      <span className="text-xs font-black uppercase text-[#074878] tracking-wider">
                         {t("gcpConsumptionLabel")}
                       </span>
-                      <Database className="w-4 h-4 text-[#074878]" />
+                      <Database className="w-5 h-5 text-[#074878]" />
                     </div>
-                    <div className="text-xl font-black text-[#074878]">
-                      ${activeModalCase.gcpMonthlyCostUsd} <span className="text-xs font-normal text-slate-500">/ mês</span>
+                    <div className="text-2xl sm:text-3xl font-black text-[#074878]">
+                      ${activeModalCase.gcpMonthlyCostUsd} <span className="text-sm font-normal text-slate-500">/ mês</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-                      <div className="p-2 rounded-xl bg-white border border-blue-100">
-                        <span className="text-[9px] text-slate-400 uppercase block">BigQuery</span>
-                        <strong>${activeModalCase.costBreakdown?.bigqueryUsd || 0}/mês</strong>
+                    <div className="grid grid-cols-2 gap-2.5 pt-1">
+                      <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">BigQuery</span>
+                        <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.bigqueryUsd || 0}/mês</strong>
                       </div>
-                      <div className="p-2 rounded-xl bg-white border border-blue-100">
-                        <span className="text-[9px] text-slate-400 uppercase block">Vertex AI</span>
-                        <strong>${activeModalCase.costBreakdown?.vertexAiUsd || 0}/mês</strong>
+                      <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Vertex AI</span>
+                        <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.vertexAiUsd || 0}/mês</strong>
                       </div>
-                      <div className="p-2 rounded-xl bg-white border border-blue-100">
-                        <span className="text-[9px] text-slate-400 uppercase block">Cloud Run</span>
-                        <strong>${activeModalCase.costBreakdown?.cloudRunUsd || 0}/mês</strong>
+                      <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Cloud Run</span>
+                        <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.cloudRunUsd || 0}/mês</strong>
                       </div>
-                      <div className="p-2 rounded-xl bg-white border border-blue-100">
-                        <span className="text-[9px] text-slate-400 uppercase block">Cloud Storage</span>
-                        <strong>${activeModalCase.costBreakdown?.storageUsd || 0}/mês</strong>
+                      <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Cloud Storage</span>
+                        <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.storageUsd || 0}/mês</strong>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Tabelas Reais e Grounding no BigQuery */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                  <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-                    <TableProperties className="w-3.5 h-3.5 text-blue-600" />
+                <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                  <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-2">
+                    <TableProperties className="w-4 h-4 text-blue-600" />
                     {t("requiredTablesLabel")}
                   </span>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {activeModalCase.requiredTables?.map((tName, idx) => (
                       <span
                         key={idx}
-                        className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold text-slate-800"
+                        className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 shadow-2xs"
                       >
                         {tName}
                       </span>
@@ -374,23 +376,23 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                 </div>
 
                 {/* 4. Guardrails e Governança */}
-                <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/70 space-y-1.5">
-                  <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                <div className="p-5 sm:p-6 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2">
+                  <span className="text-xs font-black uppercase text-amber-800 tracking-wider flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
                     {t("guardrailsLabel")}
                   </span>
-                  <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
+                  <p className="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium">
                     {activeModalCase.guardrails}
                   </p>
                 </div>
 
-                {/* 5. Casos de Sucesso Similares no Google Cloud (Regra: estritamente cloud.google.com/customers?hl=pt-BR, se não tiver não exibir) */}
+                {/* 5. Casos de Sucesso Similares no Google Cloud */}
                 {similarStories.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50/70 via-indigo-50/30 to-white border border-blue-200/90 space-y-3">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-50/70 via-indigo-50/30 to-white border border-blue-200/90 space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <GoogleCloudLogo height={16} />
-                        <span className="text-[10px] font-black uppercase text-[#074878] tracking-wider">
+                        <GoogleCloudLogo height={18} />
+                        <span className="text-xs font-black uppercase text-[#074878] tracking-wider">
                           {t("similarCasesHeader")}
                         </span>
                       </div>
@@ -398,14 +400,14 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                         href="https://cloud.google.com/customers?hl=pt-BR"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] font-bold text-[#074878] hover:underline flex items-center gap-1 shrink-0"
+                        className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 shrink-0"
                       >
                         <span>cloud.google.com/customers</span>
-                        <ArrowUpRight className="w-3 h-3" />
+                        <ArrowUpRight className="w-3.5 h-3.5" />
                       </a>
                     </div>
 
-                    <p className="text-[11px] text-slate-500 leading-tight">
+                    <p className="text-xs sm:text-[13px] text-slate-600 leading-snug">
                       {t("similarCasesSubtitle")}{" "}
                       <a
                         href="https://cloud.google.com/customers?hl=pt-BR"
@@ -417,35 +419,35 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                       </a>:
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                       {similarStories.map((story) => (
                         <div
                           key={story.id}
-                          className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs hover:border-[#074878]/50 hover:shadow-sm transition-all flex flex-col justify-between space-y-2.5"
+                          className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#074878]/50 hover:shadow-md transition-all flex flex-col justify-between space-y-3"
                         >
                           <div>
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-black text-xs text-slate-900">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-black text-sm text-slate-900">
                                 {story.customerName}
                               </span>
-                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
                                 {story.country}
                               </span>
                             </div>
-                            <p className="text-[10px] font-bold text-[#074878] mt-1 line-clamp-1">
+                            <p className="text-xs sm:text-sm font-bold text-[#074878] mt-1 line-clamp-1">
                               {story.headline}
                             </p>
-                            <p className="text-[10px] text-slate-600 mt-1 leading-relaxed line-clamp-3">
+                            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed line-clamp-3 font-normal">
                               {story.summary}
                             </p>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                             <div className="flex flex-wrap gap-1">
                               {story.products.slice(0, 3).map((prod, pIdx) => (
                                 <span
                                   key={pIdx}
-                                  className="px-1.5 py-0.5 rounded bg-blue-50 text-[9px] font-semibold text-[#074878]"
+                                  className="px-2 py-0.5 rounded-md bg-blue-50 text-[10px] font-bold text-[#074878]"
                                 >
                                   {prod}
                                 </span>
@@ -455,10 +457,10 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                               href={story.storyUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10px] font-bold text-[#074878] hover:text-[#053456] shrink-0"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#074878] hover:text-[#053456] shrink-0"
                             >
                               <span>{t("readFullStory")}</span>
-                              <ArrowUpRight className="w-3 h-3" />
+                              <ArrowUpRight className="w-3.5 h-3.5" />
                             </a>
                           </div>
                         </div>
@@ -469,24 +471,24 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
               </div>
 
               {/* Rodapé do Modal */}
-              <div className="p-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 rounded-b-3xl">
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] text-slate-500">
-                    {t("confidenceScoreLabel")}: <strong>{(activeModalCase.confidenceScore * 100).toFixed(0)}%</strong>
+              <div className="p-5 sm:p-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-slate-50/80 rounded-b-3xl">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs sm:text-sm text-slate-600">
+                    {t("confidenceScoreLabel")}: <strong className="text-slate-900 font-black">{(activeModalCase.confidenceScore * 100).toFixed(0)}%</strong>
                   </span>
                   <button
                     onClick={() => {
                       setTerraformModalCase(activeModalCase);
                     }}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#074878] to-purple-800 hover:from-[#053456] hover:to-purple-900 text-white text-xs font-bold shadow-xs transition-all cursor-pointer hover:scale-105"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#074878] to-purple-800 hover:from-[#053456] hover:to-purple-900 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-105"
                   >
-                    <Cpu className="w-3.5 h-3.5" />
+                    <Cpu className="w-4 h-4" />
                     <span>Gerar Pipeline Terraform (Multi-Engine)</span>
                   </button>
                 </div>
                 <button
                   onClick={() => setActiveModalCase(null)}
-                  className="px-5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
                 >
                   {t("closeBtn")}
                 </button>
