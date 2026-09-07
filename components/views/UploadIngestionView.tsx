@@ -91,6 +91,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleDownloadNotebook = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -124,12 +125,21 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
     "Outro Segmento"
   ];
 
-  // Identificação automática de setor com Gemini 3.8 Flash
+  // Identificação automática de setor ultra-rápida
   const handleDetectIndustry = async (nameOverride?: string, urlOverride?: string) => {
     const targetName = nameOverride !== undefined ? nameOverride : customerName;
     const targetUrl = urlOverride !== undefined ? urlOverride : websiteUrl;
 
-    if (!targetName.trim() && !targetUrl.trim()) return;
+    if (!targetName.trim() && !targetUrl.trim()) {
+      setIsDetectingSector(false);
+      return;
+    }
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setIsDetectingSector(true);
     try {
@@ -140,7 +150,8 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           companyName: targetName.trim(),
           websiteUrl: targetUrl.trim(),
           additionalInfo: additionalInfo.trim()
-        })
+        }),
+        signal: controller.signal
       });
       const data = await res.json();
       if (data.industry) {
@@ -150,24 +161,31 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           setSectorRationale(data.rationale);
         }
       }
-    } catch (e) {
-      console.warn("Falha ao detectar setor automaticamente:", e);
+    } catch (e: any) {
+      if (e?.name !== "AbortError") {
+        console.warn("Falha ao detectar setor automaticamente:", e);
+      }
     } finally {
-      setIsDetectingSector(false);
+      if (abortControllerRef.current === controller) {
+        setIsDetectingSector(false);
+      }
     }
   };
 
-  // Auto-detecção dinâmica ao digitar Nome da Empresa ou URL (Debounce de 500ms)
+  // Auto-detecção dinâmica ao digitar Nome da Empresa ou URL (Debounce de 350ms)
   useEffect(() => {
     const trimmedName = customerName.trim();
     const trimmedUrl = websiteUrl.trim();
 
-    // Dispara a busca inteligente se houver nome ou URL
-    if (trimmedName.length < 2 && trimmedUrl.length < 5) return;
+    // Dispara a busca inteligente somente se houver nome significativo ou URL
+    if (trimmedName.length < 3 && trimmedUrl.length < 5) {
+      setIsDetectingSector(false);
+      return;
+    }
 
     const timer = setTimeout(() => {
       handleDetectIndustry(trimmedName, trimmedUrl);
-    }, 500);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [customerName, websiteUrl]);
