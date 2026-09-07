@@ -7,15 +7,60 @@ export const DATASET_ID = "business_assessment_customer";
 export const GCS_BUCKET = "dass-2026";
 export const GCS_PREFIX = "business_assessment";
 
+// Cache do token com expiração curta e segura (máx 4 minutos) para evitar tokens expirados em memória
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
-export async function getGcpAccessToken(): Promise<string> {
+export function invalidateGcpTokenCache(): void {
+  cachedToken = null;
+}
+
+export async function getGcpAccessToken(forceRefresh = false): Promise<string> {
   const now = Date.now();
-  if (cachedToken && cachedToken.expiresAt > now + 60000) {
+  if (!forceRefresh && cachedToken && cachedToken.expiresAt > now + 30000) {
     return cachedToken.token;
   }
 
-  // 1. Tenta obter via GoogleAuth (ADC nativo)
+  // 0. Verifica token explicitamente fornecido em variável de ambiente
+  if (process.env.GCP_ACCESS_TOKEN && process.env.GCP_ACCESS_TOKEN.startsWith("ya29.")) {
+    return process.env.GCP_ACCESS_TOKEN;
+  }
+
+  // 1. Tenta prioritariamente via gcloud CLI local (ambiente de dev/macOS onde o usuário está autenticado)
+  const gcloudBinCandidates = [
+    process.env.GCLOUD_BIN,
+    "/Users/rafaelpaes/google-cloud-sdk/bin/gcloud",
+    "/opt/homebrew/bin/gcloud",
+    "/usr/local/bin/gcloud",
+    "gcloud"
+  ].filter(Boolean) as string[];
+
+  const customEnv = {
+    ...process.env,
+    PATH: `/Users/rafaelpaes/google-cloud-sdk/bin:/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || ""}`
+  };
+
+  for (const bin of gcloudBinCandidates) {
+    try {
+      const stdout = execSync(`${bin} auth print-access-token`, {
+        encoding: "utf-8",
+        timeout: 12000,
+        env: customEnv,
+        stdio: ["pipe", "pipe", "pipe"]
+      });
+      const token = stdout.trim();
+      if (token && token.startsWith("ya29.")) {
+        cachedToken = {
+          token,
+          expiresAt: now + 240000 // Cache seguro de 4 minutos (tokens GCP duram 60 min)
+        };
+        return token;
+      }
+    } catch {
+      // continua para o próximo candidato
+    }
+  }
+
+  // 2. Fallback via GoogleAuth (ADC nativo / Cloud Run Service Account)
   try {
     const auth = new GoogleAuth({
       scopes: [
@@ -29,28 +74,39 @@ export async function getGcpAccessToken(): Promise<string> {
     if (tokenResponse?.token) {
       cachedToken = {
         token: tokenResponse.token,
-        expiresAt: now + 3500000 // ~1 hora
+        expiresAt: now + 240000 // Cache seguro de 4 minutos
       };
       return tokenResponse.token;
     }
-  } catch (error) {
-    console.warn("[GCP Auth] ADC nativo falhou, tentando fallback gcloud auth CLI...", error);
+  } catch (error: any) {
+    console.warn("[GCP Auth] Falha ao obter token via GoogleAuth ADC:", error?.message || error);
   }
 
-  // 2. Fallback resiliente via gcloud CLI local
-  try {
-    const stdout = execSync("gcloud auth print-access-token", { encoding: "utf-8", timeout: 10000 });
-    const token = stdout.trim();
-    if (token && token.startsWith("ya29.")) {
-      cachedToken = {
-        token,
-        expiresAt: now + 3000000
-      };
-      return token;
-    }
-  } catch (cliError) {
-    console.error("[GCP Auth] Falha crítica ao obter token via CLI:", cliError);
+  throw new Error("Não foi possível autenticar no Google Cloud via gcloud CLI ou ADC.");
+}
+
+/**
+ * Wrapper resiliente para fetch com autorização GCP automática e auto-retry transparente em caso de 401.
+ */
+export async function fetchWithGcpAuth(
+  url: string,
+  init: RequestInit = {},
+  retryOn401 = true
+): Promise<Response> {
+  let token = await getGcpAccessToken();
+  const headers = new Headers(init.headers || {});
+  headers.set("Authorization", `Bearer ${token}`);
+
+  let res = await fetch(url, { ...init, headers });
+
+  // Se retornar 401 Unauthorized, invalida imediatamente o cache e retenta com token novo
+  if (res.status === 401 && retryOn401) {
+    console.warn(`[GCP Auth] Requisição a ${url} retornou 401. Renovando token via gcloud/ADC e repetindo...`);
+    invalidateGcpTokenCache();
+    token = await getGcpAccessToken(true);
+    headers.set("Authorization", `Bearer ${token}`);
+    res = await fetch(url, { ...init, headers });
   }
 
-  throw new Error("Não foi possível autenticar no Google Cloud via ADC ou gcloud CLI.");
+  return res;
 }

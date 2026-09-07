@@ -1,5 +1,5 @@
 // lib/gcp/storage.ts - Upload e gestão de arquivos em Google Cloud Storage
-import { getGcpAccessToken, GCS_BUCKET, GCS_PREFIX } from "./auth";
+import { fetchWithGcpAuth, GCS_BUCKET, GCS_PREFIX } from "./auth";
 
 export interface GcsUploadResult {
   folderUri: string;
@@ -33,14 +33,12 @@ export async function uploadBufferToGcs(
   buffer: Buffer,
   contentType: string = "application/octet-stream"
 ): Promise<string> {
-  const token = await getGcpAccessToken();
   const encodedPath = encodeURIComponent(destinationPath);
   const url = `https://storage.googleapis.com/upload/storage/v1/b/${bucket}/o?uploadType=media&name=${encodedPath}`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithGcpAuth(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
       "Content-Type": contentType,
       "Content-Length": buffer.length.toString()
     },

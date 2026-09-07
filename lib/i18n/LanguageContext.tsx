@@ -19,16 +19,18 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
 
 export const translations = {
   "pt-BR": {
-    // Sidebar
-    tabUpload: "Ingestão & Metadados",
+    // Sidebar & Navbar
+    tabUpload: "Assessment de Negócio",
     tabUploadDesc: "Upload de ZIP & Ingestão GCS",
-    tabDecision: "Agent Intelligence",
+    tabDecision: "Visão Executiva",
     tabDecisionDesc: "Cockpit Executivo & Síntese",
-    tabCases: "Casos de Uso & BC",
+    tabCases: "Casos de Uso",
     tabCasesDesc: "Cards & Business Case",
+    tabDebate: "Debate Multi-Agente",
+    tabDebateDesc: "NC-MAD Tripla Rede Neural",
     tabGraph: "Grafo de Conhecimento",
     tabGraphDesc: "BigQuery GQL & Relacionamentos",
-    tabChat: "Chat Conversacional",
+    tabChat: "Data Agent BQ",
     tabChatDesc: "Data Agent com Grounding",
     sidebarStorage: "BigQuery & Storage:",
     sidebarConnected: "Conectado",
@@ -132,16 +134,18 @@ export const translations = {
     productsUsed: "Produtos Google Cloud"
   },
   "en-US": {
-    // Sidebar
-    tabUpload: "Ingestion & Metadata",
+    // Sidebar & Navbar
+    tabUpload: "Business Assessment",
     tabUploadDesc: "ZIP Upload & GCS Ingestion",
-    tabDecision: "Agent Intelligence",
+    tabDecision: "Executive View",
     tabDecisionDesc: "Executive Cockpit & Synthesis",
-    tabCases: "Use Cases & BC",
+    tabCases: "Use Cases",
     tabCasesDesc: "Cards & Business Case",
+    tabDebate: "Multi-Agent Debate",
+    tabDebateDesc: "NC-MAD Triple Neural Network",
     tabGraph: "Knowledge Graph",
     tabGraphDesc: "BigQuery GQL & Relationships",
-    tabChat: "Conversational Chat",
+    tabChat: "Data Agent BQ",
     tabChatDesc: "Data Agent with Grounding",
     sidebarStorage: "BigQuery & Storage:",
     sidebarConnected: "Connected",
@@ -245,16 +249,18 @@ export const translations = {
     productsUsed: "Google Cloud Products"
   },
   "es-ES": {
-    // Sidebar
-    tabUpload: "Ingestión y Metadatos",
+    // Sidebar & Navbar
+    tabUpload: "Assessment de Negocio",
     tabUploadDesc: "Carga de ZIP e Ingestión GCS",
-    tabDecision: "Agent Intelligence",
+    tabDecision: "Visión Ejecutiva",
     tabDecisionDesc: "Cockpit Ejecutivo y Síntesis",
-    tabCases: "Casos de Uso y BC",
+    tabCases: "Casos de Uso",
     tabCasesDesc: "Tarjetas y Business Case",
+    tabDebate: "Debate Multi-Agente",
+    tabDebateDesc: "NC-MAD Triple Red Neural",
     tabGraph: "Grafo de Conocimiento",
     tabGraphDesc: "BigQuery GQL y Relaciones",
-    tabChat: "Chat Conversacional",
+    tabChat: "Data Agent BQ",
     tabChatDesc: "Data Agent con Grounding",
     sidebarStorage: "BigQuery & Storage:",
     sidebarConnected: "Conectado",

@@ -31,19 +31,22 @@ import {
   Check
 } from "lucide-react";
 import { TopUseCase, CustomerAssessment } from "@/lib/types";
-import { GoogleCloudLogo } from "../GoogleCloudLogo";
+import { GoogleCloudLogo, GoogleCloudIcon } from "../GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSimilarGoogleCloudCustomerStories } from "@/lib/gcp/customer-stories";
 import { UseCaseTerraformModal } from "./UseCaseTerraformModal";
+import { formatCurrencyUsd, formatCurrencyBrl, formatPercent, formatDecimal } from "@/lib/utils/formatters";
 
 interface TopUseCasesViewProps {
   useCases: TopUseCase[];
   assessment: CustomerAssessment | null;
+  onDetailCaseWithGemini?: (useCase: TopUseCase) => void;
 }
 
 export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
   useCases,
-  assessment
+  assessment,
+  onDetailCaseWithGemini
 }) => {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -90,58 +93,97 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Banner de Métricas Consolidadas (C-Level ROI) */}
+      {/* 2. Banner de Métricas Consolidadas (ModoUI Clean Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-[#063964] via-[#08487D] to-[#03233F] text-white shadow-md">
-          <span className="text-[10px] font-black uppercase text-blue-200 tracking-wider block">
-            {t("consolidatedReturn")}
-          </span>
-          <div className="text-2xl font-black mt-1">
-            ${(totalFinancialGainUsd / 1000).toFixed(0)}k <span className="text-xs font-normal text-blue-200">/ ano</span>
+        {/* Card 1: Retorno Consolidado Cliente */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-2xl sm:text-[28px] font-black text-slate-900 tabular-nums">
+                {formatCurrencyUsd(totalFinancialGainUsd, { compact: true, showSign: true, decimals: 2 })} <span className="text-xs font-normal text-slate-400">/ ano</span>
+              </div>
+              <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">
+                ~{formatCurrencyBrl(totalFinancialGainUsd * 5.6, { compact: true, decimals: 2 })} em receita e eficiência
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border border-emerald-200 text-emerald-700 bg-emerald-50">
+              <TrendingUp className="w-3 h-3 text-emerald-600" />
+              <span>+{overallRoi}% ROI</span>
+            </span>
           </div>
-          <p className="text-[11px] text-emerald-300 font-semibold mt-1">
-            ~R$ {((totalFinancialGainUsd * 5.6) / 1000000).toFixed(2)}M em receita e eficiência
-          </p>
+          <div className="pt-3 mt-4 border-t border-slate-100">
+            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+              {t("consolidatedReturn") || "Retorno Consolidado"}
+            </h4>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+              Impacto econômico validado nos {useCases.length} casos
+            </p>
+          </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-            {t("gcpCost")}
-          </span>
-          <div className="text-2xl font-black text-[#074878] mt-1">
-            ${totalGcpMonthlyCostUsd.toLocaleString()} <span className="text-xs font-normal text-slate-400">/ mês</span>
+        {/* Card 2: Consumo Google Cloud */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-2xl sm:text-[28px] font-black text-[#074878] tabular-nums">
+                {formatCurrencyUsd(totalGcpMonthlyCostUsd, { decimals: 2 })} <span className="text-xs font-normal text-slate-400">/ mês</span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                {formatCurrencyUsd(totalGcpAnnualCostUsd, { compact: true, decimals: 2 })}/ano (BigQuery + Agent Platform)
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border border-blue-200 text-[#074878] bg-blue-50">
+              <Zap className="w-3 h-3 text-[#074878]" />
+              <span>Serverless</span>
+            </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            ${(totalGcpAnnualCostUsd / 1000).toFixed(1)}k/ano (BigQuery + Vertex AI)
-          </p>
+          <div className="pt-3 mt-4 border-t border-slate-100">
+            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+              {t("gcpCost") || "Consumo Google Cloud"}
+            </h4>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+              Infraestrutura de alta performance auto-sustentável
+            </p>
+          </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-            {t("overallRoi")}
-          </span>
-          <div className="text-2xl font-black text-emerald-600 mt-1">
-            +{overallRoi}%
+        {/* Card 3: Payback & Multiplicador */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-2xl sm:text-[28px] font-black text-emerald-600 tabular-nums">
+                +{overallRoi}%
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                Payback estimado em ~1,8 meses
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border border-purple-200 text-purple-700 bg-purple-50">
+              <Sparkles className="w-3 h-3 text-purple-600" />
+              <span>Fast-Track</span>
+            </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Payback estimado em ~1.8 meses
-          </p>
+          <div className="pt-3 mt-4 border-t border-slate-100">
+            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+              {t("overallRoi") || "Multiplicador de Retorno"}
+            </h4>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+              Para cada $1 investido em GCP, o cliente captura retorno superior
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* 3. Filtro por Categoria */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
-          <Filter className="w-3.5 h-3.5" /> Filtrar:
-        </span>
+      {/* 3. Filtro por Categoria (Segmented Control Pill ModoUI) */}
+      <div className="inline-flex items-center p-1 bg-slate-100 rounded-full border border-slate-200/60 shadow-inner-xs flex-wrap gap-1">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
               selectedCategory === cat
-                ? "bg-[#074878] text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/50"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
             {cat === "ALL" ? t("filterAll") : cat}
@@ -196,8 +238,8 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                     RETORNO ESPERADO PARA O CLIENTE (BC)
                   </span>
                   <div className="text-base font-black text-emerald-700">
-                    +${(clientAnnualGainUsd / 1000).toFixed(0)}k <span className="text-[10px] font-normal text-emerald-800">/ ano</span>
-                    <span className="text-xs font-bold text-slate-500 ml-1.5">(~R$ {clientAnnualGainBrl.toFixed(2)}M)</span>
+                    {formatCurrencyUsd(clientAnnualGainUsd, { compact: true, showSign: true, decimals: 2 })} <span className="text-[10px] font-normal text-emerald-800">/ ano</span>
+                    <span className="text-xs font-bold text-slate-500 ml-1.5">(~{formatCurrencyBrl(clientAnnualGainUsd * 5.6, { compact: true, decimals: 2 })})</span>
                   </div>
                   <p className="text-[10px] text-emerald-900 font-medium leading-tight">
                     {useCase.businessCaseRoi}
@@ -210,30 +252,46 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                     CONSUMO DE INFRAESTRUTURA GOOGLE CLOUD
                   </span>
                   <div className="text-base font-black text-[#074878]">
-                    ${gcpMonthlyCost} <span className="text-[10px] font-normal text-slate-500">/ mês</span>
-                    <span className="text-xs font-bold text-slate-500 ml-1.5">(~${(gcpAnnualCost / 1000).toFixed(1)}k/ano)</span>
+                    {formatCurrencyUsd(gcpMonthlyCost, { decimals: 2 })} <span className="text-[10px] font-normal text-slate-500">/ mês</span>
+                    <span className="text-xs font-bold text-slate-500 ml-1.5">(~{formatCurrencyUsd(gcpAnnualCost, { compact: true, decimals: 2 })}/ano)</span>
                   </div>
                   <p className="text-[10px] text-slate-600 font-medium leading-tight">
-                    BigQuery (${useCase.costBreakdown?.bigqueryUsd || 0}) + Vertex AI (${useCase.costBreakdown?.vertexAiUsd || 0}) + Cloud Run
+                    BigQuery ({formatCurrencyUsd(useCase.costBreakdown?.bigqueryUsd || 0, { decimals: 2 })}) + Agent Platform ({formatCurrencyUsd(useCase.costBreakdown?.vertexAiUsd || 0, { decimals: 2 })}) + Cloud Run
                   </p>
                 </div>
               </div>
 
               {/* Rodapé do Card */}
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setTerraformModalCase(useCase);
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:scale-105"
-                  title="Gerar Pipeline Terraform (Multi-Engine BigQuery Studio & Knowledge Catalog)"
-                >
-                  <Cpu className="w-3.5 h-3.5 text-purple-600" />
-                  <span>Pipeline Terraform</span>
-                </button>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTerraformModalCase(useCase);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:scale-105"
+                    title="Gerar Pipeline Terraform (Multi-Engine BigQuery Studio & Knowledge Catalog)"
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Pipeline Terraform</span>
+                  </button>
 
-                <span className="text-xs font-black text-[#074878] group-hover:underline flex items-center gap-0.5">
+                  {onDetailCaseWithGemini && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDetailCaseWithGemini(useCase);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:scale-105"
+                      title="Detalhar case com o Gemini no BigQuery Data Agent"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Detalhar com Gemini</span>
+                    </button>
+                  )}
+                </div>
+
+                <span className="text-xs font-black text-[#074878] group-hover:underline flex items-center gap-0.5 shrink-0">
                   <span>Ver Detalhes</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
@@ -341,7 +399,10 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                           <DollarSign className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div className="text-2xl sm:text-3xl font-black text-emerald-700">
-                          +${(activeModalCase.financialGainEstimateUsd / 1000).toFixed(0)}k <span className="text-sm font-normal text-emerald-800">/ ano</span>
+                          {formatCurrencyUsd(activeModalCase.financialGainEstimateUsd, { compact: true, showSign: true, decimals: 2 })} <span className="text-sm font-normal text-emerald-800">/ ano</span>
+                        </div>
+                        <div className="text-xs text-emerald-900 font-bold -mt-1">
+                          ({formatCurrencyUsd(activeModalCase.financialGainEstimateUsd, { decimals: 2 })}/ano • ~{formatCurrencyBrl(activeModalCase.financialGainEstimateUsd * 5.6, { compact: true, decimals: 2 })})
                         </div>
                         <p className="text-xs sm:text-sm text-emerald-950 font-semibold leading-relaxed">
                           {activeModalCase.businessCaseRoi}
@@ -359,27 +420,27 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                           <span className="text-xs font-black uppercase text-[#074878] tracking-wider">
                             {t("gcpConsumptionLabel")}
                           </span>
-                          <Database className="w-5 h-5 text-[#074878]" />
+                          <GoogleCloudIcon size={24} />
                         </div>
                         <div className="text-2xl sm:text-3xl font-black text-[#074878]">
-                          ${activeModalCase.gcpMonthlyCostUsd} <span className="text-sm font-normal text-slate-500">/ mês</span>
+                          {formatCurrencyUsd(activeModalCase.gcpMonthlyCostUsd, { decimals: 2 })} <span className="text-sm font-normal text-slate-500">/ mês</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2.5 pt-1">
                           <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
                             <span className="text-[10px] text-slate-400 font-bold uppercase block">BigQuery</span>
-                            <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.bigqueryUsd || 0}/mês</strong>
+                            <strong className="text-sm font-extrabold text-slate-800">{formatCurrencyUsd(activeModalCase.costBreakdown?.bigqueryUsd || 0, { decimals: 2 })}/mês</strong>
                           </div>
                           <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block">Vertex AI</span>
-                            <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.vertexAiUsd || 0}/mês</strong>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block">Agent Platform</span>
+                            <strong className="text-sm font-extrabold text-slate-800">{formatCurrencyUsd(activeModalCase.costBreakdown?.vertexAiUsd || 0, { decimals: 2 })}/mês</strong>
                           </div>
                           <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
                             <span className="text-[10px] text-slate-400 font-bold uppercase block">Cloud Run</span>
-                            <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.cloudRunUsd || 0}/mês</strong>
+                            <strong className="text-sm font-extrabold text-slate-800">{formatCurrencyUsd(activeModalCase.costBreakdown?.cloudRunUsd || 0, { decimals: 2 })}/mês</strong>
                           </div>
                           <div className="p-2.5 rounded-xl bg-white border border-blue-100 shadow-2xs">
                             <span className="text-[10px] text-slate-400 font-bold uppercase block">Cloud Storage</span>
-                            <strong className="text-sm font-extrabold text-slate-800">${activeModalCase.costBreakdown?.storageUsd || 0}/mês</strong>
+                            <strong className="text-sm font-extrabold text-slate-800">{formatCurrencyUsd(activeModalCase.costBreakdown?.storageUsd || 0, { decimals: 2 })}/mês</strong>
                           </div>
                         </div>
                       </div>
@@ -505,14 +566,14 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                     {/* Banner Topo da Arquitetura */}
                     <div className="p-6 rounded-3xl bg-gradient-to-r from-[#063964] via-[#08487D] to-[#20104e] text-white shadow-md space-y-2">
                       <div className="flex items-center gap-2">
-                        <GoogleCloudLogo height={20} />
+                        <GoogleCloudLogo height={20} textColor="white" />
                         <span className="text-blue-200 text-xs font-semibold">•</span>
                         <span className="px-2.5 py-0.5 rounded-full bg-blue-400/20 border border-blue-300/30 text-blue-200 text-[10px] font-black uppercase tracking-wider">
                           Enterprise Reference Architecture
                         </span>
                       </div>
                       <h3 className="text-lg sm:text-xl font-black">
-                        Blueprint Arquitetural: BigQuery Studio + Vertex AI Gemini 3.8 Flash + Knowledge Catalog
+                        Blueprint Arquitetural: BigQuery Studio + Agent Platform Gemini 3.8 Flash + Knowledge Catalog
                       </h3>
                       <p className="text-xs sm:text-sm text-blue-100/90 max-w-3xl leading-relaxed">
                         Desenho técnico e funcional da solução corporativa desenhado para habilitar o caso de negócio <strong>&quot;{activeModalCase.title}&quot;</strong> com pipelines multi-engine nativos, grounding analítico sem alucinação e governança automatizada.
@@ -623,10 +684,10 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                             </div>
                             <h4 className="text-sm font-black text-slate-900 mt-2.5 flex items-center gap-1.5">
                               <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-                              Vertex AI Gemini 3.8 Flash
+                              Agent Platform Gemini 3.8 Flash
                             </h4>
                             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                              Raciocínio analítico avançado e Data Agents conversacionais com grounding estrito no schema do BigQuery. Funções BQML <code>ML.GENERATE_TEXT</code> nativas.
+                              Raciocínio analítico avançado e Data Agents conversacionais com grounding estrito no schema do BigQuery. Integração nativa com Agent Platform e funções BQML <code>ML.GENERATE_TEXT</code>.
                             </p>
                           </div>
                           <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
@@ -741,7 +802,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                             Retorno comprovado em menos de 2 meses
                           </h5>
                           <p className="text-[11px] text-emerald-900 leading-relaxed font-medium">
-                            &quot;Com ganho anual projetado de +${(activeModalCase.financialGainEstimateUsd / 1000).toFixed(0)}k/ano e custo de nuvem de apenas ${activeModalCase.gcpMonthlyCostUsd}/mês, a iniciativa se autofinancia desde o primeiro trimestre.&quot;
+                            &quot;Com ganho anual projetado de {formatCurrencyUsd(activeModalCase.financialGainEstimateUsd, { compact: true, showSign: true, decimals: 2 })}/ano e custo de nuvem de apenas {formatCurrencyUsd(activeModalCase.gcpMonthlyCostUsd, { decimals: 2 })}/mês, a iniciativa se autofinancia desde o primeiro trimestre.&quot;
                           </p>
                         </div>
 
@@ -753,7 +814,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                             Dados protegidos dentro do perímetro BigQuery
                           </h5>
                           <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
-                            &quot;O Gemini 3.8 Flash opera diretamente nos dados governados pelo Knowledge Catalog, sem exportar informações para terceiros nem usar os dados do cliente para treinamento de modelos.&quot;
+                            &quot;O Gemini 3.8 Flash na Agent Platform opera diretamente nos dados governados pelo Knowledge Catalog, sem exportar informações para terceiros nem usar os dados do cliente para treinamento de modelos.&quot;
                           </p>
                         </div>
 
@@ -777,25 +838,25 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                             Composição de Consumo Google Cloud (ARR Mensal & Anual)
                           </span>
                           <span className="text-xs font-extrabold text-[#074878]">
-                            Total: ${activeModalCase.gcpMonthlyCostUsd}/mês (~${((activeModalCase.gcpMonthlyCostUsd || 0) * 12 / 1000).toFixed(1)}k/ano)
+                            Total: {formatCurrencyUsd(activeModalCase.gcpMonthlyCostUsd, { decimals: 2 })}/mês (~{formatCurrencyUsd((activeModalCase.gcpMonthlyCostUsd || 0) * 12, { compact: true, decimals: 2 })}/ano)
                           </span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">BigQuery Compute & Storage</span>
-                            <span className="text-sm font-black text-slate-900">${activeModalCase.costBreakdown?.bigqueryUsd || 0}/mês</span>
+                            <span className="text-sm font-black text-slate-900">{formatCurrencyUsd(activeModalCase.costBreakdown?.bigqueryUsd || 0, { decimals: 2 })}/mês</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Vertex AI Gemini 3.8 Flash</span>
-                            <span className="text-sm font-black text-slate-900">${activeModalCase.costBreakdown?.vertexAiUsd || 0}/mês</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Agent Platform Gemini 3.8 Flash</span>
+                            <span className="text-sm font-black text-slate-900">{formatCurrencyUsd(activeModalCase.costBreakdown?.vertexAiUsd || 0, { decimals: 2 })}/mês</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">Cloud Run Cockpit</span>
-                            <span className="text-sm font-black text-slate-900">${activeModalCase.costBreakdown?.cloudRunUsd || 0}/mês</span>
+                            <span className="text-sm font-black text-slate-900">{formatCurrencyUsd(activeModalCase.costBreakdown?.cloudRunUsd || 0, { decimals: 2 })}/mês</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">Cloud Storage Staging</span>
-                            <span className="text-sm font-black text-slate-900">${activeModalCase.costBreakdown?.storageUsd || 0}/mês</span>
+                            <span className="text-sm font-black text-slate-900">{formatCurrencyUsd(activeModalCase.costBreakdown?.storageUsd || 0, { decimals: 2 })}/mês</span>
                           </div>
                         </div>
                       </div>
@@ -818,7 +879,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                           </div>
                           <div className="p-3 rounded-xl bg-white border border-slate-200">
                             <span className="text-[10px] font-black text-indigo-700 uppercase block">Semanas 5-6</span>
-                            <strong className="text-slate-900 block mt-1">Gemini 3.8 Flash</strong>
+                            <strong className="text-slate-900 block mt-1">Agent Platform Gemini 3.8 Flash</strong>
                             <p className="text-[11px] text-slate-500 mt-1">Configuração de Data Agents, grounding em catálogo e testes C-Level.</p>
                           </div>
                           <div className="p-3 rounded-xl bg-white border border-slate-200">
@@ -837,7 +898,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
               <div className="p-5 sm:p-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-slate-50/80 rounded-b-3xl">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-xs sm:text-sm text-slate-600">
-                    {t("confidenceScoreLabel")}: <strong className="text-slate-900 font-black">{(activeModalCase.confidenceScore * 100).toFixed(0)}%</strong>
+                    {t("confidenceScoreLabel")}: <strong className="text-slate-900 font-black">{formatPercent(activeModalCase.confidenceScore * 100, 1)}</strong>
                   </span>
                   <button
                     onClick={() => {
@@ -848,6 +909,20 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                     <Cpu className="w-4 h-4" />
                     <span>Gerar Pipeline Terraform (Multi-Engine)</span>
                   </button>
+                  {onDetailCaseWithGemini && (
+                    <button
+                      onClick={() => {
+                        const targetCase = activeModalCase;
+                        setActiveModalCase(null);
+                        onDetailCaseWithGemini(targetCase);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer hover:scale-105"
+                      title="Detalhar case com o Gemini no BigQuery Data Agent"
+                    >
+                      <Sparkles className="w-4 h-4 text-blue-200" />
+                      <span>Detalhar case com o Gemini</span>
+                    </button>
+                  )}
                 </div>
                 <button
                   onClick={() => setActiveModalCase(null)}

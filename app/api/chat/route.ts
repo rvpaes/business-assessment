@@ -1,6 +1,6 @@
-// app/api/chat/route.ts - BigQuery Data Agent (Conversational Analytics API) + Property Graph GQL Grounding
 import { NextRequest, NextResponse } from "next/server";
 import { callGemini38Flash } from "@/lib/gcp/gemini-3-8";
+import { askBigQueryDataAgent } from "@/lib/gcp/conversational-analytics";
 import { 
   logStructuredStep, 
   inspectKnowledgeCatalog, 
@@ -25,7 +25,28 @@ export async function POST(req: NextRequest) {
     });
 
     // =========================================================================
-    // FASE 1: Inspeção do Knowledge Catalog (Semântica & Data Profiles)
+    // FASE 1: BigQuery Data Agent Oficial (Property Graph ISO GQL)
+    // =========================================================================
+    try {
+      const dataAgentRes = await askBigQueryDataAgent(message, customerName);
+      if (dataAgentRes && dataAgentRes.reply) {
+        return NextResponse.json({
+          success: true,
+          reply: dataAgentRes.reply,
+          thoughts: dataAgentRes.thoughts,
+          generatedSql: dataAgentRes.generatedSql,
+          queryResults: dataAgentRes.queryResults,
+          querySchema: dataAgentRes.querySchema,
+          followupQuestions: dataAgentRes.followupQuestions,
+          source: "bigquery_data_agent"
+        });
+      }
+    } catch (agentErr) {
+      console.warn("[Chat] BigQuery Data Agent API em fallback para pipeline local GQL:", agentErr);
+    }
+
+    // =========================================================================
+    // FASE 2: Fallback - Inspeção do Knowledge Catalog (Semântica & Data Profiles)
     // =========================================================================
     let catalogSummary = "";
     let catalogItems: any[] = [];
@@ -39,7 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // FASE 2: Travessia no Property Graph via ISO GQL (GRAPH_TABLE)
+    // FASE 3: Fallback - Travessia no Property Graph via ISO GQL (GRAPH_TABLE)
     // =========================================================================
     const isGovernanceQuestion = /lgpd|bacen|governança|governance|segurança|security|pii|mascaramento|ciso/i.test(message);
     
@@ -69,7 +90,7 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // FASE 3: Síntese Grounded com Gemini 3.8 Flash (Zero-Hallucination)
+    // FASE 4: Fallback - Síntese Grounded com Gemini 3.8 Flash (Zero-Hallucination)
     // =========================================================================
     const prompt = `
 Você é o BigQuery Data Agent Executivo de Inteligência Analítica e IA da Google Cloud para o cliente ${customerName || "Corporativo"}.

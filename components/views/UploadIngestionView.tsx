@@ -14,11 +14,9 @@ import {
   Globe,
   FileText,
   Check,
-  Database,
   ChevronRight,
   Bot
 } from "lucide-react";
-import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -224,14 +222,7 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-200 font-sans py-4">
       {/* 1. Header Minimalista & Direto */}
-      <div className="text-center space-y-3">
-        <div className="flex justify-center">
-          <GoogleCloudLogo height={34} />
-        </div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#074878] text-[11px] font-black uppercase tracking-wider">
-          <Database className="w-3.5 h-3.5" />
-          <span>Google Cloud Business Assessment</span>
-        </div>
+      <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           {t("startBusinessAssessmentTitle")}
         </h1>

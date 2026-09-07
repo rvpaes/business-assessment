@@ -33,7 +33,7 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     industry: "Fintech & Bancos Digitais",
     headline: "Revolut impulsiona decisões financeiras em tempo real para 35M+ de clientes com BigQuery",
     summary: "O neobanco global processa bilhões de registros no BigQuery para análises preditivas de score de crédito, prevenção de churn e engenharia de decisão analítica com sub-segundo de resposta.",
-    products: ["BigQuery", "Vertex AI", "Cloud Storage", "Looker"],
+    products: ["BigQuery", "Agent Platform", "Cloud Storage", "Looker"],
     storyUrl: "https://cloud.google.com/customers/revolut-data?hl=pt-BR",
     country: "Global",
     tags: ["banco", "fintech", "sessões", "transacional", "inadimplência", "churn", "ltv", "finops", "big data", "score", "risco"]
@@ -44,7 +44,7 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     industry: "Bancos & Prevenção a Fraudes",
     headline: "Millennium BCP combate fraudes e aprimora governança regulatória com machine learning no GCP",
     summary: "Detecção de anomalias em pagamentos e esteiras de conformidade para prevenção a lavagem de dinheiro e PEPs, diminuindo falsos positivos e garantindo compliance financeiro automatizado.",
-    products: ["BigQuery", "Vertex AI", "Security Command Center"],
+    products: ["BigQuery", "Agent Platform", "Security Command Center"],
     storyUrl: "https://cloud.google.com/customers/millennium-bcp?hl=pt-BR",
     country: "Portugal / Latam",
     tags: ["fraude", "compliance", "peps", "regulatório", "anomalias", "segurança", "governança", "risco", "impedidos", "financeiro"]
@@ -55,7 +55,7 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     industry: "Farmacêutica & Saúde",
     headline: "Super-Pharm conecta 280+ farmácias com recomendações personalizadas e análise de demanda por PDV",
     summary: "Rede líder de drogarias utilizou BigQuery e modelos preditivos para cruzar hábitos de consumo locais, raios de cobertura e demanda gravitacional para abastecimento de medicamentos sem rupturas.",
-    products: ["BigQuery", "Vertex AI", "BigQuery ML"],
+    products: ["BigQuery", "Agent Platform", "BigQuery ML"],
     storyUrl: "https://cloud.google.com/customers/super-pharm?hl=pt-BR",
     country: "Global / Varejo Farma",
     tags: ["farmacêutica", "farma", "saúde", "pdv", "prescrições", "gravitação", "huff", "lojas", "farmácias", "sellout", "medicamentos"]
@@ -66,7 +66,7 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     industry: "Ciências Médicas & Farmacêutica",
     headline: "Eversana acelera comercialização de medicamentos e engajamento médico com IA no Google Cloud",
     summary: "Plataforma de inteligência comercial médica que integra dados de visitas a médicos, prescrições e ensaios clínicos para otimizar rotas de campo e produtividade com IA causal e BigQuery.",
-    products: ["BigQuery", "Vertex AI", "Healthcare API", "Gemini"],
+    products: ["BigQuery", "Agent Platform", "Healthcare API", "Gemini"],
     storyUrl: "https://cloud.google.com/customers/eversana?hl=pt-BR",
     country: "Global",
     tags: ["médico", "prescritores", "doutor", "farmacêutica", "rotas", "campo", "uplift", "causal", "remédios", "medicamentos", "saúde"]
@@ -88,7 +88,7 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     industry: "Cadeia de Suprimentos & Varejo",
     headline: "Morrisons otimiza cadeia de suprimentos e reduz índice de rupturas em 500 lojas com BigQuery",
     summary: "Monitoramento de estoque em centros de distribuição e gôndolas com machine learning no BigQuery, prevenindo desbalanceamentos logísticos e eliminando perdas por ruptura de canais.",
-    products: ["BigQuery", "Vertex AI", "Knowledge Catalog"],
+    products: ["BigQuery", "Agent Platform", "Knowledge Catalog"],
     storyUrl: "https://cloud.google.com/customers/morrisons?hl=pt-BR",
     country: "Global",
     tags: ["ruptura", "estoque", "supply chain", "distribuição", "s&op", "logística", "sku", "canais", "anti-ruptura"]
@@ -108,9 +108,9 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     id: "etsy-ai",
     customerName: "Etsy",
     industry: "Inteligência Artificial & Mídia",
-    headline: "Etsy escala causal AI e otimização algorítmica de campanhas com Vertex AI e BigQuery",
+    headline: "Etsy escala causal AI e otimização algorítmica de campanhas com Agent Platform e BigQuery",
     summary: "Implementação de modelos causais sobre centenas de terabytes de dados no BigQuery para supressão de anúncios ineficientes, hiperpersonalização e expansão de margem financeira.",
-    products: ["Vertex AI", "BigQuery", "Cloud GPUs", "Spanner"],
+    products: ["Agent Platform", "BigQuery", "Cloud GPUs", "Spanner"],
     storyUrl: "https://cloud.google.com/customers/etsy-ai?hl=pt-BR",
     country: "Global",
     tags: ["mídia", "digital", "anúncios", "marketing", "causal", "ia generativa", "ad spend", "algoritmo", "supressão", "margem"]

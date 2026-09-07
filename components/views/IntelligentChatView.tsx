@@ -9,6 +9,7 @@ import {
   ExternalLink, Layers, ArrowUpRight
 } from "lucide-react";
 import { CustomerAssessment } from "@/lib/types";
+import { VERIFIED_QUERIES, VerifiedQueryItem } from "@/lib/constants/verified-queries";
 
 interface Message {
   id: string;
@@ -27,21 +28,25 @@ interface Message {
 
 interface IntelligentChatViewProps {
   assessment: CustomerAssessment | null;
+  initialPrompt?: string | null;
+  onClearInitialPrompt?: () => void;
 }
 
 export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
-  assessment
+  assessment,
+  initialPrompt,
+  onClearInitialPrompt
 }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      text: `Olá! Sou o **BigQuery Data Agent** oficial da Google Cloud (Conversational Analytics API), conectado ao assessment corporativo de **${assessment?.customerName || "seu cliente"}**.\n\nMinha inteligência analítica foi treinada diretamente nos **6 Casos de Uso Prioritários**, estimativas de **ROI de Negócio**, rampa de **consumo mensal GCP (ARR)** e no **Grafo de Conhecimento** corporativo.\n\nComo posso apoiar a tomada de decisão comercial ou responder dúvidas sobre os casos de uso e serviços Google Cloud?`,
+      text: `Olá! Sou o **BigQuery Data Agent** oficial da Google Cloud (Conversational Analytics API), conectado diretamente ao **Grafo de Propriedades Corporativo** (\`enterprise_business_graph\`) de **${assessment?.customerName || "seu cliente"}**.\n\nMinha inteligência analítica opera 100% via consultas nativas **ISO GQL (GRAPH_TABLE)** com **28 Verified Queries** validadas e guardrails de zero-alucinação. Meu foco é analisar o retorno financeiro do cliente (sempre superior ao custo GCP), governança e metadados no **Knowledge Catalog** e consumo de serviços Google Cloud.\n\nComo posso apoiar a tomada de decisão executiva ou validação de casos de uso hoje?`,
       source: "bigquery_data_agent",
       followupQuestions: [
-        "Quais são os 6 casos de uso prioritários e seus respectivos ROIs?",
-        "Qual o consumo mensal total em nuvem (ARR) se aprovarmos todos os casos?",
-        "Quais serviços GCP (BigQuery, Vertex AI, Knowledge Catalog) são contratados?"
+        "Quais são os casos de uso prioritários no Grafo Corporativo?",
+        "Qual a comparação entre retorno financeiro anual do cliente e custo de nuvem anual de GCP no Grafo?",
+        "Qual a linhagem entre tabelas do catálogo e mecanismos de governança do Knowledge Catalog?"
       ],
       timestamp: new Date().toISOString()
     }
@@ -53,6 +58,8 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
   const [expandedSql, setExpandedSql] = useState<Record<string, boolean>>({});
   const [expandedTable, setExpandedTable] = useState<Record<string, boolean>>({});
   const [expandedThought, setExpandedThought] = useState<Record<string, boolean>>({});
+  const [showAllVerified, setShowAllVerified] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +73,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
 
   const quickPrompts = [
     "Quais casos de uso conectam diretamente à meta de maior retorno no Grafo?",
-    "Qual o consumo mensal de serviços GCP (BigQuery, Vertex AI, Knowledge Catalog) no Grafo?",
+    "Qual o consumo mensal de serviços GCP (BigQuery, Agent Platform, Knowledge Catalog) no Grafo?",
     "Como o Knowledge Catalog audita as tabelas e protege dados com PII?",
     "Quais tabelas do catálogo alimentam o Caso 1 prioritário?"
   ];
@@ -168,6 +175,18 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
     }
   };
 
+  // Dispara automaticamente quando receber um caso de uso para detalhamento
+  const triggeredPromptRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim() && triggeredPromptRef.current !== initialPrompt) {
+      triggeredPromptRef.current = initialPrompt;
+      handleSend(initialPrompt);
+      if (onClearInitialPrompt) {
+        onClearInitialPrompt();
+      }
+    }
+  }, [initialPrompt]);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300 font-sans">
       {/* 1. Header do Módulo com Identidade BigQuery Data Agent */}
@@ -205,21 +224,107 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Prompts Rápidos Estratégicos */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
-          <Sparkles className="w-3.5 h-3.5 text-blue-600" /> Sugestões para Vendedores & Arquitetos:
-        </span>
-        {quickPrompts.map((prompt, idx) => (
+      {/* 2. Prompts Rápidos e 28 Verified Queries */}
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" /> Sugestões Rápidas:
+            </span>
+            {quickPrompts.map((prompt, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(prompt)}
+                disabled={isLoading}
+                className="text-xs px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50/70 border border-slate-200/80 hover:border-blue-300 text-slate-700 hover:text-[#074878] transition-all text-left shadow-2xs cursor-pointer font-medium"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+
           <button
-            key={idx}
-            onClick={() => handleSend(prompt)}
-            disabled={isLoading}
-            className="text-xs px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50/70 border border-slate-200/80 hover:border-blue-300 text-slate-700 hover:text-[#074878] transition-all text-left shadow-2xs cursor-pointer font-medium"
+            onClick={() => setShowAllVerified(!showAllVerified)}
+            className="text-xs px-3 py-1.5 rounded-xl bg-[#074878] text-white hover:bg-[#063860] transition-all flex items-center gap-1.5 font-bold shadow-xs cursor-pointer shrink-0"
           >
-            {prompt}
+            <span>💡 28 Verified Queries do Grafo</span>
+            <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-md font-extrabold">
+              {showAllVerified ? "Ocultar" : "Explorar"}
+            </span>
           </button>
-        ))}
+        </div>
+
+        {/* Gaveta Expansível com as 28 Verified Queries Oficiais */}
+        {showAllVerified && (
+          <div className="bg-white border border-blue-200 rounded-2xl p-4 shadow-sm space-y-3 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-[#074878]" />
+                  Verified Queries Publicadas no BigQuery Data Agent (ISO GQL • enterprise_business_graph)
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Todas as 28 consultas foram auditadas diretamente contra o grafo e retornam resultados válidos (sem NULL). Clique para executar no chat.
+                </p>
+              </div>
+
+              {/* Filtros por Categoria */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: "all", label: "Todas (28)" },
+                  { id: "roi", label: "🎯 Casos & ROI (6)" },
+                  { id: "customers", label: "🏢 Clientes (5)" },
+                  { id: "gcp", label: "☁️ Consumo GCP (6)" },
+                  { id: "governance", label: "🛡️ Knowledge Catalog (6)" },
+                  { id: "roadmap", label: "🚀 Metas & Roadmap (5)" }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                      selectedCategory === cat.id
+                        ? "bg-[#074878] text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Grid com as Queries Verificadas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[260px] overflow-y-auto p-1">
+              {VERIFIED_QUERIES
+                .filter(q => selectedCategory === "all" || q.category === selectedCategory)
+                .map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      handleSend(item.question);
+                    }}
+                    disabled={isLoading}
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-800 group-hover:text-[#074878] leading-tight">
+                        {item.question}
+                      </span>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#074878] shrink-0" />
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-[#074878]">
+                        {item.categoryLabel}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 truncate">
+                        {item.sqlSnippet}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. Container Principal do Chat */}

@@ -1,6 +1,6 @@
 // lib/terraform/use-case-terraform-generator.ts - Gerador de Pipelines Terraform Multi-Motor para BigQuery Studio
 // Integra as 3 skills: /bigquery-studio-pipelines (SQLX, BigFrames, PySpark), /gcp_bq_otimization e /gcp_knowledge_catalog
-// Conecta globalmente ao Vertex AI Gemini 3.8 Flash
+// Conecta globalmente ao Agent Platform Gemini 3.8 Flash
 
 import { TopUseCase } from "@/lib/types";
 import { ExtendedUseCase } from "@/lib/data/customer-usecases-catalog";
@@ -77,7 +77,7 @@ export function generateUseCaseTerraformBundle(
  *   - /bigquery-studio-pipelines (Dataform, SQLX, BigFrames e PySpark Serverless Stored Procedures)
  *   - /gcp_bq_otimization (FinOps, Particionamento Diário, Clustering x4 e PK/FK NOT ENFORCED)
  *   - /gcp_knowledge_catalog (Knowledge Catalog LIGHTWEIGHT Scan, Aspect Types e Descrições de Coluna)
- * Modelo Global IA: Vertex AI Gemini 3.8 Flash (gemini-3.8-flash)
+ * Modelo Global IA: Agent Platform Gemini 3.8 Flash (gemini-3.8-flash)
  */
 
 terraform {
@@ -112,7 +112,7 @@ variable "project_id" {
 
 variable "region" {
   type        = string
-  description = "Região primária de recursos (BigQuery & Vertex AI)"
+  description = "Região primária de recursos (BigQuery & Agent Platform)"
   default     = "${region}"
 }
 
@@ -168,7 +168,7 @@ resource "google_bigquery_connection" "studio_hybrid_connection" {
   cloud_resource {}
 }
 
-# Permissão para a Conexão invocar Vertex AI Gemini 3.8 Flash
+# Permissão para a Conexão invocar Agent Platform Gemini 3.8 Flash
 resource "google_project_iam_member" "connection_vertex_user" {
   project = var.project_id
   role    = "roles/aiplatform.user"
@@ -263,13 +263,13 @@ resource "google_bigquery_table" "${slugify(primaryTable)}" {
       name        = "score_preditivo_gemini"
       type        = "FLOAT64"
       mode        = "NULLABLE"
-      description = "Score contínuo (0.00 a 1.00) inferido pelo modelo Gemini 3.8 Flash ou Vertex AI."
+      description = "Score contínuo (0.00 a 1.00) inferido pelo modelo Gemini 3.8 Flash ou Agent Platform."
     },
     {
       name        = "explicabilidade_causal"
       type        = "STRING"
       mode        = "NULLABLE"
-      description = "Racional estruturado em texto retornado pelo Gemini 3.8 Flash via Vertex AI."
+      description = "Racional estruturado em texto retornado pelo Gemini 3.8 Flash via Agent Platform."
     },
     {
       name        = "hash_origem"
@@ -461,7 +461,7 @@ actions:
         - name: compute_features_bigframes_${caseSlug}
       filename: definitions/invoke_spark_procedure.sql
 
-  # ETAPA 4: Enriquecimento Causal & Scoring com Gemini 3.8 Flash (Motor: Vertex AI via BQ Remote Model)
+  # ETAPA 4: Enriquecimento Causal & Scoring com Gemini 3.8 Flash (Motor: Agent Platform via BQ Remote Model)
   - operation:
       name: invoke_gemini_38_flash_scoring_${caseSlug}
       project: "${projectId}"
@@ -696,7 +696,7 @@ LEFT JOIN
 - **SQLX**: Usado para staging, agregações relacionais e tabela incremental gold.
 - **Python (BigFrames)**: Usado para matrizes e score de features com pushdown (sem .to_pandas()).
 - **PySpark Serverless**: Usado via Stored Procedure para processamento de logs não-estruturados.
-- **Gemini 3.8 Flash**: Invocado via BigQuery Remote Model ou Vertex AI para sumarização e inferência causal.
+- **Gemini 3.8 Flash**: Invocado via BigQuery Remote Model ou Agent Platform para sumarização e inferência causal.
 
 ## 3. Governança Knowledge Catalog (/gcp_knowledge_catalog)
 - Assegure que as tabelas possuam descrições ricas em todas as colunas.
@@ -716,7 +716,7 @@ Conforme a skill **\`/bigquery-studio-pipelines\`**, o pipeline integra 3 motore
 1. **SQLX (Dremel MPP Nativo)**: Ingestão Staging, deduplicação e carga incremental Gold com \`\${when(incremental(), ...)}\`.
 2. **Python BigFrames (\`bigframes.pandas\`)**: Engenharia de features tabulares com 100% de pushdown (zero egress de dados).
 3. **PySpark Serverless (Stored Procedures)**: Limpeza e enriquecimento de payloads não-estruturados via contêiner Spark efêmero.
-4. **Vertex AI Gemini 3.8 Flash**: Inferência de causalidade e explicabilidade grounded via Cloud Resource Connection.
+4. **Agent Platform Gemini 3.8 Flash**: Inferência de causalidade e explicabilidade grounded via Cloud Resource Connection.
 
 ---
 
@@ -832,7 +832,7 @@ terraform apply -var="project_id=${projectId}" -var="region=${region}" -auto-app
       sqlRole: "Ingestão, deduplicação staging e agregação final gold com tabelas incrementais.",
       bigframesRole: "Engenharia de features analíticas matriciais com pushdown direto no Dremel (sem download local).",
       sparkRole: "Processamento de dados não-estruturados e tokenização distribuída via Stored Procedure Serverless.",
-      geminiRole: "Inferência causal e explicabilidade de negócio via Vertex AI Gemini 3.8 Flash (Remote Model)."
+      geminiRole: "Inferência causal e explicabilidade de negócio via Agent Platform Gemini 3.8 Flash (Remote Model)."
     },
     bestPractices: [
       {
@@ -881,7 +881,7 @@ terraform apply -var="project_id=${projectId}" -var="region=${region}" -auto-app
         title: "Conexão Cloud Resource Gemini 3.8 Flash",
         skill: "bigquery-studio-pipelines",
         status: "ACTIVE",
-        description: "Conecta o BigQuery ao Vertex AI Gemini 3.8 Flash para modelos remotos e IA analítica em tempo real."
+        description: "Conecta o BigQuery ao Agent Platform Gemini 3.8 Flash para modelos remotos e IA analítica em tempo real."
       }
     ]
   };

@@ -25,9 +25,9 @@ A **Google Cloud Business Assessment Intelligence Platform** é uma solução co
 
 ### 2. 🧠 Neuro-Debate Studio (NC-MAD / `/neuro_debate`)
 Debate dialético em 3 fases especializadas:
-- **Fase 1: Agente DMN (Default Mode Network - O Explorador Divergente)**: Dr. Leonardo Cruz explora lateralmente o espaço de hipóteses (`thinking_level="HIGH"`) sem autocensura prévia, formulando propostas em Rotas de Flexibilidade e Persistência.
-- **Fase 2: Agente SN / Arbiter (Salience Network - O Árbitro de Saliência)**: Beatriz Alvarenga filtra alucinações, calcula a **Matriz de Saliência** (Viabilidade na Stack, Razão Exploração/Otimização, Complexidade, Risco Operacional) e define **Alvos de Auditoria**.
-- **Fase 3: Agente CEN (Central Executive Network - O Engenheiro Executivo & FinOps)**: Marcos Mendonça audita vulnerabilidades, calcula o **Business Case (BC) com ROI** e a estimativa de custos de infraestrutura GCP (BigQuery, Vertex AI, Cloud Run, GCS), consolidando os **Top 6 Casos de Uso**.
+- **Fase 1: Agente DMN (Default Mode Network - Ideação & Inovação)**: Explora lateralmente o espaço de hipóteses (`thinking_level="HIGH"`) sem autocensura prévia, formulando propostas em Rotas de Flexibilidade e Persistência.
+- **Fase 2: Agente SN / Arbiter (Salience Network - Saliência & Governança)**: Filtra alucinações, calcula a **Matriz de Saliência** (Viabilidade na Stack, Razão Exploração/Otimização, Complexidade, Risco Operacional) e define **Alvos de Auditoria**.
+- **Fase 3: Agente CEN (Central Executive Network - Executivo & FinOps)**: Audita vulnerabilidades, calcula o **Business Case (BC) com ROI** e a estimativa de custos de infraestrutura GCP (BigQuery, Agent Platform, Cloud Run, GCS), consolidando os **Top 6 Casos de Uso**.
 
 ### 3. 💎 Top 6 Casos de Uso com Benchmarking & Custos GCP
 - **Grounding Rigoroso**: Conexão comprovada com tabelas e colunas reais do BigQuery.

@@ -1,5 +1,5 @@
 // app/api/use-cases/terraform/route.ts - API de Geração e Refinamento de Pipelines Terraform
-// Integração global com Vertex AI Gemini 3.8 Flash (gemini-3.8-flash)
+// Integração global com Agent Platform Gemini 3.8 Flash (gemini-3.8-flash)
 import { NextRequest, NextResponse } from "next/server";
 import { generateUseCaseTerraformBundle } from "@/lib/terraform/use-case-terraform-generator";
 import { callGemini38Flash } from "@/lib/gcp/gemini-3-8";

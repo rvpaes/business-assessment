@@ -1,5 +1,5 @@
-// lib/gcp/gemini-3-8.ts - Integração com Gemini 3.8 Flash via Vertex AI Publisher Model
-import { getGcpAccessToken, PROJECT_ID } from "./auth";
+// lib/gcp/gemini-3-8.ts - Integração com Gemini 3.8 Flash via Agent Platform
+import { fetchWithGcpAuth, PROJECT_ID } from "./auth";
 import { logStructuredStep } from "./bigquery";
 
 export interface Gemini38Options {
@@ -13,7 +13,6 @@ export async function callGemini38Flash(
   prompt: string,
   options: Gemini38Options = {}
 ): Promise<{ text: string; thoughtText?: string; raw: any }> {
-  const token = await getGcpAccessToken();
   const url = `https://aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/global/publishers/google/models/gemini-3.8-flash:generateContent`;
 
   const thinkingLevel = options.thinkingLevel || "MEDIUM";
@@ -25,7 +24,8 @@ export async function callGemini38Flash(
     "2. Se uma consulta analítica ou metadado retornar vazio (0 rows), você DEVE afirmar categoricamente que não há dados disponíveis para o critério, sem extrapolar estimativas de conhecimento prévio.",
     "3. Fundamente qualquer caso de uso estritamente nos ativos de dados comprovadamente existentes no catálogo do BigQuery do cliente.",
     "4. Ao gerar código ou consultas SQL, siga as regras de otimização de custo e performance de BigQuery e Graph Analytics (GQL).",
-    "5. Mantenha tom executivo C-Level, claro, conciso, de alto impacto e minimalista."
+    "5. Mantenha tom executivo C-Level, claro, conciso, de alto impacto e minimalista.",
+    "6. REGRA MANDATÓRIA DE NEGÓCIO: O retorno financeiro estimado/esperado para o cliente (financial_gain_estimate_usd) DEVE SER SEMPRE ESTRITAMENTE MAIOR que o consumo/custo anual estimado do GCP (annual_gcp_cost_usd). Todo caso de uso DEVE ser estruturado com essa premissa fundamental."
   ].filter(Boolean).join("\n\n");
 
   const requestBody: any = {
@@ -55,10 +55,9 @@ export async function callGemini38Flash(
     thought: `Chamando Gemini 3.8 Flash com thinkingLevel=${thinkingLevel} e mimeType=${options.responseMimeType || "text/plain"}.`
   });
 
-  const res = await fetch(url, {
+  const res = await fetchWithGcpAuth(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify(requestBody)

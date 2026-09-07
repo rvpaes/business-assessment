@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ControlTowerHeader, CustomerOption } from "@/components/ControlTowerHeader";
-import { ControlTowerSidebar, NavigationTab } from "@/components/ControlTowerSidebar";
+import { CustomerOption } from "@/components/ControlTowerHeader";
+import { ModernTopNavbar, ModernNavTab } from "@/components/ModernTopNavbar";
 import { UploadIngestionView } from "@/components/views/UploadIngestionView";
 import { ExecutiveDecisionView } from "@/components/views/ExecutiveDecisionView";
 import { TopUseCasesView } from "@/components/views/TopUseCasesView";
@@ -46,29 +46,70 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 const defaultTopUseCases: TopUseCase[] = getCustomerUseCases("Hypera Pharma");
 
 export default function HomePage() {
-  // Ajuste 1: A tela "Ingestão & Metadados" é a PRIMEIRA tela por padrão!
-  const [activeTab, setActiveTab] = useState<NavigationTab>("upload");
-  const [assessment, setAssessment] = useState<CustomerAssessment | null>(defaultAssessment);
+  // Ajuste 4: A tela "Assessment de Negócio" é a PRIMEIRA tela por padrão!
+  const [activeTab, setActiveTab] = useState<ModernNavTab>("upload");
+  const [assessment, setAssessment] = useState<CustomerAssessment | null>(null);
   const [tables, setTables] = useState<TableCatalogItem[]>([]);
   const [turns, setTurns] = useState<NeuroDebateTurn[]>([]);
-  const [topUseCases, setTopUseCases] = useState<TopUseCase[]>(defaultTopUseCases);
+  const [topUseCases, setTopUseCases] = useState<TopUseCase[]>([]);
   const [salienceMatrix, setSalienceMatrix] = useState<SalienceItem[]>([]);
   const [auditTargets, setAuditTargets] = useState<AuditTarget[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showLiveDebateView, setShowLiveDebateView] = useState(false);
   const [autoStartDebate, setAutoStartDebate] = useState(false);
+  // Ajuste 3: Aba Debate Multi-Agente só aparece quando executa o item Assessment de Negócio
+  const [hasExecutedAssessment, setHasExecutedAssessment] = useState(false);
+  const [chatInitialPrompt, setChatInitialPrompt] = useState<string | null>(null);
 
-  // Carrega tabelas do BigQuery caso disponíveis
+  const handleDetailCaseWithGemini = (useCase: TopUseCase) => {
+    const clientReturn = useCase.businessCaseRoi || `Retorno anual de ~$${Number(useCase.financialGainEstimateUsd || 0).toLocaleString()}`;
+    const gcpCost = `~$${Number((useCase.gcpMonthlyCostUsd || 0) * 12).toLocaleString()}/ano ($${Number(useCase.gcpMonthlyCostUsd || 0).toLocaleString()}/mês)`;
+    
+    const prompt = `Por favor, faça um detalhamento analítico aprofundado do Caso de Uso: "${useCase.title}" (${useCase.category}).
+
+• Problema de Negócio: ${useCase.businessProblem}
+• Solução Proposta: ${useCase.solutionDescription}
+• Retorno Financeiro Estimado: ${clientReturn}
+• Custo de Nuvem GCP Estimado: ${gcpCost}
+• Tabelas Requeridas no BigQuery: ${useCase.requiredTables?.join(", ") || "N/A"}
+• Guardrails & Governança: ${useCase.guardrails}
+
+Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.customerName || "nosso cliente"}? Apresente a consulta ISO GQL ou SQL para validação no Grafo Corporativo (enterprise_business_graph), demonstre a comparação entre Retorno do Cliente vs Consumo GCP e os mecanismos de governança do Knowledge Catalog.`;
+
+    setChatInitialPrompt(prompt);
+    setActiveTab("chat");
+  };
+
+  // Carrega assessment do BigQuery caso disponível (ou inicia vazio para novo teste)
   useEffect(() => {
     async function loadInitialData() {
       try {
-        const res = await fetch("/api/bigquery/graph");
-        const json = await res.json();
-        if (json.topTablesSample && json.topTablesSample.length > 0) {
-          setTables(json.topTablesSample);
+        const custRes = await fetch("/api/customers");
+        const custJson = await custRes.json();
+        if (custJson.customers && custJson.customers.length > 0) {
+          const latest = custJson.customers[0];
+          setAssessment({
+            assessmentId: latest.assessmentId || latest.id,
+            customerId: latest.customerId || latest.id,
+            customerName: latest.name,
+            industry: latest.industry,
+            uploadTimestamp: latest.uploadTimestamp,
+            totalDatasets: 24,
+            totalTables: latest.totalTables,
+            totalViews: 0,
+            totalColumns: latest.totalColumns,
+            documentedColumns: Math.round(latest.totalColumns * (latest.docPercentage / 100)),
+            docPercentage: latest.docPercentage,
+            gcsArchiveUri: latest.gcsArchiveUri || ""
+          });
+          const casesRes = await fetch(`/api/bigquery/graph?customerName=${encodeURIComponent(latest.name)}`);
+          const casesJson = await casesRes.json();
+          if (casesJson.topTablesSample && casesJson.topTablesSample.length > 0) {
+            setTables(casesJson.topTablesSample);
+          }
         }
       } catch (err) {
-        console.warn("Notice: Base de metadados pronta.", err);
+        console.warn("Notice: Base pronta para novo assessment.", err);
       }
     }
     loadInitialData();
@@ -82,7 +123,8 @@ export default function HomePage() {
     setTopUseCases([]);
     setSalienceMatrix([]);
     setAuditTargets([]);
-    // Ajuste 1: Abre direto na tela de debate executando automaticamente
+    // Ajuste 3: Habilita aba Debate Multi-Agente apenas após executar o Assessment de Negócio
+    setHasExecutedAssessment(true);
     setAutoStartDebate(true);
     setShowLiveDebateView(true);
   };
@@ -116,8 +158,11 @@ export default function HomePage() {
   const handleSelectCustomer = (cust: CustomerOption) => {
     setAssessment((prev) => ({
       ...(prev || defaultAssessment),
+      assessmentId: cust.assessmentId || cust.id,
+      customerId: cust.customerId || prev?.customerId || cust.id,
       customerName: cust.name,
       industry: cust.industry,
+      uploadTimestamp: cust.uploadTimestamp,
       totalTables: cust.totalTables,
       totalColumns: cust.totalColumns,
       docPercentage: cust.docPercentage,
@@ -125,109 +170,118 @@ export default function HomePage() {
     }));
     const newCases = getCustomerUseCases(cust.name);
     setTopUseCases(newCases);
+    setHasExecutedAssessment(true);
     setShowLiveDebateView(false);
     setActiveTab("decision");
   };
 
   return (
     <LanguageProvider>
-      <div className="min-h-screen flex bg-[#F0F4F8] text-slate-900 font-sans antialiased">
-        {/* 1. Sidebar Fixa à Esquerda */}
-        <ControlTowerSidebar
+      <div className="min-h-screen bg-[#F8F9FA] text-slate-900 font-sans antialiased flex flex-col">
+        {/* Barra de Navegação Superior ModoUI */}
+        <ModernTopNavbar
           activeTab={activeTab}
           onTabChange={(tab) => {
             setShowLiveDebateView(false);
             setActiveTab(tab);
           }}
-          casesCount={topUseCases.length}
+          customerName={assessment?.customerName || "Novo Assessment"}
+          industry={assessment?.industry || "Aguardando Ingestão"}
+          uploadTimestamp={assessment?.uploadTimestamp}
+          totalTables={assessment?.totalTables || 0}
+          docPercentage={assessment?.docPercentage || 0}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          onNavigateToUpload={() => {
+            setShowLiveDebateView(false);
+            setActiveTab("upload");
+          }}
+          onSelectCustomer={handleSelectCustomer}
+          onSearchSubmit={(q) => {
+            console.log("Busca executiva:", q);
+          }}
+          casesCount={topUseCases.length || 6}
+          showDebateTab={hasExecutedAssessment || turns.length > 0 || showLiveDebateView}
         />
 
-        {/* 2. Área Principal com Header Sticky e Conteúdo */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header Superior Fixo com Busca e Perfil */}
-          <ControlTowerHeader
-            customerName={assessment?.customerName || "Cliente Corporativo"}
-            industry={assessment?.industry || "Bens de Consumo & Saúde"}
-            totalTables={assessment?.totalTables || 0}
-            docPercentage={assessment?.docPercentage || 0}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-            onNavigateToUpload={() => {
-              setShowLiveDebateView(false);
-              setActiveTab("upload");
-            }}
-            onSelectCustomer={handleSelectCustomer}
-            onSearchSubmit={(q) => {
-              console.log("Busca executiva:", q);
-            }}
-          />
-
-          {/* Conteúdo da Aba Ativa */}
-          <main className="flex-1 p-6 sm:p-8 max-w-[1600px] w-full mx-auto">
-            {/* Visualização de Debate ao Vivo (se acionado) */}
-            {showLiveDebateView ? (
-              <div className="space-y-4">
+        {/* Conteúdo Principal com Largura Fluida e Generosa */}
+        <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Visualização de Debate ao Vivo (se acionado ou se aba for 'debate') */}
+          {showLiveDebateView || activeTab === "debate" ? (
+            <div className="space-y-4">
+              {showLiveDebateView && (
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => setShowLiveDebateView(false)}
                     className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    ← Voltar para Agent Intelligence
+                    ← Voltar para Visão Executiva
                   </button>
                 </div>
-                <NeuroDebateView
-                  assessment={assessment || defaultAssessment}
-                  tables={tables}
-                  turns={turns}
-                  topUseCases={topUseCases}
-                  salienceMatrix={salienceMatrix}
-                  auditTargets={auditTargets}
-                  autoStart={autoStartDebate}
-                  onDebateComplete={handleDebateComplete}
-                  onNavigateToCases={() => {
-                    setShowLiveDebateView(false);
-                    setActiveTab("cases");
-                  }}
+              )}
+              <NeuroDebateView
+                assessment={assessment || defaultAssessment}
+                tables={tables}
+                turns={turns}
+                topUseCases={topUseCases}
+                salienceMatrix={salienceMatrix}
+                auditTargets={auditTargets}
+                autoStart={autoStartDebate}
+                onDebateComplete={handleDebateComplete}
+                onNavigateToCases={() => {
+                  setShowLiveDebateView(false);
+                  setActiveTab("cases");
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Aba Assessment de Negócio */}
+              {activeTab === "upload" && (
+                <UploadIngestionView
+                  assessment={assessment}
+                  onAssessmentLoaded={handleAssessmentLoaded}
+                  onNavigateToDashboard={() => setActiveTab("decision")}
+                  onNavigateToCases={() => setActiveTab("cases")}
                 />
-              </div>
-            ) : (
-              <>
-                {/* Ajuste 1: Aba "upload" (Ingestão & Metadados) é a inicial */}
-                {activeTab === "upload" && (
-                  <UploadIngestionView
-                    assessment={assessment}
-                    onAssessmentLoaded={handleAssessmentLoaded}
-                    onNavigateToDashboard={() => setActiveTab("decision")}
-                    onNavigateToCases={() => setActiveTab("cases")}
-                  />
-                )}
+              )}
 
-                {activeTab === "decision" && (
-                  <ExecutiveDecisionView
-                    assessment={assessment}
-                    topUseCases={topUseCases}
-                    tables={tables}
-                    onTriggerDebate={() => setShowLiveDebateView(true)}
-                    onNavigateToTab={(tab) => setActiveTab(tab as NavigationTab)}
-                    onNavigateToUpload={() => setActiveTab("upload")}
-                  />
-                )}
+              {/* Aba Visão Executiva ModoUI */}
+              {activeTab === "decision" && (
+                <ExecutiveDecisionView
+                  assessment={assessment}
+                  topUseCases={topUseCases}
+                  tables={tables}
+                  onTriggerDebate={() => {
+                    setHasExecutedAssessment(true);
+                    setAutoStartDebate(true);
+                    setShowLiveDebateView(true);
+                  }}
+                  onNavigateToTab={(tab) => setActiveTab(tab as ModernNavTab)}
+                  onNavigateToUpload={() => setActiveTab("upload")}
+                />
+              )}
 
-                {/* Aba "cases" com Cards e Modal de Detalhamento */}
-                {activeTab === "cases" && (
-                  <TopUseCasesView
-                    useCases={topUseCases}
-                    assessment={assessment}
-                  />
-                )}
+              {/* Aba Casos de Uso */}
+              {activeTab === "cases" && (
+                <TopUseCasesView
+                  useCases={topUseCases}
+                  assessment={assessment}
+                  onDetailCaseWithGemini={handleDetailCaseWithGemini}
+                />
+              )}
 
-                {activeTab === "chat" && (
-                  <IntelligentChatView assessment={assessment} />
-                )}
-              </>
-            )}
-          </main>
-        </div>
+              {/* Aba Data Agent BQ */}
+              {activeTab === "chat" && (
+                <IntelligentChatView
+                  assessment={assessment}
+                  initialPrompt={chatInitialPrompt}
+                  onClearInitialPrompt={() => setChatInitialPrompt(null)}
+                />
+              )}
+            </>
+          )}
+        </main>
       </div>
     </LanguageProvider>
   );

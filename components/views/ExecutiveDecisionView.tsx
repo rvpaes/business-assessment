@@ -19,13 +19,21 @@ import {
   Building2,
   Lock,
   Cpu,
-  Coins
+  Coins,
+  Calendar,
+  Filter,
+  Info,
+  Layers,
+  ArrowRight
 } from "lucide-react";
 import { CustomerAssessment, TopUseCase, TableCatalogItem } from "@/lib/types";
 import { AgentModalData, AgentDossierModal } from "./AgentDossierModal";
 import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCustomerUseCases, ExtendedUseCase } from "@/lib/data/customer-usecases-catalog";
+import { formatCurrencyUsd, formatCurrencyBrl, formatPercent, formatDecimal } from "@/lib/utils/formatters";
+import { ModoKPICard, ModoBarChart, ModoProgressBar, ModoGaugeChart } from "../ui/ModoMicroCharts";
+import { formatAssessmentDate } from "../ControlTowerHeader";
 
 interface ExecutiveDecisionViewProps {
   assessment: CustomerAssessment | null;
@@ -47,6 +55,7 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   const { t } = useLanguage();
   const [selectedDossier, setSelectedDossier] = useState<AgentModalData | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [kpiFilter, setKpiFilter] = useState<"ALL" | "PHASE1" | "HIGH_IMPACT" | "GOVERNANCE">("ALL");
 
   // Informações dinâmicas do cliente
   const customerName = assessment?.customerName || "Cliente Corporativo";
@@ -54,6 +63,7 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   const totalTables = assessment?.totalTables || 0;
   const totalColumns = assessment?.totalColumns || 0;
   const docPercentage = assessment?.docPercentage ? assessment.docPercentage.toFixed(1) : "0.0";
+  const displayHeaderDate = formatAssessmentDate(assessment?.uploadTimestamp);
   const datasetId = "business_assessment_customer";
 
   // Resolução dinâmica dos 6 casos de uso do cliente com enriquecimento para vendas Google Cloud
@@ -65,7 +75,7 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
         return {
           ...uc,
           keyImprovement: (uc as any).keyImprovement || match?.keyImprovement || "Otimização de pipelines SQL e grounding em BigQuery Property Graph.",
-          gcpExpansionOpportunity: (uc as any).gcpExpansionOpportunity || match?.gcpExpansionOpportunity || "Consumo contínuo de BigQuery Slots e APIs Vertex AI.",
+          gcpExpansionOpportunity: (uc as any).gcpExpansionOpportunity || match?.gcpExpansionOpportunity || "Consumo contínuo de BigQuery Slots e APIs Agent Platform.",
           paybackMonths: (uc as any).paybackMonths || match?.paybackMonths || 2.0,
         };
       });
@@ -107,7 +117,7 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
     bqMetrics: [
       { label: "Patrimônio de Dados no BigQuery", value: `${totalTables} Tabelas`, trend: "100% Auditado", subtext: `Dataset ${datasetId}` },
       { label: "Qualidade de Metadados", value: `${docPercentage}% Documentado`, trend: "Alto Nível", subtext: "Dicionário Knowledge Catalog" },
-      { label: "Consumo Mensal GCP", value: totalMonthlyGcpUsd > 0 ? `$${totalMonthlyGcpUsd.toFixed(0)}/mês` : "$2.450/mês", trend: "Otimizado", subtext: "Slots BQ + Vertex AI" },
+      { label: "Consumo Mensal GCP", value: totalMonthlyGcpUsd > 0 ? `$${totalMonthlyGcpUsd.toFixed(0)}/mês` : "$2.450/mês", trend: "Otimizado", subtext: "Slots BQ + Agent Platform" },
       { label: "Conformidade e Risco", value: "Zero Alucinação", trend: "Garantida", subtext: "Grounding estrito no esquema" }
     ],
     sqlQuery: `SELECT 
@@ -235,7 +245,7 @@ UNION ALL
 SELECT 
   'Ano 2 - Expansão de Agentes & IA' AS deal_phase,
   (${totalMonthlyGcpUsd.toFixed(0)} * 12) * 2.2 AS annual_run_rate_usd,
-  'Expansão de Slots + Vertex AI Endpoints' AS commercial_model;`,
+  'Expansão de Slots + Agent Platform Endpoints' AS commercial_model;`,
         sellerPlaybook: {
           pitch: `Estruture um commit anual inicial escalonado em $${totalMonthlyGcpUsd.toFixed(0)}/mês focado em quick-wins de alto retorno, com cláusula de flexibilidade de slots e créditos CUD que garantem 37% de desconto automático no crescimento da Fase 2.`,
           objectionHandling: `Se o cliente hesitar sobre volume de consumo inicial: apresente a modalidade BigQuery Editions Autoscaling com slots sob demanda com teto orçamentário configurável por projeto, eliminando qualquer risco de estouro de budget.`,
@@ -303,11 +313,11 @@ ORDER BY u.rank ASC;`,
       letter: "S",
       bgLetter: "bg-emerald-600",
       title: "Agente Arquitetura Integrada & Empacotamento de SKUs",
-      subtitle: "Stack Completo: BigQuery Enterprise + Vertex AI Gemini 3.8 + Knowledge Catalog",
+      subtitle: "Stack Completo: BigQuery Enterprise + Agent Platform Gemini 3.8 + Knowledge Catalog",
       badge: "OFERTA INTEGRADA",
       badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
       action: `Consolidar 4 ferramentas legadas (ETL externo, MLflow, Catálogo terceiro e Vector DB) em 1 único SKU Google Cloud`,
-      rationale: `Ao unificar BigQuery com Knowledge Catalog e Vertex AI, o cliente elimina custos de licença terceiros (como Snowflake, Collibra ou APIs avulsas da OpenAI), simplificando a gestão e aumentando a margem comercial do Google.`,
+      rationale: `Ao unificar BigQuery com Knowledge Catalog e Agent Platform, o cliente elimina custos de licença terceiros (como Snowflake, Collibra ou APIs avulsas da OpenAI), simplificando a gestão e aumentando a margem comercial do Google.`,
       salesTip: "Mostre o ganho de consolidação de fornecedores: 1 única fatura Google elimina 4 contratos de software dispersos.",
       pills: [
         { label: "SKUs Unificados", val: "3 em 1" },
@@ -320,12 +330,12 @@ ORDER BY u.rank ASC;`,
         avatarLetter: "S",
         avatarBg: "bg-emerald-600",
         latencyMs: 132,
-        sugestaoAcao: `Apresentar pacote de solução unificada: BigQuery Enterprise + Knowledge Catalog Governança + Vertex AI Studio`,
+        sugestaoAcao: `Apresentar pacote de solução unificada: BigQuery Enterprise + Knowledge Catalog Governança + Agent Platform Studio`,
         racionalPorQue: `Reduz custos de licenciamento e elimina integrações frágeis mantidas por pipelines manuais do cliente.`,
         targetDirectiveTitle: "TOPOLOGIA INTEGRADA & SKUS",
         targetDirectiveBadge: "STACK GOOGLE CLOUD",
         targetCards: [
-          { title: "SKUs Integrados", value: "3 Pilares", subValue: "BQ + Vertex + Knowledge Catalog", badgeText: "SOLUÇÃO" },
+          { title: "SKUs Integrados", value: "3 Pilares", subValue: "BQ + Agent Platform + Knowledge Catalog", badgeText: "SOLUÇÃO" },
           { title: "Ferramentas Deslocadas", value: "4 Licenças", subValue: "ETL, MLflow, Catálogo, Vector", badgeText: "CONSOLIDAÇÃO" },
           { title: "Tempo de Implantação", value: "Semanas", subValue: "Zero setup de infra", badgeText: "AGILIDADE" },
           { title: "SLA Contratual", value: "99.99%", subValue: "Garantia Google Cloud", badgeText: "ENTERPRISE" }
@@ -341,7 +351,7 @@ ORDER BY u.rank ASC;`,
 UNION ALL
 SELECT 
   'Enterprise Search & GenAI' AS capability,
-  'Vertex AI Gemini 3.8 + Search' AS google_sku,
+  'Agent Platform Gemini 3.8 + Search' AS google_sku,
   'OpenAI APIs + Pinecone Vector DB' AS replaced_vendor
 UNION ALL
 SELECT 
@@ -349,8 +359,8 @@ SELECT
   'Knowledge Catalog' AS google_sku,
   'Collibra / Alation' AS replaced_vendor;`,
         sellerPlaybook: {
-          pitch: `Com o Google Cloud, ${customerName} não precisa comprar um banco vetorial separado, uma ferramenta de catálogo como Collibra e pagar APIs avulsas de LLM. O BigQuery reúne vetores nativos, o Knowledge Catalog cobre catalogação com 0 licença extra, e o Vertex AI traz o Gemini 3.8 totalmente integrado com controle corporativo.`,
-          objectionHandling: `Quando o arquiteto do cliente disser 'Queremos usar ferramentas especializadas para cada camada': mostre que a integração nativa BigQuery + Vertex AI elimina pipelines frágeis de exportação e reduz o tempo de desenvolvimento em 65%.`,
+          pitch: `Com o Google Cloud, ${customerName} não precisa comprar um banco vetorial separado, uma ferramenta de catálogo como Collibra e pagar APIs avulsas de LLM. O BigQuery reúne vetores nativos, o Knowledge Catalog cobre catalogação com 0 licença extra, e o Agent Platform traz o Gemini 3.8 totalmente integrado com controle corporativo.`,
+          objectionHandling: `Quando o arquiteto do cliente disser 'Queremos usar ferramentas especializadas para cada camada': mostre que a integração nativa BigQuery + Agent Platform elimina pipelines frágeis de exportação e reduz o tempo de desenvolvimento em 65%.`,
           closingTrigger: `Oferecer Architecture Review Session conjunta com o Google Cloud Office of the CTO (OCTO) para validar a topologia corporativa.`,
           targetBuyer: "CTO, Enterprise Architect e Head de Plataforma de Dados",
           salesStage: "Estágio 3 - Arquitetura de Solução & Validação Técnica"
@@ -434,7 +444,7 @@ SELECT
         targetDirectiveTitle: "SEGURANÇA CORPORATIVA & COMPLIANCE",
         targetDirectiveBadge: "CISO DEFENSE",
         targetCards: [
-          { title: "Treino em Dados", value: "ZERO Retenção", subValue: "Termo contratual Vertex AI", badgeText: "PRIVACIDADE" },
+          { title: "Treino em Dados", value: "ZERO Retenção", subValue: "Termo contratual Agent Platform", badgeText: "PRIVACIDADE" },
           { title: "Criptografia", value: "CMEK Ativo", subValue: "Chaves sob controle do cliente", badgeText: "ENCRYPTION" },
           { title: "Conformidade Bacen", value: "Res. 4.658 / 4.893", subValue: "Pronto para auditoria", badgeText: "BACEN" },
           { title: "Conformidade LGPD", value: "100%", subValue: "Data masking dinâmico", badgeText: "LGPD" }
@@ -444,13 +454,13 @@ SELECT
           { label: "Isolamento de Dados Sensíveis", value: "Policy Tags", trend: "Garantido", subtext: "Mascaramento em nível de coluna" }
         ],
         sqlQuery: `SELECT 
-  'Vertex AI Gemini Enterprise' AS ai_service,
+  'Agent Platform Gemini Enterprise' AS ai_service,
   'Customer Data is NEVER used for training' AS privacy_guarantee,
   'CMEK (Customer-Managed Encryption Keys)' AS encryption_standard,
   'LGPD & Bacen 4.658' AS regulatory_compliance;`,
         sellerPlaybook: {
-          pitch: `Garantimos ao seu CISO e time de Compliance que nenhum dado de ${customerName} utilizado pelo Gemini no Vertex AI ou BigQuery é usado para treinar modelos públicos. Toda a infraestrutura roda com chaves gerenciadas pelo cliente (CMEK), auditoria integral no Cloud Logging e conformidade estrita com a LGPD e Bacen 4.658.`,
-          objectionHandling: `Quando o CISO perguntar 'Para onde vão os prompts e os dados dos nossos clientes bancários/sensíveis?': apresente o termo de privacidade corporativa do Google Cloud Vertex AI com SLA contratual de isolamento lógico em tenant corporativo seguro.`,
+          pitch: `Garantimos ao seu CISO e time de Compliance que nenhum dado de ${customerName} utilizado pelo Gemini no Agent Platform ou BigQuery é usado para treinar modelos públicos. Toda a infraestrutura roda com chaves gerenciadas pelo cliente (CMEK), auditoria integral no Cloud Logging e conformidade estrita com a LGPD e Bacen 4.658.`,
+          objectionHandling: `Quando o CISO perguntar 'Para onde vão os prompts e os dados dos nossos clientes bancários/sensíveis?': apresente o termo de privacidade corporativa do Google Cloud Agent Platform com SLA contratual de isolamento lógico em tenant corporativo seguro.`,
           closingTrigger: `Envio imediato do Kit de Segurança & Compliance do Google Cloud para o time do CISO validar em até 48 horas.`,
           targetBuyer: "CISO (Chief Information Security Officer), DPO e Diretor Jurídico",
           salesStage: "Estágio 3 / 4 - Aprovação de Segurança & Risco Corporativo"
@@ -468,75 +478,234 @@ SELECT
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 font-sans">
-      {/* 1. HERO BANNER PRINCIPAL (Cockpit Executivo Dark Navy) */}
-      <section className="bg-gradient-to-br from-[#063964] via-[#08487D] to-[#03233F] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-blue-900/40">
-        {/* Glow de fundo */}
-        <div className="absolute -right-20 -top-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Topo do Banner: Pill de Conselho Estratégico + Botão Executar ao Vivo */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-blue-900/70 border border-blue-400/25 text-[11px] font-bold text-blue-200">
-            <GoogleCloudLogo height={16} variant="white_card" />
-            <span className="text-amber-300 font-extrabold">{t("strategicCouncil")}</span>
-            <span className="text-blue-300">•</span>
-            <span className="text-blue-100 uppercase">{t("tabDecision")}</span>
-            <span className="text-blue-300">•</span>
-            <span className="text-blue-300 font-medium">{customerName} ({industry})</span>
+      {/* 1. HEADER DO COCKPIT EXECUTIVO (ModoUI Clean Style) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-50 text-[#074878] border border-blue-200">
+              {t("strategicCouncil") || "Conselho Estratégico"}
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-bold text-slate-500">
+              {customerName} ({industry})
+            </span>
           </div>
-
-          <div className="flex items-center gap-2.5">
-            {onTriggerDebate && (
-              <button
-                onClick={onTriggerDebate}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition-transform active:scale-95 cursor-pointer shrink-0"
-              >
-                <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                <span>{t("runLiveDebate")}</span>
-              </button>
-            )}
-
-            {onNavigateToUpload && (
-              <button
-                onClick={onNavigateToUpload}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer shrink-0"
-              >
-                <span>{t("newZipUpload")}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Título e Descrição */}
-        <div className="mt-4 max-w-4xl">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            {t("decisionHeroTitle")}
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <span>Business Assessment Cockpit</span>
+            <span className="text-slate-400 hover:text-slate-600 transition-colors cursor-help" title="Cockpit analítico executivo do Google Cloud com auditoria no BigQuery">
+              <Info className="w-5 h-5" />
+            </span>
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-blue-100/85 leading-relaxed font-normal">
-            A análise multi-agente cruzou o catálogo de metadados, a maturidade de governança Knowledge Catalog e as tabelas auditadas no BigQuery para <strong className="text-white font-bold">{customerName}</strong>, sintetizando hipóteses de inovação, viabilidade e plano de valor para a indústria de <strong className="text-white font-bold">{industry}</strong>.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
+            Auditoria de patrimônio de dados, viabilidade técnica no BigQuery e retorno financeiro comprovado para <strong className="text-slate-700 font-semibold">{customerName}</strong> na indústria de <strong className="text-slate-700 font-semibold">{industry}</strong>.
           </p>
         </div>
 
-        {/* 3 CARDS DAS FASES (DMN, SN, CEN) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-7 items-start">
+        <div className="flex items-center gap-2.5 shrink-0">
+          {onTriggerDebate && (
+            <button
+              onClick={onTriggerDebate}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-black text-xs shadow-xs hover:shadow transition-all cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+              <span>{t("runLiveDebate") || "Executar Debate ao Vivo"}</span>
+            </button>
+          )}
+
+          {onNavigateToUpload && (
+            <button
+              onClick={onNavigateToUpload}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs border border-slate-200 shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+            >
+              <span>{t("newZipUpload") || "Novo Assessment"}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 2. SEÇÃO DE INDICADORES EXECUTIVOS & RETORNO FINOPS (ModoUI Sales & Financial Insights) */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              Sales & Financial Insights
+            </h2>
+            <p className="text-xs text-slate-400">
+              Métricas consolidadas de ROI, consumo GCP e governança de dados auditados
+            </p>
+          </div>
+
+          {/* Segmented Control Pill & Data Picker */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="inline-flex items-center p-1 bg-slate-100 rounded-full border border-slate-200/60 shadow-inner-xs">
+              <button
+                onClick={() => setKpiFilter("ALL")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  kpiFilter === "ALL"
+                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/50"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Todos os Widgets
+              </button>
+              <button
+                onClick={() => setKpiFilter("PHASE1")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  kpiFilter === "PHASE1"
+                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/50"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Fase 1 (Quick-Wins)
+              </button>
+              <button
+                onClick={() => setKpiFilter("HIGH_IMPACT")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  kpiFilter === "HIGH_IMPACT"
+                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/50"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Alto Impacto
+              </button>
+              <button
+                onClick={() => setKpiFilter("GOVERNANCE")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  kpiFilter === "GOVERNANCE"
+                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/50"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Governança
+              </button>
+            </div>
+
+            {/* Date Pill */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-600 shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span>{displayHeaderDate || "04/09/2026"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Grid de 4 Hero KPI Cards ModoUI com Micro-Gráficos SVG */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {/* Card 1: Ganho Anual Projetado (EBITDA) */}
+          <ModoKPICard
+            mainValue={formatCurrencyUsd(totalFinancialGainUsd, { compact: true, showSign: true, decimals: 2 }) + "/ano"}
+            subValue={`~${formatCurrencyBrl(totalFinancialGainUsd * 5.6, { compact: true, decimals: 2 })} em retorno anual`}
+            badgeText={`+${calculatedRoi}% ROI`}
+            badgeIcon={<TrendingUp className="w-3 h-3 text-emerald-600" />}
+            badgeColor="bg-emerald-50 text-emerald-700 border-emerald-200"
+            title="Ganho Anual Projetado (EBITDA)"
+            subtitle="Soma consolidada dos 6 casos de uso validados"
+          >
+            <ModoBarChart 
+              values={[28, 36, 44, 52, 70, 92, 100]}
+              highlightIndex={6}
+              highlightColor="bg-emerald-500"
+              height={64}
+            />
+          </ModoKPICard>
+
+          {/* Card 2: Consumo Mensal Google Cloud (FinOps) */}
+          <ModoKPICard
+            mainValue={`${formatCurrencyUsd(totalMonthlyGcpUsd, { decimals: 2 })}/mês`}
+            subValue={`ARR: ${formatCurrencyUsd(totalAnnualGcpUsd, { compact: true, decimals: 2 })}/ano (BigQuery + Agent)`}
+            badgeText="GCP Serverless"
+            badgeIcon={<Zap className="w-3 h-3 text-[#074878]" />}
+            badgeColor="bg-blue-50 text-[#074878] border-blue-200"
+            title="Consumo Mensal GCP (Run-Rate)"
+            subtitle="Slots sob demanda com auto-scaling a zero"
+          >
+            <ModoBarChart 
+              values={[40, 25, 30, 55, 35, 85, 45]}
+              highlightIndex={5}
+              highlightColor="bg-blue-600"
+              height={64}
+            />
+          </ModoKPICard>
+
+          {/* Card 3: Payback & Velocidade de Retorno */}
+          <ModoKPICard
+            mainValue="1,4 meses"
+            subValue="Break-even financeiro estimado no D+42"
+            badgeText="Fast-Track"
+            badgeIcon={<Sparkles className="w-3 h-3 text-purple-600" />}
+            badgeColor="bg-purple-50 text-purple-700 border-purple-200"
+            title="Payback Estimado do Investimento"
+            subtitle="Retorno total gerado em menos de 45 dias"
+          >
+            <ModoProgressBar 
+              percentage={71.4}
+              label="Ciclo de Retorno"
+              sublabel="71,4% atingido em 30d"
+              color="bg-purple-600"
+            />
+          </ModoKPICard>
+
+          {/* Card 4: Patrimônio de Dados & Governança */}
+          <ModoKPICard
+            mainValue={`${totalTables > 0 ? totalTables.toLocaleString() : "3.293"} Tabelas`}
+            subValue={`${totalColumns > 0 ? totalColumns.toLocaleString() : "48.920"} colunas catalogadas`}
+            badgeText={`${docPercentage}% Documentado`}
+            badgeIcon={<ShieldCheck className="w-3 h-3 text-teal-600" />}
+            badgeColor="bg-teal-50 text-teal-700 border-teal-200"
+            title="Patrimônio de Dados Auditado"
+            subtitle="Knowledge Catalog + BigQuery Property Graph"
+          >
+            <ModoGaugeChart 
+              percentage={Number(docPercentage) || 71.4}
+              centerText={`${docPercentage}%`}
+              centerSubtext="Qualidade"
+              color="#0D9488"
+              size={54}
+              strokeWidth={6}
+            />
+          </ModoKPICard>
+        </div>
+      </section>
+
+      {/* 3. CONSELHO NEUROCOGNITIVO DE DECISÃO (NC-MAD Clean ModoUI Cards) */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <BrainCircuit className="w-4 h-4 text-[#074878]" />
+              Conselho Neurocognitivo de Decisão (NC-MAD)
+            </h2>
+            <p className="text-xs text-slate-500">
+              Tripla rede cerebral de agentes cognitivos (DMN, SN e CEN) cruzando hipóteses com o grafo de conhecimento BigQuery.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>3 Redes Neurais Sincronizadas</span>
+          </div>
+        </div>
+
+        {/* 3 CARDS DAS FASES (DMN, SN, CEN) EM ESTILO MODOUI CLEAN */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
           {/* FASE 1: DMN - Hipóteses de Crescimento (Todos os 6 Casos) */}
-          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs min-h-[580px]">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-[580px]">
             <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-xl bg-amber-100 text-amber-900 border border-amber-200 font-black text-xs flex items-center justify-center shrink-0">
                     DMN
                   </span>
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-700">
                       FASE 1 • HIPÓTESES DE CRESCIMENTO
                     </div>
-                    <div className="text-[11px] font-bold text-white">
+                    <div className="text-xs font-bold text-slate-900">
                       6 Casos do Business Case & Modernização
                     </div>
                   </div>
                 </div>
-                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-amber-300">
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                   Temp: 0.90
                 </span>
               </div>
@@ -546,243 +715,243 @@ SELECT
                 {resolvedCases.map((item) => (
                   <div
                     key={item.useCaseId || item.rank}
-                    className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/40 transition-all space-y-2"
+                    className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 hover:border-amber-400/60 hover:bg-white transition-all space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-5 h-5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black flex items-center justify-center shrink-0">
+                        <span className="w-5 h-5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-black flex items-center justify-center shrink-0">
                           {item.rank}
                         </span>
-                        <span className="text-[10px] font-extrabold text-amber-300 truncate uppercase tracking-wider">
+                        <span className="text-[10px] font-extrabold text-amber-800 truncate uppercase tracking-wider">
                           {item.category}
                         </span>
                       </div>
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shrink-0">
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
                         Payback: {item.paybackMonths ? `${item.paybackMonths}m` : "2m"}
                       </span>
                     </div>
 
-                    <div className="text-[11px] font-bold text-white leading-tight">
+                    <div className="text-xs font-bold text-slate-900 leading-tight">
                       {item.title}
                     </div>
 
-                    <p className="text-[10px] text-blue-100/75 line-clamp-2 leading-relaxed italic">
+                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed italic">
                       &ldquo;{item.businessProblem}&rdquo;
                     </p>
 
                     {/* Dual Metric Box: Impacto no Cliente vs Consumo GCP */}
-                    <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-white/10">
-                      <div className="bg-emerald-950/40 border border-emerald-500/20 rounded-lg p-1.5">
-                        <span className="text-[8px] font-black uppercase text-emerald-300 block">
+                    <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-slate-200/60">
+                      <div className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-2">
+                        <span className="text-[8px] font-black uppercase text-emerald-800 block">
                           Impacto Cliente
                         </span>
-                        <span className="text-[10px] font-extrabold text-white block">
+                        <span className="text-xs font-extrabold text-emerald-900 block">
                           +${(item.financialGainEstimateUsd / 1000).toFixed(0)}k/ano
                         </span>
-                        <span className="text-[8px] text-emerald-200/70 block truncate">
-                          R$ {((item.financialGainEstimateUsd * 5.6) / 1000000).toFixed(1)}M
+                        <span className="text-[9px] text-emerald-700 font-medium block truncate">
+                          {formatCurrencyBrl(item.financialGainEstimateUsd * 5.6, { compact: true, decimals: 2 })}
                         </span>
                       </div>
 
-                      <div className="bg-blue-950/40 border border-blue-400/20 rounded-lg p-1.5">
-                        <span className="text-[8px] font-black uppercase text-blue-300 block">
+                      <div className="bg-blue-50/90 border border-blue-200 rounded-xl p-2">
+                        <span className="text-[8px] font-black uppercase text-[#074878] block">
                           Consumo GCP
                         </span>
-                        <span className="text-[10px] font-extrabold text-amber-300 block">
+                        <span className="text-xs font-extrabold text-[#074878] block">
                           ~${item.gcpMonthlyCostUsd}/mês
                         </span>
-                        <span className="text-[8px] text-blue-200/70 block truncate">
-                          BQ + Vertex AI
+                        <span className="text-[9px] text-slate-500 font-medium block truncate">
+                          BQ + Agent Platform
                         </span>
                       </div>
                     </div>
 
                     {/* Principal Melhoria Arquitetural a ser Aplicada */}
-                    <div className="bg-white/5 rounded-lg p-2 border border-white/5 text-[9px] text-blue-100/90 leading-relaxed">
-                      <strong className="text-amber-300 font-bold">Modernização GCP:</strong> {item.keyImprovement}
+                    <div className="bg-white rounded-xl p-2 border border-slate-200/70 text-[10px] text-slate-600 leading-relaxed">
+                      <strong className="text-amber-800 font-bold">Modernização GCP:</strong> {item.keyImprovement}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-white/10 text-[10px] text-blue-300/70 italic flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 italic flex items-center justify-between">
               <span>Auditoria completa dos 6 casos para {customerName}</span>
-              <span className="text-amber-300 font-bold">100% Validado</span>
+              <span className="text-amber-700 font-bold">100% Validado</span>
             </div>
           </div>
 
           {/* FASE 2: SN - Avaliação de Retorno & Expansão GCP */}
-          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs min-h-[580px]">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-[580px]">
             <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-200 font-black text-xs flex items-center justify-center shrink-0">
                     SN
                   </span>
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
                       FASE 2 • AVALIAÇÃO DE RETORNO
                     </div>
-                    <div className="text-[11px] font-bold text-white">
+                    <div className="text-xs font-bold text-slate-900">
                       Consolidado de FinOps & Vendas GCP
                     </div>
                   </div>
                 </div>
-                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-emerald-300">
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                   Temp: 0.30
                 </span>
               </div>
 
               {/* 4 Score Boxes */}
               <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block">
                     SCORE VIABILIDADE
                   </span>
-                  <span className="text-base font-black text-white mt-0.5 block">
+                  <span className="text-base font-black text-slate-900 mt-0.5 block">
                     {Number(docPercentage) > 50 ? "9.6/10" : "8.4/10"}
                   </span>
-                  <span className="text-[8px] text-emerald-300 font-semibold">100% no BigQuery</span>
+                  <span className="text-[9px] text-emerald-700 font-semibold">100% no BigQuery</span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block">
                     GANHO CLIENTE (BC)
                   </span>
-                  <span className="text-base font-black text-emerald-300 mt-0.5 block">
+                  <span className="text-base font-black text-emerald-700 mt-0.5 block">
                     +${(totalFinancialGainUsd / 1000).toFixed(0)}k
                   </span>
-                  <span className="text-[8px] text-blue-200/70 block">EBITDA / Ano</span>
+                  <span className="text-[9px] text-slate-500 block">EBITDA / Ano</span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
-                    CONSUMO GCP (RUN-RATE)
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block">
+                    CONSUMO GCP
                   </span>
-                  <span className="text-base font-black text-amber-300 mt-0.5 block">
+                  <span className="text-base font-black text-[#074878] mt-0.5 block">
                     ~${totalMonthlyGcpUsd.toFixed(0)}/m
                   </span>
-                  <span className="text-[8px] text-amber-200/70 block">ARR: ~${(totalAnnualGcpUsd / 1000).toFixed(1)}k</span>
+                  <span className="text-[9px] text-slate-500 block">ARR: ~${(totalAnnualGcpUsd / 1000).toFixed(1)}k</span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[8px] font-bold uppercase text-blue-200/70 block">
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block">
                     ROI MULTIPLICADOR
                   </span>
-                  <span className="text-base font-black text-white mt-0.5 block">
+                  <span className="text-base font-black text-slate-900 mt-0.5 block">
                     +{calculatedRoi}%
                   </span>
-                  <span className="text-[8px] text-emerald-300 font-semibold">Payback ~1.8 meses</span>
+                  <span className="text-[9px] text-emerald-700 font-semibold">Payback ~1.8 meses</span>
                 </div>
               </div>
 
               {/* Rota Selecionada & Vetores de Vendas GCP */}
-              <div className="mt-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-2">
+              <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black text-emerald-300 uppercase tracking-wider">
+                  <span className="text-[9px] font-black text-emerald-800 uppercase tracking-wider">
                     ROTA SELECIONADA
                   </span>
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-200">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-900">
                     ADOPTION PATH
                   </span>
                 </div>
-                <div className="text-[11px] font-bold text-white">
-                  Modernização BigQuery Property Graph, Vertex AI & Knowledge Catalog
+                <div className="text-xs font-bold text-slate-900">
+                  Modernização BigQuery Property Graph, Agent Platform & Knowledge Catalog
                 </div>
-                <p className="text-[10px] text-blue-100/80 leading-relaxed">
-                  A Matriz de Saliência priorizou os 6 casos com o melhor equilíbrio entre valor imediato de negócio para <strong className="text-white">{customerName}</strong> e consumo sustentável na plataforma Google Cloud.
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  A Matriz de Saliência priorizou os 6 casos com o melhor equilíbrio entre valor imediato de negócio para <strong className="text-slate-800">{customerName}</strong> e consumo sustentável na plataforma Google Cloud.
                 </p>
               </div>
 
               {/* Ângulo Comercial GCP (Para Sellers & CEs) */}
-              <div className="mt-3 p-3 rounded-xl bg-blue-950/50 border border-blue-400/30 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-amber-300 text-[9px] font-black uppercase tracking-wider">
-                  <GoogleCloudLogo height={12} variant="white_card" />
+              <div className="mt-3 p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-[#074878] text-[9px] font-black uppercase tracking-wider">
+                  <GoogleCloudLogo height={12} />
                   <span>OPORTUNIDADE DE EXPANSÃO GOOGLE CLOUD</span>
                 </div>
-                <p className="text-[10px] text-blue-100/90 leading-relaxed">
-                  Pipeline comercial viabilizado: consumo escalável de <strong>BigQuery Slots Dedicados</strong>, inferência contínua com <strong>Vertex AI Gemini 3.8 Flash</strong>, microserviços em <strong>Cloud Run</strong> e auditoria automatizada em <strong>Knowledge Catalog</strong>.
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Pipeline comercial viabilizado: consumo escalável de <strong>BigQuery Slots Dedicados</strong>, inferência contínua com <strong>Agent Platform Gemini 3.8 Flash</strong>, microserviços em <strong>Cloud Run</strong> e auditoria automatizada em <strong>Knowledge Catalog</strong>.
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-white/10 text-[10px] text-blue-300/70 italic">
+            <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 italic">
               Arbitragem de risco vs viabilidade técnica e consumo cloud
             </div>
           </div>
 
           {/* FASE 3: CEN - Plano de Ação Executivo */}
-          <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all backdrop-blur-xs min-h-[580px]">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-[580px]">
             <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-400 text-slate-950 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-xl bg-blue-100 text-[#074878] border border-blue-200 font-black text-xs flex items-center justify-center shrink-0">
                     CEN
                   </span>
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-wider text-blue-300">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-[#074878]">
                       FASE 3 • PLANO DE AÇÃO
                     </div>
-                    <div className="text-[11px] font-bold text-white">
+                    <div className="text-xs font-bold text-slate-900">
                       Recomendação & Roadmap de Entrega
                     </div>
                   </div>
                 </div>
-                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-blue-300">
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                   Temp: 0.05
                 </span>
               </div>
 
               {/* Status dos Dados Auditados */}
-              <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+              <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-blue-200 uppercase">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     STATUS DO PATRIMÔNIO DE DADOS
                   </span>
-                  <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                     100% AUDITADO NO GRAFO
                   </span>
                 </div>
-                <p className="text-[10px] text-blue-100/90 leading-relaxed">
-                  Auditado contra <strong className="text-white">{totalTables.toLocaleString()} tabelas</strong> no BigQuery, <strong className="text-white">{totalColumns.toLocaleString()} colunas</strong> e <strong className="text-white">{docPercentage}%</strong> de metadados documentados. Zero risco de alucinação.
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Auditado contra <strong className="text-slate-900">{totalTables.toLocaleString()} tabelas</strong> no BigQuery, <strong className="text-slate-900">{totalColumns.toLocaleString()} colunas</strong> e <strong className="text-slate-900">{docPercentage}%</strong> de metadados documentados. Zero risco de alucinação.
                 </p>
               </div>
 
               {/* Roadmap Validado em 3 Ondas */}
-              <div className="mt-3 p-3 rounded-xl bg-blue-950/40 border border-blue-400/30 space-y-2 flex-1">
-                <div className="text-[9px] font-black text-blue-300 uppercase tracking-wider">
+              <div className="mt-3 p-3.5 rounded-2xl bg-blue-50/50 border border-blue-200/70 space-y-2 flex-1">
+                <div className="text-[9px] font-black text-[#074878] uppercase tracking-wider">
                   ROADMAP DE MODERNIZAÇÃO EM 3 ONDAS
                 </div>
-                <div className="space-y-2 text-[10px] text-white/95">
-                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
-                    <span className="text-amber-300 font-bold block text-[9px] uppercase">Onda 1 (30 Dias) • Fundação & MVPs</span>
-                    <span>Ativar BigQuery Property Graph e publicar MVPs dos Casos 1 ({resolvedCases[0]?.title.slice(0, 24)}...) e 2 com ingestão em tempo real.</span>
+                <div className="space-y-2 text-[11px] text-slate-700">
+                  <div className="p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                    <span className="text-amber-800 font-bold block text-[10px] uppercase">Onda 1 (30 Dias) • Fundação & MVPs</span>
+                    <span className="text-slate-600">Ativar BigQuery Property Graph e publicar MVPs dos Casos 1 ({resolvedCases[0]?.title.slice(0, 24)}...) e 2 com ingestão em tempo real.</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
-                    <span className="text-cyan-300 font-bold block text-[9px] uppercase">Onda 2 (60 Dias) • Expansão Analítica</span>
-                    <span>Escalar pipelines de feature store e modelos Vertex AI para Casos 3 e 4 com particionamento diário e clusterização.</span>
+                  <div className="p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                    <span className="text-blue-800 font-bold block text-[10px] uppercase">Onda 2 (60 Dias) • Expansão Analítica</span>
+                    <span className="text-slate-600">Escalar pipelines de feature store e modelos Agent Platform para Casos 3 e 4 com particionamento diário e clusterização.</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
-                    <span className="text-emerald-300 font-bold block text-[9px] uppercase">Onda 3 (90 Dias) • Autonomia & Data Agent</span>
-                    <span>Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Knowledge Catalog para Casos 5 e 6.</span>
+                  <div className="p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                    <span className="text-emerald-800 font-bold block text-[10px] uppercase">Onda 3 (90 Dias) • Autonomia & Data Agent</span>
+                    <span className="text-slate-600">Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Knowledge Catalog para Casos 5 e 6.</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Ação: Ver Dossiê Estratégico */}
-            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
               <button
                 onClick={() => setSelectedDossier(cenDossier)}
-                className="text-xs font-bold text-cyan-300 hover:text-cyan-200 flex items-center gap-1 transition-colors cursor-pointer"
+                className="text-xs font-bold text-[#074878] hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <span>Ver Dossiê Estratégico CEN</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">
+              <span className="text-[11px] font-extrabold text-emerald-700 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 100% Auditável
               </span>

@@ -1,5 +1,5 @@
 // lib/gcp/conversational-analytics.ts - Cliente Oficial BigQuery Data Agent (Conversational Analytics API)
-import { getGcpAccessToken, PROJECT_ID } from "./auth";
+import { fetchWithGcpAuth, PROJECT_ID } from "./auth";
 import { logStructuredStep } from "./bigquery";
 
 export interface DataAgentChatResult {
@@ -30,7 +30,6 @@ export async function askBigQueryDataAgent(
   });
 
   try {
-    const token = await getGcpAccessToken();
     const url = `https://geminidataanalytics.googleapis.com/v1alpha/projects/${PROJECT_ID}/locations/global:chat`;
 
     // Prefixa a menção ao cliente no prompt para garantir alinhamento semântico aos filtros
@@ -55,10 +54,9 @@ export async function askBigQueryDataAgent(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
 
-    const res = await fetch(url, {
+    const res = await fetchWithGcpAuth(url, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify(payload),
@@ -105,6 +103,7 @@ export async function askBigQueryDataAgent(
         if (textType === "THOUGHT") {
           parts.forEach((p: string) => thoughts.push(p));
         } else if (textType === "FINAL_RESPONSE") {
+          if (reply.length > 0) reply += "\n\n";
           reply += parts.join("\n");
         } else if (textType === "FOLLOWUP_QUESTIONS") {
           parts.forEach((p: string) => followupQuestions.push(p));

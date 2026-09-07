@@ -1,6 +1,6 @@
 // lib/data/customer-usecases-catalog.ts - Catálogo Especializado de Casos de Uso por Cliente & Indústria
 // Projetado para vendedores do Google Cloud e tomadores de decisão C-Level
-// Cada caso balanceia: 1) Impacto no Negócio do Cliente ($ EBITDA/Receita) e 2) Consumo na Plataforma GCP (BigQuery, Vertex AI, Cloud Run, Knowledge Catalog)
+// Cada caso balanceia: 1) Impacto no Negócio do Cliente ($ EBITDA/Receita) e 2) Consumo na Plataforma GCP (BigQuery, Agent Platform, Cloud Run, Knowledge Catalog)
 // Padrão Estratégico:
 //   - Casos 1 a 3: Alto consumo GCP ($7.6k - $13.5k/mês) com altíssimo impacto no cliente ($2.2M - $4.8M/ano)
 //   - Casos 4 a 6: Consumo GCP otimizado/baixo ($750 - $1.85k/mês) com impacto relevante no cliente ($480k - $920k/ano)
@@ -22,7 +22,7 @@ export const DIGIO_USE_CASES: ExtendedUseCase[] = [
     title: "Score Preditivo de Crédito em Tempo Real & Concessão de Limite Dinâmico",
     category: "AI/ML Preditivo & Streaming",
     businessProblem: "Modelos legados de score estático com atualização mensal geram rejeição de 24% de bons tomadores e atraso na concessão de limites de cartão, limitando a expansão da carteira.",
-    solutionDescription: "Pipeline corporativo de feature store no BigQuery com inferência online em sub-segundo no Vertex AI, integrando histórico transacional, pagamentos via Pix e birôs externos para ajuste contínuo de limite.",
+    solutionDescription: "Pipeline corporativo de feature store no BigQuery com inferência online em sub-segundo no Agent Platform, integrando histórico transacional, pagamentos via Pix e birôs externos para ajuste contínuo de limite.",
     businessCaseRoi: "Redução de 28% no default de 90 dias e aumento de +$4.200.000/ano em margem líquida financeira com payback em 1.3 meses.",
     financialGainEstimateUsd: 4200000,
     gcpMonthlyCostUsd: 12800,
@@ -34,11 +34,11 @@ export const DIGIO_USE_CASES: ExtendedUseCase[] = [
     },
     requiredTables: ["transacoes_cartao", "cadastro_correntistas", "historico_faturas", "bureaux_score"],
     requiredColumns: ["cpf_hash", "valor_transacao", "score_interno", "limite_disponivel", "status_inadimplencia"],
-    guardrails: "Auditoria contínua de viés algorítmico no Vertex Explainable AI; conformidade estrita com resolução Bacen 4.658.",
+    guardrails: "Auditoria contínua de viés algorítmico no Agent Platform Explainable AI; conformidade estrita com resolução Bacen 4.658.",
     confidenceScore: 0.96,
     status: "VALIDATED",
-    keyImprovement: "Migrar rotinas batch noturnas para BigQuery Continuous Queries com CDC e Vertex AI Online Feature Store, reduzindo latência de concessão de 48h para 180ms.",
-    gcpExpansionOpportunity: "Consumo de BigQuery Slots dedicados + Vertex AI Prediction Endpoints corporativos para 15M+ de avaliações de crédito/mês.",
+    keyImprovement: "Migrar rotinas batch noturnas para BigQuery Continuous Queries com CDC e Agent Platform Online Feature Store, reduzindo latência de concessão de 48h para 180ms.",
+    gcpExpansionOpportunity: "Consumo de BigQuery Slots dedicados + Agent Platform Prediction Endpoints corporativos para 15M+ de avaliações de crédito/mês.",
     paybackMonths: 1.3
   },
   {
@@ -48,7 +48,7 @@ export const DIGIO_USE_CASES: ExtendedUseCase[] = [
     title: "Motor Causal de Anomalias & Prevenção Antifraude Pix/Cartão em Sub-Segundo",
     category: "Causal AI & Segurança",
     businessProblem: "Aumento de fraudes sofisticadas de engenharia social e transações suspeitas fora do perfil de gastos, com custo elevado de estornos (chargebacks) e atrito com clientes VIP.",
-    solutionDescription: "Detecção de anomalias com Vertex AI Autoencoders e BigQuery Vector Search processando redes de relacionamento entre contas recebedoras de Pix e geolocalização de dispositivos.",
+    solutionDescription: "Detecção de anomalias com Agent Platform Autoencoders e BigQuery Vector Search processando redes de relacionamento entre contas recebedoras de Pix e geolocalização de dispositivos.",
     businessCaseRoi: "Bloqueio preventivo de $3.100.000/ano em fraudes com queda de 52% em falsos positivos com payback em 1.4 meses.",
     financialGainEstimateUsd: 3100000,
     gcpMonthlyCostUsd: 10400,
@@ -90,7 +90,7 @@ export const DIGIO_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.93,
     status: "VALIDATED",
     keyImprovement: "Clusterização e particionamento das tabelas de faturas por mês contábil e faixa de atraso, cortando custos de query no BigQuery em 68%.",
-    gcpExpansionOpportunity: "Crescimento contínuo de dados analíticos no BigQuery com ativação de Vertex AI AutoML.",
+    gcpExpansionOpportunity: "Crescimento contínuo de dados analíticos no BigQuery com ativação de Agent Platform AutoML.",
     paybackMonths: 1.5
   },
   {
@@ -126,7 +126,7 @@ export const DIGIO_USE_CASES: ExtendedUseCase[] = [
     title: "Assistente Conversacional do Correntista com Grounding no Knowledge Catalog",
     category: "GenAI & Agentes Conversacionais",
     businessProblem: "Volume massivo de chamados repetitivos de dúvidas sobre faturas, limite, parcelamento e extrato gerando filas e custo por ticket elevado.",
-    solutionDescription: "Data Agent conversacional no Cloud Run alimentado por Gemini 3.8 Flash no Vertex AI, com grounding estrito no schema do BigQuery e Knowledge Catalog para respostas exatas.",
+    solutionDescription: "Data Agent conversacional no Cloud Run alimentado por Gemini 3.8 Flash no Agent Platform, com grounding estrito no schema do BigQuery e Knowledge Catalog para respostas exatas.",
     businessCaseRoi: "Deflexão de 48% dos chamados de 1º nível e ganho de produtividade operacional avaliado em $720.000/ano.",
     financialGainEstimateUsd: 720000,
     gcpMonthlyCostUsd: 1350,
@@ -142,7 +142,7 @@ export const DIGIO_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.94,
     status: "VALIDATED",
     keyImprovement: "Implementar Knowledge Catalog Policy Tags de mascaramento dinâmico em colunas sensíveis (CPF, dados de cartão, saldos) garantindo conformidade LGPD nativa.",
-    gcpExpansionOpportunity: "Porta de entrada para adoção de GenAI corporativa no Vertex AI com 500k+ sessões mensais de chat.",
+    gcpExpansionOpportunity: "Porta de entrada para adoção de GenAI corporativa no Agent Platform com 500k+ sessões mensais de chat.",
     paybackMonths: 1.1
   },
   {
@@ -182,7 +182,7 @@ export const HYPERA_USE_CASES: ExtendedUseCase[] = [
     title: "Previsão de Demanda Multinível & Otimização de Ruptura de Estoque em 85.000 PDVs",
     category: "Supply Chain & S&OP",
     businessProblem: "Esgotamento imprevisto de medicamentos estratégicos em 85.000 farmácias e 14 centros de distribuição regionais, gerando perdas milionárias de faturamento e fretes aéreos emergenciais.",
-    solutionDescription: "Previsão hiperlocal de demanda com Vertex AI Time Series e BigQuery Slots Dedicados cruzando sell-out diário, sazonalidade epidemiológica e lead time de centros de distribuição para disparo preditivo de reposição.",
+    solutionDescription: "Previsão hiperlocal de demanda com Agent Platform Time Series e BigQuery Slots Dedicados cruzando sell-out diário, sazonalidade epidemiológica e lead time de centros de distribuição para disparo preditivo de reposição.",
     businessCaseRoi: "Eliminação de 34% das perdas por ruptura de estoque e ganho financeiro direto de +$3.850.000/ano (~R$ 21.56M/ano) com payback em 1.4 meses.",
     financialGainEstimateUsd: 3850000,
     gcpMonthlyCostUsd: 11450,
@@ -198,7 +198,7 @@ export const HYPERA_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.96,
     status: "VALIDATED",
     keyImprovement: "Implementar BigQuery Reservations com slots dedicados e particionamento temporal diário para processar terabytes de sell-out sem degradação de performance.",
-    gcpExpansionOpportunity: "Substituição completa do módulo legado de S&OP por pipelines modernos em BigQuery Studio e Vertex AI.",
+    gcpExpansionOpportunity: "Substituição completa do módulo legado de S&OP por pipelines modernos em BigQuery Studio e Agent Platform.",
     paybackMonths: 1.4
   },
   {
@@ -208,7 +208,7 @@ export const HYPERA_USE_CASES: ExtendedUseCase[] = [
     title: "Motor Causal de Conversão Médica & Otimização de Rotas da Força de Campo",
     category: "Causal AI & Força de Vendas",
     businessProblem: "Dispersão de roteiro operacional das equipes de representantes em campo, gerando ociosidade em setores com alto potencial de prescrição médica não atendido.",
-    solutionDescription: "Modelagem causal com Vertex AI e BigQuery GIS cruzando histórico de prescrições, especialidades médicas e sell-out regional para maximizar a conversão das visitas presenciais.",
+    solutionDescription: "Modelagem causal com Agent Platform e BigQuery GIS cruzando histórico de prescrições, especialidades médicas e sell-out regional para maximizar a conversão das visitas presenciais.",
     businessCaseRoi: "Aumento de 14.8% no volume de prescrições ativas por médico visitado e acréscimo de +$2.900.000/ano (~R$ 16.24M/ano) com payback em 1.6 meses.",
     financialGainEstimateUsd: 2900000,
     gcpMonthlyCostUsd: 9600,
@@ -234,7 +234,7 @@ export const HYPERA_USE_CASES: ExtendedUseCase[] = [
     title: "Mapeamento Gravitacional de Prescrição & Demanda por Microrregião (Modelo Huff)",
     category: "Geomarketing & BigQuery GIS",
     businessProblem: "Falta de correlação precisa entre os médicos prescritores e as farmácias satélites onde o paciente adquire o medicamento prescrito, gerando ruptura invisível.",
-    solutionDescription: "Algoritmo gravitacional de Huff no BigQuery ML e Vertex AI para atribuir probabilidades espaciais de compra por ponto de venda em raio de até 5km.",
+    solutionDescription: "Algoritmo gravitacional de Huff no BigQuery ML e Agent Platform para atribuir probabilidades espaciais de compra por ponto de venda em raio de até 5km.",
     businessCaseRoi: "Recuperação de 42% da demanda reprimida em farmácias satélites no raio de influência médica, gerando +$2.200.000/ano com payback em 1.8 meses.",
     financialGainEstimateUsd: 2200000,
     gcpMonthlyCostUsd: 7800,
@@ -250,7 +250,7 @@ export const HYPERA_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.94,
     status: "VALIDATED",
     keyImprovement: "Utilizar funções geoespaciais BigQuery GIS (ST_GEOHASH, ST_DISTANCE, ST_CLUSTERDBSCAN) para cálculos vetoriais in-database sem mover dados.",
-    gcpExpansionOpportunity: "Uso intensivo de BigQuery GIS e Vertex AI AutoML para calibração contínua dos pesos gravitacionais por CEP.",
+    gcpExpansionOpportunity: "Uso intensivo de BigQuery GIS e Agent Platform AutoML para calibração contínua dos pesos gravitacionais por CEP.",
     paybackMonths: 1.8
   },
   {
@@ -302,7 +302,7 @@ export const HYPERA_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.92,
     status: "VALIDATED",
     keyImprovement: "Construção de camada unificada de dados de CRM no BigQuery integrando Veeva, Salesforce e eventos digitais.",
-    gcpExpansionOpportunity: "Consumo de Cloud Run e Vertex AI para geração dinâmica de resumos de ensaios clínicos aprovados pelo compliance.",
+    gcpExpansionOpportunity: "Consumo de Cloud Run e Agent Platform para geração dinâmica de resumos de ensaios clínicos aprovados pelo compliance.",
     paybackMonths: 1.1
   },
   {
@@ -342,7 +342,7 @@ export const NUBANK_USE_CASES: ExtendedUseCase[] = [
     title: "Prevenção Ativa de Churn & Retenção Preditiva de Clientes Alta Renda (Ultravioleta)",
     category: "Causal AI & Retenção",
     businessProblem: "Migração silenciosa de saldos e transações de clientes Ultravioleta para outros bancos digitais antes do encerramento formal da conta.",
-    solutionDescription: "Monitoramento de micro-sinais de desengajamento com modelos causais no Vertex AI e BigQuery Vector Search processando 50M+ de eventos diários.",
+    solutionDescription: "Monitoramento de micro-sinais de desengajamento com modelos causais no Agent Platform e BigQuery Vector Search processando 50M+ de eventos diários.",
     businessCaseRoi: "Retenção de +$4.600.000/ano em receita de intercâmbio e investimentos com intervenções automatizadas em D+3.",
     financialGainEstimateUsd: 4600000,
     gcpMonthlyCostUsd: 13200,
@@ -357,7 +357,7 @@ export const NUBANK_USE_CASES: ExtendedUseCase[] = [
     guardrails: "Opt-out de campanhas e governança estrita de privacidade sob LGPD com Policy Tags.",
     confidenceScore: 0.96,
     status: "VALIDATED",
-    keyImprovement: "Implementação de BigQuery BI Engine e Vertex AI Vector Search para cálculo em tempo real de embeddings de comportamento do cliente.",
+    keyImprovement: "Implementação de BigQuery BI Engine e Agent Platform Vector Search para cálculo em tempo real de embeddings de comportamento do cliente.",
     gcpExpansionOpportunity: "Consumo maciço de BigQuery Slots dedicados para streaming analytics contínuo.",
     paybackMonths: 1.2
   },
@@ -368,7 +368,7 @@ export const NUBANK_USE_CASES: ExtendedUseCase[] = [
     title: "Esteira de Crédito Pré-Aprovado & Ajuste Algorítmico de Limite em Tempo Real",
     category: "AI/ML Preditivo & Streaming",
     businessProblem: "Limites estáticos de cartão de crédito não acompanham a evolução de renda instantânea dos usuários, gerando recusas em compras de alto valor.",
-    solutionDescription: "Modelos preditivos in-database no BigQuery ML e Vertex AI Online Feature Store com avaliação contínua de capacidade de pagamento e ampliação segura de limites.",
+    solutionDescription: "Modelos preditivos in-database no BigQuery ML e Agent Platform Online Feature Store com avaliação contínua de capacidade de pagamento e ampliação segura de limites.",
     businessCaseRoi: "Expansão de 16% no faturamento total de cartões com incremento de +$3.400.000/ano em margem líquida com payback em 1.4 meses.",
     financialGainEstimateUsd: 3400000,
     gcpMonthlyCostUsd: 10800,
@@ -384,7 +384,7 @@ export const NUBANK_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.95,
     status: "VALIDATED",
     keyImprovement: "Substituição de pipelines externos em Python por BigQuery ML in-database, eliminando custos de transferência e acelerando retreinamento.",
-    gcpExpansionOpportunity: "Consumo contínuo de Vertex AI Feature Store e BigQuery ML para dezenas de milhões de correntistas.",
+    gcpExpansionOpportunity: "Consumo contínuo de Agent Platform Feature Store e BigQuery ML para dezenas de milhões de correntistas.",
     paybackMonths: 1.4
   },
   {
@@ -436,7 +436,7 @@ export const NUBANK_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.93,
     status: "VALIDATED",
     keyImprovement: "Grounding estrito do Gemini no BigQuery com resposta em streaming para reduzir latência de percepção do usuário.",
-    gcpExpansionOpportunity: "Volume massivo de requisições de Vertex AI Gemini 3.8 Flash e Cloud Run.",
+    gcpExpansionOpportunity: "Volume massivo de requisições de Agent Platform Gemini 3.8 Flash e Cloud Run.",
     paybackMonths: 1.0
   },
   {
@@ -502,7 +502,7 @@ export const AMBEV_USE_CASES: ExtendedUseCase[] = [
     title: "Previsão de Sell-Out Hiperlocal & Reposição Dinâmica para Bares e Restaurantes (BEES)",
     category: "Supply Chain & Demanda",
     businessProblem: "Ruptura de estoque de marcas premium em fins de semana e feriados em 400.000 pontos de venda parceiros, gerando perda irrecuperável de consumo.",
-    solutionDescription: "Previsão hiperlocal de consumo no BigQuery com slots dedicados e Vertex AI integrando meteorologia em tempo real, eventos esportivos e histórico de compras da plataforma BEES.",
+    solutionDescription: "Previsão hiperlocal de consumo no BigQuery com slots dedicados e Agent Platform integrando meteorologia em tempo real, eventos esportivos e histórico de compras da plataforma BEES.",
     businessCaseRoi: "Elevação de 8.4% no sell-out mensal e ganho financeiro direto de +$4.100.000/ano (~R$ 22.9M/ano) com payback em 1.4 meses.",
     financialGainEstimateUsd: 4100000,
     gcpMonthlyCostUsd: 12200,
@@ -518,7 +518,7 @@ export const AMBEV_USE_CASES: ExtendedUseCase[] = [
     confidenceScore: 0.96,
     status: "VALIDATED",
     keyImprovement: "Uso de BigQuery Time-Series Forecasting (ARIMA_PLUS) com agregação automática de feriados e eventos esportivos municipais.",
-    gcpExpansionOpportunity: "Conexão direta do ecossistema B2B BEES com BigQuery e Vertex AI para pedidos preditivos automatizados.",
+    gcpExpansionOpportunity: "Conexão direta do ecossistema B2B BEES com BigQuery e Agent Platform para pedidos preditivos automatizados.",
     paybackMonths: 1.4
   },
   {
@@ -528,7 +528,7 @@ export const AMBEV_USE_CASES: ExtendedUseCase[] = [
     title: "Otimização Combinatória de Roteirização de Distribuição & Redução de Emissões",
     category: "Logística & ESG",
     businessProblem: "Custo elevado de combustível e quilometragem rodada da frota pesada em grandes regiões metropolitanas com restrições urbanas de circulação.",
-    solutionDescription: "Otimização combinatória com Vertex AI e BigQuery GIS gerando rotas eficientes com menor emissão de CO2 e redução de tempo de descarga.",
+    solutionDescription: "Otimização combinatória com Agent Platform e BigQuery GIS gerando rotas eficientes com menor emissão de CO2 e redução de tempo de descarga.",
     businessCaseRoi: "Economia anual de combustível e manutenção de frota calculada em +$3.200.000/ano com payback em 1.5 meses.",
     financialGainEstimateUsd: 3200000,
     gcpMonthlyCostUsd: 9900,
@@ -606,7 +606,7 @@ export const AMBEV_USE_CASES: ExtendedUseCase[] = [
     title: "Auditoria Visual de Gôndolas & Geladeiras com Gemini 3.8 Multimodal",
     category: "Visão Computacional & IA",
     businessProblem: "Dificuldade para aferir conformidade de planogramas de geladeiras e presença de marcas concorrentes nos pontos de venda parceiros.",
-    solutionDescription: "Classificação automática de fotos de geladeiras enviadas pelos promotores usando modelos de Gemini 3.8 Flash Multimodal no Vertex AI.",
+    solutionDescription: "Classificação automática de fotos de geladeiras enviadas pelos promotores usando modelos de Gemini 3.8 Flash Multimodal no Agent Platform.",
     businessCaseRoi: "Elevação de 22% no cumprimento de contratos de visibilidade de gôndola, gerando +$710.000/ano.",
     financialGainEstimateUsd: 710000,
     gcpMonthlyCostUsd: 1280,
@@ -621,8 +621,8 @@ export const AMBEV_USE_CASES: ExtendedUseCase[] = [
     guardrails: "Rosto de pessoas presentes nas imagens é automaticamente borrado antes da análise para proteção de privacidade.",
     confidenceScore: 0.93,
     status: "VALIDATED",
-    keyImprovement: "Processamento de imagens diretamente do Cloud Storage chamando Vertex AI Gemini 3.8 Multimodal com persistência de metadados no BigQuery.",
-    gcpExpansionOpportunity: "Consumo de tokens multimodais do Gemini no Vertex AI para dezenas de milhares de promotores de campo.",
+    keyImprovement: "Processamento de imagens diretamente do Cloud Storage chamando Agent Platform Gemini 3.8 Multimodal com persistência de metadados no BigQuery.",
+    gcpExpansionOpportunity: "Consumo de tokens multimodais do Gemini no Agent Platform para dezenas de milhares de promotores de campo.",
     paybackMonths: 1.1
   },
   {

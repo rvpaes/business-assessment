@@ -1,5 +1,5 @@
 // components/views/UseCaseTerraformModal.tsx - Modal de Visualização e Exportação de Pipelines Terraform
-// Integração Multi-Motor: SQLX, Python BigFrames, PySpark Serverless e Vertex AI Gemini 3.8 Flash
+// Integração Multi-Motor: SQLX, Python BigFrames, PySpark Serverless e Agent Platform Gemini 3.8 Flash
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -136,7 +136,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
     }
   };
 
-  // Refinamento ao vivo com Vertex AI Gemini 3.8 Flash
+  // Refinamento ao vivo com Agent Platform Gemini 3.8 Flash
   const handleRefineWithGemini = async () => {
     if (!refinementPrompt.trim()) return;
     try {
@@ -182,7 +182,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
                 <Cpu className="w-3 h-3" /> Motor: {bundle.engineBreakdown.primaryEngine}
               </span>
               <span className="px-2 py-0.5 rounded bg-purple-400/20 text-purple-200 text-[10px] font-bold uppercase flex items-center gap-1 border border-purple-300/30">
-                <Sparkles className="w-3 h-3" /> Vertex AI Gemini 3.8 Flash
+                <Sparkles className="w-3 h-3" /> Agent Platform Gemini 3.8 Flash
               </span>
             </div>
             
@@ -360,7 +360,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
                 >
                   <div className="flex items-center gap-1.5 text-purple-300">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Raciocínio Arquitetural de Vertex AI Gemini 3.8 Flash</span>
+                    <span>Raciocínio Arquitetural de Agent Platform Gemini 3.8 Flash</span>
                   </div>
                   {showThoughts ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 </button>

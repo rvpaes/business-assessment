@@ -57,7 +57,7 @@ export async function runNeuroDebatePipeline(
   // =========================================================================
   onProgress?.({
     phase: "DMN_GENERATION",
-    message: "🧠 Fase 1 [DMN]: Dr. Leonardo Cruz (Chief Innovation Strategist) iniciando ideação divergente de múltiplos domínios..."
+    message: "🧠 Fase 1 [DMN]: Agente de Ideação & Inovação iniciando ideação divergente de múltiplos domínios..."
   });
 
   logStructuredStep({
@@ -68,8 +68,9 @@ export async function runNeuroDebatePipeline(
   });
 
   const dmnPrompt = `
-Você é o Agente DMN (Default Mode Network - The Generative Explorer), atuando como Dr. Leonardo Cruz, Chief Innovation Strategist.
+Você é o Agente DMN (Default Mode Network - The Generative Explorer), especialista executivo em ideação analítica e inteligência artificial.
 Seu papel biológico é a ideação divergente, associação lateral livre e criação sem autocensura prévia (Shofty et al., 2022).
+NUNCA use nomes fictícios de pessoas humanas (como Dr. Leonardo Cruz, etc.). Identifique-se estritamente como "Agente DMN (Ideação & Inovação)".
 
 INFORMAÇÕES DO CLIENTE AUDITADO:
 - Nome do Cliente: ${assessment.customerName}
@@ -89,16 +90,18 @@ Gere entre 8 a 10 propostas de casos de uso analíticos e de IA Generativa de al
 2. Rota da Persistência: Otimizações profundas, FinOps, S&OP, prevenção de fraude e retenção.
 
 REGRAS:
+- PREMISSA MANDATÓRIA DE NEGÓCIO: O retorno esperado para o cliente deve ser SEMPRE maior que o consumo Google Cloud. Todos os casos e propostas devem ser montados obrigatoriamente com essa premissa.
 - Todas as propostas DEVEM se referenciar explicitamente às tabelas reais listadas acima.
 - NUNCA mencione tabelas que não estejam na lista.
 - Para cada proposta, inclua: ID (ex: PROP-1), Título, Categoria de Negócio, Hipótese de Valor e Tabelas Requeridas.
+- NÃO use nomes de pessoas reais ou fictícias no texto.
 
 Retorne em formato de texto executivo estruturado.
 `;
 
   const dmnResponse = await callGemini38Flash(dmnPrompt, {
     thinkingLevel: "HIGH",
-    systemInstruction: "Você é o explorador divergente DMN. Seja criativo, audacioso e estruturado, conectando dados de negócio a IA de ponta."
+    systemInstruction: "Você é o explorador divergente DMN. Seja criativo, audacioso e estruturado, conectando dados de negócio a IA de ponta. NUNCA utilize nomes próprios de pessoas físicas; identifique-se como Agente DMN. PREMISSA MANDATÓRIA: O retorno esperado para o cliente deve ser sempre maior que o consumo GCP. O caso deve ser montado com essa premissa."
   });
 
   const dmnTurn: NeuroDebateTurn = {
@@ -107,7 +110,7 @@ Retorne em formato de texto executivo estruturado.
     cycle: 1,
     phase: "DMN_GENERATION",
     agentRole: "DMN_Explorer",
-    agentName: "Dr. Leonardo Cruz (Chief Innovation Strategist)",
+    agentName: "Agente DMN (Ideação & Inovação)",
     thoughtLog: dmnResponse.thoughtText || "Explorando correlações entre datasets transacionais, cadastrais e modelos comportamentais.",
     outputText: dmnResponse.text,
     timestamp: new Date().toISOString()
@@ -125,7 +128,7 @@ Retorne em formato de texto executivo estruturado.
   // =========================================================================
   onProgress?.({
     phase: "SN_SALIENCE_FILTER",
-    message: "⚖️ Fase 2 [SN / Arbiter]: Beatriz Alvarenga (CDAO & Salience Arbiter) calculando Matriz de Saliência e alvos de auditoria..."
+    message: "⚖️ Fase 2 [SN]: Agente de Saliência & Governança calculando Matriz de Saliência e alvos de auditoria..."
   });
 
   logStructuredStep({
@@ -136,8 +139,9 @@ Retorne em formato de texto executivo estruturado.
   });
 
   const snPrompt = `
-Você é a Agente SN / Arbiter (Salience Network), atuando como Beatriz Alvarenga, Chief Data & Analytics Officer e Árbitra de Saliência.
+Você é o Agente SN / Arbiter (Salience Network), especialista executivo em governança de dados, conformidade e viabilidade arquitetural.
 Seu papel biológico é a detecção de saliência, balanceamento de trade-offs (Cohen et al., 2007) e filtragem pragmática.
+NUNCA use nomes fictícios de pessoas humanas (como Beatriz Alvarenga, etc.). Identifique-se estritamente como "Agente SN (Saliência & Governança)".
 
 PROPOSTAS RECEBIDAS DO AGENTE DMN:
 ${dmnResponse.text}
@@ -149,14 +153,16 @@ METADADOS & DATA PROFILE DO KNOWLEDGE CATALOG (AVALIE COMPLETUDE E QUALIDADE):
 ${catalogContextStr || "Em catalogação"}
 
 SUA TAREFA:
-1. Purgar propostas inviáveis ou que dependam de dados inexistentes.
-2. Gerar a MATRIZ DE SALIÊNCIA avaliando as propostas em 4 eixos:
+1. Purgar propostas inviáveis, que dependam de dados inexistentes ou onde o custo de infraestrutura nuvem não seja amplamente justificado pelo ganho financeiro do cliente.
+2. PREMISSA MANDATÓRIA DE NEGÓCIO: O retorno esperado para o cliente deve ser SEMPRE maior que o consumo Google Cloud. Todos os casos selecionados devem ser obrigatoriamente montados com essa premissa.
+3. Gerar a MATRIZ DE SALIÊNCIA avaliando as propostas em 4 eixos:
    - Viabilidade na Stack Atual (0 a 10)
    - Razão Exploração / Otimização (Equilibrado, Alto Risco/Inovação, Otimização Estrita)
    - Complexidade de Implementação (BAIXA, MEDIA, ALTA)
    - Risco Operacional (BAIXO, MEDIO, CRITICO)
-3. Selecionar as 6 melhores propostas para implementação final.
-4. Formular de 3 a 5 ALVOS DE AUDITORIA com testes de estresse (ex: vazamento de PII, volume de dados, latência, custos de query).
+4. Selecionar as 6 melhores propostas para implementação final (priorizando casos com ROI amplamente positivo para o cliente).
+5. Formular de 3 a 5 ALVOS DE AUDITORIA com testes de estresse (ex: vazamento de PII, volume de dados, latência, custos de query).
+6. NÃO use nomes de pessoas físicas reais ou fictícias no texto.
 
 Responda em formato JSON rigoroso com o schema:
 {
@@ -186,7 +192,7 @@ Responda em formato JSON rigoroso com o schema:
   const snResponse = await callGemini38Flash(snPrompt, {
     thinkingLevel: "MEDIUM",
     responseMimeType: "application/json",
-    systemInstruction: "Você é a árbitra SN. Neutralidade rigorosa, foco em viabilidade e proteção dos dados do cliente."
+    systemInstruction: "Você é a árbitra SN. Neutralidade rigorosa, foco em viabilidade e proteção dos dados do cliente. NUNCA utilize nomes próprios de pessoas físicas; identifique-se como Agente SN. PREMISSA MANDATÓRIA: O retorno esperado para o cliente deve ser sempre maior que o consumo GCP. O caso deve ser montado com essa premissa."
   });
 
   let snParsed: any = {};
@@ -205,7 +211,7 @@ Responda em formato JSON rigoroso com o schema:
     cycle: 1,
     phase: "SN_SALIENCE_FILTER",
     agentRole: "SN_Arbiter",
-    agentName: "Beatriz Alvarenga (CDAO & Salience Arbiter)",
+    agentName: "Agente SN (Saliência & Governança)",
     thoughtLog: snResponse.thoughtText || "Auditando viabilidade de colunas, volumetria e conformidade com governança.",
     outputText: snParsed.analysisText || snResponse.text,
     salienceMatrix,
@@ -225,7 +231,7 @@ Responda em formato JSON rigoroso com o schema:
   // =========================================================================
   onProgress?.({
     phase: "CEN_EXECUTIVE_VALIDATION",
-    message: "🛡️ Fase 3 [CEN]: Marcos Mendonça (Cloud Architect & FinOps Director) auditando alvos e calculando BC & Custos GCP..."
+    message: "🛡️ Fase 3 [CEN]: Agente Executivo & FinOps auditando alvos e calculando BC & Custos GCP..."
   });
 
   logStructuredStep({
@@ -236,8 +242,9 @@ Responda em formato JSON rigoroso com o schema:
   });
 
   const cenPrompt = `
-Você é o Agente CEN (Central Executive Network), atuando como Marcos Mendonça, Principal Cloud Architect & FinOps Director.
+Você é o Agente CEN (Central Executive Network), especialista executivo em arquitetura cloud e modelagem FinOps no Google Cloud.
 Seu papel biológico é o controle inibitório, escrutínio de regras formais, cálculo financeiro e especificação técnica determinística (Ellamil et al., 2012).
+NUNCA use nomes fictícios de pessoas humanas (como Marcos Mendonça, etc.). Identifique-se estritamente como "Agente CEN (Executivo & FinOps)".
 
 CONTEXTO DO CLIENTE:
 - Cliente: ${assessment.customerName}
@@ -256,25 +263,26 @@ ${JSON.stringify(auditTargets, null, 2)}
 
 SUA TAREFA:
 1. Audite rigorosamente as propostas contra os alvos de auditoria.
-2. REGRA MANDATÓRIA DE BUSINESS CASE & FINOPS (INSTRUÇÃO CRÍTICA):
-   - O valor do retorno financeiro anual estimado para o cliente (financialGainEstimateUsd) DEVE SER SEMPRE MAIOR que o custo anualizado de consumo GCP (gcpMonthlyCostUsd * 12).
+2. PREMISSA FUNDAMENTAL E INEGOCIÁVEL (INSTRUÇÃO CRÍTICA DE NEGÓCIO):
+   - O RETORNO ESPERADO PARA O CLIENTE DEVE SER SEMPRE MAIOR QUE O CONSUMO GCP. O CASO DEVE SER MONTADO COM ESSA PREMISSA.
+   - O valor do retorno financeiro anual estimado para o cliente (financialGainEstimateUsd) DEVE SER SEMPRE ESTRITAMENTE MAIOR que o custo anualizado de consumo GCP (gcpMonthlyCostUsd * 12).
    - Sob nenhuma hipótese o custo de nuvem pode igualar ou superar o ganho do cliente. O business case DEVE ser amplamente superavitário com ROI de pelo menos 250% a 500%+ ao ano (payback acelerado de 1 a 4 meses).
 3. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6), seguindo a estrutura corporativa de consumo e impacto:
    - CASOS 1 a 3 (ALTO IMPACTO NO CLIENTE & ALTO CONSUMO GCP):
-     * Cargas analíticas massivas, inferência contínua com Vertex AI Gemini 3.8 Flash, BigQuery Slots Dedicados e Feature Store em tempo real.
+     * Cargas analíticas massivas, inferência contínua com Agent Platform Gemini 3.8 Flash, BigQuery Slots Dedicados e Feature Store em tempo real.
      * Consumo GCP: Entre $6.500/mês e $14.000/mês (ARR de ~$80k a $170k).
-     * Ganho Financeiro para o Cliente (EBITDA/Receita): Entre $2.200.000/ano e $4.800.000/ano (R$ 12M a R$ 27M/ano). Sempre maior que o custo GCP anual.
+     * Ganho Financeiro para o Cliente (EBITDA/Receita): Entre $2.200.000/ano e $4.800.000/ano (R$ 12M a R$ 27M/ano). Sempre estritamente maior que o custo GCP anual.
    - CASOS 4 a 6 (IMPACTO RELEVANTE NO CLIENTE & CONSUMO OTIMIZADO/MAIS BAIXO GCP):
      * Cargas serverless sob demanda, consultas incrementais BigQuery Studio, Cloud Run e governança Knowledge Catalog.
      * Consumo GCP: Entre $750/mês e $1.850/mês (ARR de ~$9k a $22k).
-     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano (R$ 2.6M a R$ 5.1M/ano). Sempre maior que o custo GCP anual.
+     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano (R$ 2.6M a R$ 5.1M/ano). Sempre estritamente maior que o custo GCP anual.
 
 4. Para CADA caso de uso, gere:
    - rank (1 a 6)
    - title (Nome do caso de uso de alto impacto executivo)
    - category (ex: "Inteligência Causal & NBA", "Supply Chain & S&OP", "Prevenção de Churn & LTV", "FinOps & Governança", "Detecção de Anomalias & Fraude", "Engenharia de Decisão com IA Generativa")
    - businessProblem (Descrição clara da dor de negócio do cliente)
-   - solutionDescription (Arquitetura técnica com BigQuery, Gemini 3.8 Flash, Vertex AI ou Cloud Run)
+   - solutionDescription (Arquitetura técnica com BigQuery, Gemini 3.8 Flash, Agent Platform ou Cloud Run)
    - businessCaseRoi (Benchmarking de mercado e ROI; ex: "ROI de 380% no ano 1 com payback em 2.2 meses")
    - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD; OBRIGATÓRIO: deve ser estritamente maior que gcpMonthlyCostUsd * 12)
    - gcpMonthlyCostUsd (Custo total mensal em GCP de acordo com a faixa do caso)
@@ -294,7 +302,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
   const cenResponse = await callGemini38Flash(cenPrompt, {
     thinkingLevel: "LOW",
     responseMimeType: "application/json",
-    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso (3 alto consumo/alto impacto + 3 consumo otimizado/impacto relevante). REGRA MANDATÓRIA INVIOLÁVEL: O valor do retorno financeiro anual para o cliente (financialGainEstimateUsd) deve sempre ser estritamente maior que o custo anual de consumo GCP (gcpMonthlyCostUsd * 12)."
+    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso (3 alto consumo/alto impacto + 3 consumo otimizado/impacto relevante). PREMISSA MANDATÓRIA E INVIOLÁVEL: O RETORNO ESPERADO PARA O CLIENTE DEVE SER SEMPRE MAIOR QUE O CONSUMO GCP. O CASO DEVE SER MONTADO COM ESSA PREMISSA. O valor do retorno financeiro anual para o cliente (financialGainEstimateUsd) deve sempre ser estritamente maior que o custo anual de consumo GCP (gcpMonthlyCostUsd * 12)."
   });
 
   let cenParsed: any = {};
@@ -356,7 +364,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
     cycle: 1,
     phase: "CEN_EXECUTIVE_VALIDATION",
     agentRole: "CEN_Executive_Engineer",
-    agentName: "Marcos Mendonça (Cloud Architect & FinOps Director)",
+    agentName: "Agente CEN (Executivo & FinOps)",
     thoughtLog: cenResponse.thoughtText || "Auditoria de alvos aprovada. Cálculo FinOps validado para os 6 casos de uso.",
     outputText: cenParsed.executiveSummary || `Aprovados os Top 6 Casos de Uso com alto ROI e grounding comprovado nas tabelas do BigQuery.`,
     verdict: "APPROVED",

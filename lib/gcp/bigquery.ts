@@ -1,5 +1,5 @@
 // lib/gcp/bigquery.ts - Integração com BigQuery, Grafo GQL e Cloud Logging Estruturado
-import { getGcpAccessToken, PROJECT_ID, DATASET_ID } from "./auth";
+import { fetchWithGcpAuth, PROJECT_ID, DATASET_ID } from "./auth";
 import {
   CustomerAssessment,
   TableCatalogItem,
@@ -66,14 +66,12 @@ export async function runOptimizedBigQueryQuery(
     throw new Error("A consulta analítica falhou repetidamente. O assistente pausou a tentativa automática de SQL para validação estrutural.");
   }
 
-  const token = await getGcpAccessToken();
   const url = `https://bigquery.googleapis.com/bigquery/v2/projects/${PROJECT_ID}/queries`;
 
   try {
-    const res = await fetch(url, {
+    const res = await fetchWithGcpAuth(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -372,8 +370,90 @@ export async function populatePropertyGraph(
   useCases: TopUseCase[],
   tables: TableCatalogItem[]
 ): Promise<PropertyGraphData> {
-  // 1. Popula as tabelas de arestas relacionais no BigQuery em background (sem bloquear UI)
+  // 1. Popula as tabelas de nós e arestas relacionais no BigQuery em background (sem bloquear UI)
   Promise.allSettled([
+    // Sincroniza n_customer
+    runOptimizedBigQueryQuery(`
+      MERGE INTO \`${PROJECT_ID}.${DATASET_ID}.n_customer\` T
+      USING (
+        SELECT 
+          '${assessment.customerId}' AS customer_id,
+          '${assessment.customerName.replace(/'/g, "\\'")}' AS name,
+          '${assessment.industry.replace(/'/g, "\\'")}' AS industry,
+          1000000000.0 AS total_revenue_usd,
+          'AVANÇADO' AS data_maturity_level,
+          'ATIVO' AS status
+      ) S ON T.customer_id = S.customer_id
+      WHEN MATCHED THEN UPDATE SET name = S.name, industry = S.industry
+      WHEN NOT MATCHED THEN INSERT (customer_id, name, industry, total_revenue_usd, data_maturity_level, status)
+      VALUES (S.customer_id, S.name, S.industry, S.total_revenue_usd, S.data_maturity_level, S.status);
+    `, "Sync n_customer"),
+
+    // Sincroniza n_assessment
+    runOptimizedBigQueryQuery(`
+      MERGE INTO \`${PROJECT_ID}.${DATASET_ID}.n_assessment\` T
+      USING (
+        SELECT 
+          '${assessment.assessmentId}' AS assessment_id,
+          '${assessment.customerId}' AS customer_id,
+          '${assessment.customerName.replace(/'/g, "\\'")}' AS customer_name,
+          ${assessment.totalTables} AS total_tables,
+          ${assessment.totalColumns} AS total_columns,
+          ${assessment.docPercentage} AS doc_percentage,
+          ${assessment.totalDatasets} AS total_datasets,
+          'CONCLUÍDO' AS status
+      ) S ON T.assessment_id = S.assessment_id
+      WHEN MATCHED THEN UPDATE SET customer_name = S.customer_name, total_tables = S.total_tables, total_columns = S.total_columns, doc_percentage = S.doc_percentage
+      WHEN NOT MATCHED THEN INSERT (assessment_id, customer_id, customer_name, total_tables, total_columns, doc_percentage, total_datasets, status)
+      VALUES (S.assessment_id, S.customer_id, S.customer_name, S.total_tables, S.total_columns, S.doc_percentage, S.total_datasets, S.status);
+    `, "Sync n_assessment"),
+
+    // Sincroniza n_use_case
+    runOptimizedBigQueryQuery(`
+      MERGE INTO \`${PROJECT_ID}.${DATASET_ID}.n_use_case\` T
+      USING (
+        SELECT 
+          use_case_id,
+          '${assessment.customerId}' AS customer_id,
+          rank,
+          title,
+          category,
+          financial_gain_estimate_usd,
+          gcp_monthly_cost_usd,
+          business_case_roi,
+          payback_months,
+          confidence_score
+        FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\`
+        WHERE assessment_id = '${assessment.assessmentId}'
+      ) S ON T.use_case_id = S.use_case_id
+      WHEN MATCHED THEN UPDATE SET title = S.title, category = S.category, financial_gain_estimate_usd = S.financial_gain_estimate_usd, gcp_monthly_cost_usd = S.gcp_monthly_cost_usd, business_case_roi = S.business_case_roi
+      WHEN NOT MATCHED THEN INSERT (use_case_id, customer_id, rank, title, category, financial_gain_estimate_usd, gcp_monthly_cost_usd, business_case_roi, payback_months, confidence_score)
+      VALUES (S.use_case_id, S.customer_id, S.rank, S.title, S.category, S.financial_gain_estimate_usd, S.gcp_monthly_cost_usd, S.business_case_roi, S.payback_months, S.confidence_score);
+    `, "Sync n_use_case"),
+
+    // Sincroniza n_table_catalog
+    runOptimizedBigQueryQuery(`
+      MERGE INTO \`${PROJECT_ID}.${DATASET_ID}.n_table_catalog\` T
+      USING (
+        SELECT 
+          table_key,
+          assessment_id,
+          table_name,
+          dataset_id,
+          table_type,
+          estimated_rows,
+          estimated_bytes,
+          column_count,
+          ROUND(SAFE_DIVIDE(documented_columns, column_count) * 100, 1) AS doc_percentage
+        FROM \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\`
+        WHERE assessment_id = '${assessment.assessmentId}'
+      ) S ON T.table_key = S.table_key
+      WHEN MATCHED THEN UPDATE SET table_name = S.table_name, estimated_rows = S.estimated_rows, estimated_bytes = S.estimated_bytes
+      WHEN NOT MATCHED THEN INSERT (table_key, assessment_id, table_name, dataset_id, table_type, estimated_rows, estimated_bytes, column_count, doc_percentage)
+      VALUES (S.table_key, S.assessment_id, S.table_name, S.dataset_id, S.table_type, S.estimated_rows, S.estimated_bytes, S.column_count, S.doc_percentage);
+    `, "Sync n_table_catalog"),
+
+    // Arestas do Grafo
     runOptimizedBigQueryQuery(`
       INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.e_customer_assessment\` (edge_id, customer_id, assessment_id, assessment_year, audit_scope)
       SELECT GENERATE_UUID() AS edge_id, '${assessment.customerId}', '${assessment.assessmentId}', 2026, 'Assessment Automatizado'
@@ -417,8 +497,53 @@ export async function populatePropertyGraph(
           WHERE e.table_key = t.table_key AND e.use_case_id = u.use_case_id
         )
       LIMIT 50;
-    `, "Populate e_table_usecase")
-  ]).catch(e => console.warn("Aviso arestas em background:", e));
+    `, "Populate e_table_usecase"),
+    runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.e_usecase_service\` (edge_id, use_case_id, service_id, monthly_cost_usd, consumption_tier, sku_description)
+      SELECT 
+        GENERATE_UUID() AS edge_id,
+        u.use_case_id,
+        'svc_bigquery' AS service_id,
+        ROUND(u.gcp_monthly_cost_usd * 0.65, 2) AS monthly_cost_usd,
+        'Enterprise Edition' AS consumption_tier,
+        'BigQuery Slots Analíticos & Particionamento' AS sku_description
+      FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+      WHERE u.assessment_id = '${assessment.assessmentId}'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.e_usecase_service\`
+          WHERE use_case_id = u.use_case_id AND service_id = 'svc_bigquery'
+        )
+      UNION ALL
+      SELECT 
+        GENERATE_UUID() AS edge_id,
+        u.use_case_id,
+        'svc_vertex_ai' AS service_id,
+        ROUND(u.gcp_monthly_cost_usd * 0.35, 2) AS monthly_cost_usd,
+        'Gemini 3.8 Enterprise' AS consumption_tier,
+        'Agent Platform Inference Tokens & Embeddings' AS sku_description
+      FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+      WHERE u.assessment_id = '${assessment.assessmentId}'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.e_usecase_service\`
+          WHERE use_case_id = u.use_case_id AND service_id = 'svc_vertex_ai'
+        );
+    `, "Populate e_usecase_service"),
+    runOptimizedBigQueryQuery(`
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.e_usecase_goal\` (edge_id, use_case_id, goal_id, contribution_pct, expected_annual_gain_usd)
+      SELECT 
+        GENERATE_UUID() AS edge_id,
+        u.use_case_id,
+        'goal_ebitda_growth' AS goal_id,
+        ROUND(SAFE_DIVIDE(u.financial_gain_estimate_usd, 2500000.0) * 100, 1) AS contribution_pct,
+        u.financial_gain_estimate_usd
+      FROM \`${PROJECT_ID}.${DATASET_ID}.top_use_cases\` u
+      WHERE u.assessment_id = '${assessment.assessmentId}'
+        AND NOT EXISTS (
+          SELECT 1 FROM \`${PROJECT_ID}.${DATASET_ID}.e_usecase_goal\`
+          WHERE use_case_id = u.use_case_id AND goal_id = 'goal_ebitda_growth'
+        );
+    `, "Populate e_usecase_goal")
+  ]).catch(e => console.warn("Aviso nós e arestas em background:", e));
 
   // 2. Nós Estratégicos de Nuvem (Google Cloud Platform Services)
   const gcpServices: PropertyGraphNode[] = [
@@ -432,9 +557,9 @@ export async function populatePropertyGraph(
     {
       id: "gcp_vertex_ai",
       nodeType: "GcpService",
-      name: "Vertex AI (Gemini 3.8 Flash)",
+      name: "Agent Platform (Gemini 3.8 Flash)",
       category: "GenAI & Machine Learning",
-      properties: { mrrEstimateUsd: 850, category: "AI Platform", tier: "Advanced AI" }
+      properties: { mrrEstimateUsd: 850, category: "Agent Platform", tier: "Advanced AI" }
     },
     {
       id: "gcp_knowledge_catalog",
@@ -514,7 +639,7 @@ export async function populatePropertyGraph(
       nodeType: "ModernizationAction",
       name: "Data Agents BigQuery com Grounding no Esquema",
       category: "GenAI Analytics",
-      properties: { targetService: "Vertex AI + BigQuery", impact: "Zero Alucinação" }
+      properties: { targetService: "Agent Platform + BigQuery", impact: "Zero Alucinação" }
     },
     {
       id: "act_knowledge_catalog_policy_tags",
@@ -623,7 +748,7 @@ export async function populatePropertyGraph(
       properties: {}
     });
 
-    // Conecta Caso de Uso ao consumo de BigQuery e Vertex AI
+    // Conecta Caso de Uso ao consumo de BigQuery e Agent Platform
     edges.push({
       edgeId: `e_uc_bq_${uc.useCaseId}`,
       sourceId: ucId,
@@ -639,7 +764,7 @@ export async function populatePropertyGraph(
       destinationId: "gcp_vertex_ai",
       edgeType: "CONSUMES_GCP_SERVICE",
       weight: uc.costBreakdown?.vertexAiUsd || 140,
-      properties: { service: "Vertex AI", monthlyCostUsd: uc.costBreakdown?.vertexAiUsd || 140 }
+      properties: { service: "Agent Platform", monthlyCostUsd: uc.costBreakdown?.vertexAiUsd || 140 }
     });
 
     // Conecta Caso de Uso a meta estratégica correspondente
@@ -949,7 +1074,7 @@ export async function queryUseCaseImpactGraphGQL(
       u.title AS use_case_title,
       u.rank AS use_case_rank,
       u.business_case_roi AS use_case_roi,
-      'BigQuery + Vertex AI' AS gcp_service_name,
+      'BigQuery + Agent Platform' AS gcp_service_name,
       u.gcp_monthly_cost_usd AS monthly_cost_usd,
       u.category AS strategic_goal_name,
       u.financial_gain_estimate_usd AS annual_gain_usd
