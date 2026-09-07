@@ -258,7 +258,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
             </div>
 
             {/* Lista de Arquivos */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 max-h-40 md:max-h-none overflow-y-auto p-2 space-y-1">
               {bundle.files.map((file, idx) => {
                 if (activeCategory !== "all" && file.category !== activeCategory) return null;
                 const isSelected = bundle.files[selectedFileIdx]?.filename === file.filename;
@@ -374,7 +374,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
             )}
 
             {/* 4. Barra Inferior de Refinamento com Gemini 3.8 Flash */}
-            <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2 shrink-0">
+            <div className="p-3 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
               <div className="relative flex-1">
                 <input
                   type="text"
@@ -383,7 +383,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !isRefining) handleRefineWithGemini();
                   }}
-                  placeholder="Personalizar com Gemini 3.8 Flash (ex: Adicionar particionamento horário em staging ou alertas de SLA)..."
+                  placeholder="Personalizar com Gemini 3.8 Flash (ex: Adicionar particionamento horário em staging)..."
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs focus:outline-hidden focus:border-blue-400 transition-colors"
                 />
               </div>
@@ -391,7 +391,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
               <button
                 onClick={handleRefineWithGemini}
                 disabled={isRefining || !refinementPrompt.trim()}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 w-full sm:w-auto"
               >
                 {isRefining ? (
                   <>

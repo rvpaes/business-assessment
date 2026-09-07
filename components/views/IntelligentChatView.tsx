@@ -212,7 +212,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-medium flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Data Agent Ativo: <code className="font-mono text-[11px] text-[#074878] font-bold">gda-7ebe8c68</code></span>
@@ -328,13 +328,13 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
       </div>
 
       {/* 3. Container Principal do Chat */}
-      <div className="bg-white rounded-2xl border border-[#E8F1F8] shadow-xs flex flex-col h-[600px] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E8F1F8] shadow-xs flex flex-col h-[600px] sm:h-[650px] max-h-[85vh] overflow-hidden">
         {/* Lista de Mensagens */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-5 bg-slate-50/30">
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 bg-slate-50/30">
           {messages.map(msg => (
             <div
               key={msg.id}
-              className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex gap-2 sm:gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
                 <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#074878] flex items-center justify-center shrink-0 mt-1 border border-blue-200 shadow-2xs font-bold">
@@ -342,7 +342,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
                 </div>
               )}
 
-              <div className={`max-w-[85%] space-y-2.5`}>
+              <div className={`max-w-[95%] sm:max-w-[85%] space-y-2.5`}>
                 {/* 1. Pensamento Analítico do Data Agent (Collapsible) */}
                 {msg.thoughts && msg.thoughts.length > 0 && (
                   <div className="border border-slate-200 rounded-xl overflow-hidden bg-white text-xs">
@@ -523,7 +523,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
                 <Database className="w-4 h-4" />
               </div>
 
-              <div className="max-w-[80%] space-y-2">
+              <div className="max-w-[95%] sm:max-w-[80%] space-y-2">
                 <div className="p-4 rounded-2xl bg-white border border-[#E8F1F8] shadow-xs text-xs sm:text-sm text-slate-800 rounded-bl-none">
                   {typingText ? (
                     <div className="whitespace-pre-line">{typingText}</div>
@@ -542,7 +542,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
         </div>
 
         {/* Campo de Input */}
-        <div className="p-4 bg-white border-t border-[#E8F1F8]">
+        <div className="p-3 sm:p-4 bg-white border-t border-[#E8F1F8]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -554,15 +554,15 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Faça uma pergunta sobre casos de uso, ROI, ARR de nuvem ou tabelas de ${assessment?.customerName || "seu cliente"}...`}
+              placeholder={`Pergunte sobre casos de uso, ROI ou tabelas de ${assessment?.customerName || "seu cliente"}...`}
               disabled={isLoading}
-              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#074878] focus:ring-2 focus:ring-blue-500/10 transition-all"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#074878] focus:ring-2 focus:ring-blue-500/10 transition-all"
             />
 
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="px-4 py-2.5 rounded-xl bg-[#074878] hover:bg-[#053456] disabled:bg-slate-200 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#074878] hover:bg-[#053456] disabled:bg-slate-200 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:cursor-not-allowed shrink-0"
             >
               <Send className="w-4 h-4" />
               <span className="hidden sm:inline">Perguntar</span>

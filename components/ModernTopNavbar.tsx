@@ -173,8 +173,8 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
               Cockpit
             </span>
 
-            {/* SELETOR INTERATIVO DE CLIENTE E ASSESSMENT (Pill Clean) */}
-            <div className="relative hidden xl:block ml-1" ref={dropdownRef}>
+            {/* SELETOR INTERATIVO DE CLIENTE E ASSESSMENT (Pill Clean - visível em notebook e desktop) */}
+            <div className="relative hidden lg:block ml-1" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition-all text-left cursor-pointer group"
@@ -272,19 +272,6 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
                       })
                     )}
                   </div>
-
-                  <div className="pt-2 border-t border-slate-100 mt-1">
-                    <button
-                      onClick={() => {
-                        setIsDropdownOpen(false);
-                        if (onNavigateToUpload) onNavigateToUpload();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#074878] hover:bg-[#053456] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Novo Assessment de Negócio</span>
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
@@ -323,9 +310,9 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
             })}
           </nav>
 
-          {/* 3. LADO DIREITO: BUSCA, IDIOMA & NOVO ASSESSMENT */}
+          {/* 3. LADO DIREITO: BUSCA, IDIOMA & AVATAR */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Campo de Busca Executiva */}
+            {/* Campo de Busca Executiva (Notebook/Desktop) */}
             <form onSubmit={handleSearch} className="relative hidden md:block w-40 xl:w-48">
               <input
                 ref={searchInputRef}
@@ -365,6 +352,7 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -373,8 +361,59 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
 
         {/* MENU MOBILE EXPANSÍVEL */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden py-3 border-t border-slate-100 space-y-2 animate-in slide-in-from-top duration-150">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <div className="lg:hidden py-3 border-t border-slate-100 space-y-3 animate-in slide-in-from-top duration-150">
+            {/* Seletor de Cliente Interativo no Mobile */}
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-[#074878]" />
+                  Assessment Ativo
+                </span>
+                {displayHeaderDate && (
+                  <span className="text-[10px] font-bold text-[#074878] bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">
+                    {displayHeaderDate}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">{customerName}</h4>
+                  <p className="text-[10px] text-slate-500">{industry} • {totalTables.toLocaleString()} tabelas</p>
+                </div>
+                {customersList.length > 1 && (
+                  <select
+                    value={customersList.findIndex(c => c.name.toLowerCase() === customerName.toLowerCase())}
+                    onChange={(e) => {
+                      const selected = customersList[Number(e.target.value)];
+                      if (selected && onSelectCustomer) {
+                        onSelectCustomer(selected);
+                        setIsMobileMenuOpen(false);
+                      }
+                    }}
+                    className="text-xs font-bold px-2 py-1 rounded-lg border border-slate-200 bg-white text-[#074878]"
+                  >
+                    {customersList.map((c, i) => (
+                      <option key={i} value={i}>{c.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* Busca Mobile */}
+            <form onSubmit={(e) => { handleSearch(e); setIsMobileMenuOpen(false); }} className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar casos de uso, tabelas..."
+                className="w-full pl-8 pr-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-[#074878]"
+              />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+            </form>
+
+            {/* Navegação Mobile */}
+            <div className="grid grid-cols-1 gap-1.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -404,19 +443,6 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
                 );
               })}
             </div>
-            
-            {onNavigateToUpload && (
-              <button
-                onClick={() => {
-                  onNavigateToUpload();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Novo Assessment de Negócio</span>
-              </button>
-            )}
           </div>
         )}
       </div>

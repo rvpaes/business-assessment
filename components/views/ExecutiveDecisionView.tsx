@@ -688,7 +688,7 @@ SELECT
         {/* 3 CARDS DAS FASES (DMN, SN, CEN) EM ESTILO MODOUI CLEAN */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
           {/* FASE 1: DMN - Hipóteses de Crescimento (Todos os 6 Casos) */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-[580px]">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-0 lg:min-h-[580px]">
             <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
@@ -782,7 +782,7 @@ SELECT
           </div>
 
           {/* FASE 2: SN - Avaliação de Retorno & Expansão GCP */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-[580px]">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-0 lg:min-h-[580px]">
             <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
@@ -883,7 +883,7 @@ SELECT
           </div>
 
           {/* FASE 3: CEN - Plano de Ação Executivo */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-[580px]">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md transition-all flex flex-col justify-between min-h-0 lg:min-h-[580px]">
             <div className="flex-1 flex flex-col">
               {/* Header do Card */}
               <div className="flex items-center justify-between">
@@ -1036,8 +1036,8 @@ SELECT
               </div>
 
               {/* Rodapé do Card: Pills de Métricas + Link para Dossiê BQ & Playbook */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {agent.pills.map((pill, pIdx) => (
                     <div
                       key={pIdx}
