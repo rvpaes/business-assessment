@@ -9,7 +9,6 @@ import { ExecutiveDecisionView } from "@/components/views/ExecutiveDecisionView"
 import { TopUseCasesView } from "@/components/views/TopUseCasesView";
 import { BigQueryGraphView } from "@/components/views/BigQueryGraphView";
 import { IntelligentChatView } from "@/components/views/IntelligentChatView";
-import { NeuroDebateView } from "@/components/views/NeuroDebateView";
 import { 
   CustomerAssessment, 
   TableCatalogItem, 
@@ -55,9 +54,9 @@ export default function HomePage() {
   const [salienceMatrix, setSalienceMatrix] = useState<SalienceItem[]>([]);
   const [auditTargets, setAuditTargets] = useState<AuditTarget[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showLiveDebateView, setShowLiveDebateView] = useState(false);
+  const [decisionSubTab, setDecisionSubTab] = useState<"cockpit" | "debate">("cockpit");
   const [autoStartDebate, setAutoStartDebate] = useState(false);
-  // Ajuste 3: Aba Debate Multi-Agente só aparece quando executa o item Assessment de Negócio
+  // Ajuste 3: Debate interno habilitado após assessment
   const [hasExecutedAssessment, setHasExecutedAssessment] = useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = useState<string | null>(null);
 
@@ -123,10 +122,10 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
     setTopUseCases([]);
     setSalienceMatrix([]);
     setAuditTargets([]);
-    // Ajuste 3: Habilita aba Debate Multi-Agente apenas após executar o Assessment de Negócio
     setHasExecutedAssessment(true);
     setAutoStartDebate(true);
-    setShowLiveDebateView(true);
+    setDecisionSubTab("debate");
+    setActiveTab("decision");
   };
 
   const handleDebateComplete = (data: {
@@ -140,7 +139,6 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
     setSalienceMatrix(data.salienceMatrix);
     setAuditTargets(data.auditTargets);
     setAutoStartDebate(false);
-    // Permanece na tela de debate para que o usuário veja a transcrição completa e os botões de ação
   };
 
   const handleRefresh = async () => {
@@ -171,7 +169,7 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
     const newCases = getCustomerUseCases(cust.name);
     setTopUseCases(newCases);
     setHasExecutedAssessment(true);
-    setShowLiveDebateView(false);
+    setDecisionSubTab("cockpit");
     setActiveTab("decision");
   };
 
@@ -182,7 +180,6 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
         <ModernTopNavbar
           activeTab={activeTab}
           onTabChange={(tab) => {
-            setShowLiveDebateView(false);
             setActiveTab(tab);
           }}
           customerName={assessment?.customerName || "Novo Assessment"}
@@ -193,7 +190,6 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           onNavigateToUpload={() => {
-            setShowLiveDebateView(false);
             setActiveTab("upload");
           }}
           onSelectCustomer={handleSelectCustomer}
@@ -201,85 +197,68 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
             console.log("Busca executiva:", q);
           }}
           casesCount={topUseCases.length || 6}
-          showDebateTab={hasExecutedAssessment || turns.length > 0 || showLiveDebateView}
         />
 
         {/* Conteúdo Principal com Largura Fluida e Generosa */}
         <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {/* Visualização de Debate ao Vivo (se acionado ou se aba for 'debate') */}
-          {showLiveDebateView || activeTab === "debate" ? (
-            <div className="space-y-4">
-              {showLiveDebateView && (
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => setShowLiveDebateView(false)}
-                    className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    ← Voltar para Visão Executiva
-                  </button>
-                </div>
-              )}
-              <NeuroDebateView
-                assessment={assessment || defaultAssessment}
-                tables={tables}
-                turns={turns}
-                topUseCases={topUseCases}
-                salienceMatrix={salienceMatrix}
-                auditTargets={auditTargets}
-                autoStart={autoStartDebate}
-                onDebateComplete={handleDebateComplete}
-                onNavigateToCases={() => {
-                  setShowLiveDebateView(false);
-                  setActiveTab("cases");
-                }}
-              />
-            </div>
-          ) : (
-            <>
-              {/* Aba Assessment de Negócio */}
-              {activeTab === "upload" && (
-                <UploadIngestionView
-                  assessment={assessment}
-                  onAssessmentLoaded={handleAssessmentLoaded}
-                  onNavigateToDashboard={() => setActiveTab("decision")}
-                  onNavigateToCases={() => setActiveTab("cases")}
-                />
-              )}
+          {/* Aba Assessment de Negócio */}
+          {activeTab === "upload" && (
+            <UploadIngestionView
+              assessment={assessment}
+              onAssessmentLoaded={handleAssessmentLoaded}
+              onNavigateToDashboard={() => {
+                setDecisionSubTab("cockpit");
+                setActiveTab("decision");
+              }}
+              onNavigateToCases={() => setActiveTab("cases")}
+            />
+          )}
 
-              {/* Aba Visão Executiva ModoUI */}
-              {activeTab === "decision" && (
-                <ExecutiveDecisionView
-                  assessment={assessment}
-                  topUseCases={topUseCases}
-                  tables={tables}
-                  onTriggerDebate={() => {
-                    setHasExecutedAssessment(true);
-                    setAutoStartDebate(true);
-                    setShowLiveDebateView(true);
-                  }}
-                  onNavigateToTab={(tab) => setActiveTab(tab as ModernNavTab)}
-                  onNavigateToUpload={() => setActiveTab("upload")}
-                />
-              )}
+          {/* Aba Visão Executiva ModoUI (Contém Sub-abas Cockpit e Debate Multi-Agente) */}
+          {activeTab === "decision" && (
+            <ExecutiveDecisionView
+              assessment={assessment}
+              topUseCases={topUseCases}
+              tables={tables}
+              turns={turns}
+              salienceMatrix={salienceMatrix}
+              auditTargets={auditTargets}
+              autoStartDebate={autoStartDebate}
+              onDebateComplete={handleDebateComplete}
+              initialSubTab={decisionSubTab}
+              onTriggerDebate={() => {
+                setHasExecutedAssessment(true);
+                setAutoStartDebate(true);
+                setDecisionSubTab("debate");
+              }}
+              onNavigateToTab={(tab) => {
+                if (tab === "debate") {
+                  setDecisionSubTab("debate");
+                  setActiveTab("decision");
+                } else {
+                  setActiveTab(tab as ModernNavTab);
+                }
+              }}
+              onNavigateToUpload={() => setActiveTab("upload")}
+            />
+          )}
 
-              {/* Aba Casos de Uso */}
-              {activeTab === "cases" && (
-                <TopUseCasesView
-                  useCases={topUseCases}
-                  assessment={assessment}
-                  onDetailCaseWithGemini={handleDetailCaseWithGemini}
-                />
-              )}
+          {/* Aba Casos de Uso */}
+          {activeTab === "cases" && (
+            <TopUseCasesView
+              useCases={topUseCases}
+              assessment={assessment}
+              onDetailCaseWithGemini={handleDetailCaseWithGemini}
+            />
+          )}
 
-              {/* Aba Data Agent BQ */}
-              {activeTab === "chat" && (
-                <IntelligentChatView
-                  assessment={assessment}
-                  initialPrompt={chatInitialPrompt}
-                  onClearInitialPrompt={() => setChatInitialPrompt(null)}
-                />
-              )}
-            </>
+          {/* Aba Data Agent BQ */}
+          {activeTab === "chat" && (
+            <IntelligentChatView
+              assessment={assessment}
+              initialPrompt={chatInitialPrompt}
+              onClearInitialPrompt={() => setChatInitialPrompt(null)}
+            />
           )}
         </main>
       </div>

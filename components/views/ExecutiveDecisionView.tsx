@@ -1,7 +1,7 @@
 // components/views/ExecutiveDecisionView.tsx - Visão Geral do Conselho Neurocognitivo de Business Assessment
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   Sparkles, 
   Zap, 
@@ -12,21 +12,22 @@ import {
   Database, 
   CheckCircle2, 
   AlertTriangle, 
-  FileText,
-  MapPin,
-  ArrowUpRight,
-  BrainCircuit,
-  Building2,
-  Lock,
-  Cpu,
-  Coins,
-  Calendar,
-  Filter,
-  Info,
-  Layers,
-  ArrowRight
+  FileText, 
+  MapPin, 
+  ArrowUpRight, 
+  BrainCircuit, 
+  Building2, 
+  Lock, 
+  Cpu, 
+  Coins, 
+  Calendar, 
+  Filter, 
+  Info, 
+  Layers, 
+  ArrowRight,
+  LayoutDashboard
 } from "lucide-react";
-import { CustomerAssessment, TopUseCase, TableCatalogItem } from "@/lib/types";
+import { CustomerAssessment, TopUseCase, TableCatalogItem, NeuroDebateTurn, SalienceItem, AuditTarget } from "@/lib/types";
 import { AgentModalData, AgentDossierModal } from "./AgentDossierModal";
 import { GoogleCloudLogo } from "../GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -34,28 +35,53 @@ import { getCustomerUseCases, ExtendedUseCase } from "@/lib/data/customer-usecas
 import { formatCurrencyUsd, formatCurrencyBrl, formatPercent, formatDecimal } from "@/lib/utils/formatters";
 import { ModoKPICard, ModoBarChart, ModoProgressBar, ModoGaugeChart } from "../ui/ModoMicroCharts";
 import { formatAssessmentDate } from "../ControlTowerHeader";
+import { NeuroDebateView } from "./NeuroDebateView";
 
-interface ExecutiveDecisionViewProps {
+export interface ExecutiveDecisionViewProps {
   assessment: CustomerAssessment | null;
   topUseCases: TopUseCase[];
   tables?: TableCatalogItem[];
+  turns?: NeuroDebateTurn[];
+  salienceMatrix?: SalienceItem[];
+  auditTargets?: AuditTarget[];
+  autoStartDebate?: boolean;
+  onDebateComplete?: (data: {
+    turns: NeuroDebateTurn[];
+    topUseCases: TopUseCase[];
+    salienceMatrix: SalienceItem[];
+    auditTargets: AuditTarget[];
+  }) => void;
   onTriggerDebate?: () => void;
   onNavigateToTab?: (tab: string) => void;
   onNavigateToUpload?: () => void;
+  initialSubTab?: "cockpit" | "debate";
 }
 
 export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
   assessment,
   topUseCases,
   tables = [],
+  turns = [],
+  salienceMatrix = [],
+  auditTargets = [],
+  autoStartDebate = false,
+  onDebateComplete,
   onTriggerDebate,
   onNavigateToTab,
-  onNavigateToUpload
+  onNavigateToUpload,
+  initialSubTab = "cockpit"
 }) => {
   const { t } = useLanguage();
   const [selectedDossier, setSelectedDossier] = useState<AgentModalData | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [kpiFilter, setKpiFilter] = useState<"ALL" | "PHASE1" | "HIGH_IMPACT" | "GOVERNANCE">("ALL");
+  const [activeSubTab, setActiveSubTab] = useState<"cockpit" | "debate">(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   // Informações dinâmicas do cliente
   const customerName = assessment?.customerName || "Cliente Corporativo";
@@ -504,7 +530,10 @@ SELECT
         <div className="flex items-center gap-2.5 shrink-0">
           {onTriggerDebate && (
             <button
-              onClick={onTriggerDebate}
+              onClick={() => {
+                setActiveSubTab("debate");
+                onTriggerDebate();
+              }}
               className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-black text-xs shadow-xs hover:shadow transition-all cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
@@ -523,7 +552,81 @@ SELECT
         </div>
       </div>
 
-      {/* 2. SEÇÃO DE INDICADORES EXECUTIVOS & RETORNO FINOPS (ModoUI Sales & Financial Insights) */}
+      {/* 2. SUB-MENU NAVEGACIONAL DENTRO DA VISÃO EXECUTIVA (Cockpit vs Debate Multi-Agente) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <button
+            onClick={() => setActiveSubTab("cockpit")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === "cockpit"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+            }`}
+          >
+            <LayoutDashboard className={`w-4 h-4 ${activeSubTab === "cockpit" ? "text-[#074878]" : "text-slate-500"}`} />
+            <span>Cockpit Executivo & Indicadores</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab("debate")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === "debate"
+                ? "bg-[#074878] text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+            }`}
+          >
+            <BrainCircuit className={`w-4 h-4 ${activeSubTab === "debate" ? "text-white" : "text-[#074878]"}`} />
+            <span>Debate Multi-Agente</span>
+            <span className={`text-[9.5px] font-black px-2 py-0.5 rounded-full leading-none ${
+              activeSubTab === "debate" ? "bg-white/20 text-white" : "bg-blue-100 text-[#074878]"
+            }`}>
+              NC-MAD
+            </span>
+          </button>
+        </div>
+
+        {activeSubTab === "debate" ? (
+          <button
+            onClick={() => setActiveSubTab("cockpit")}
+            className="text-xs font-bold text-[#074878] hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            ← Voltar ao Cockpit Executivo
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setActiveSubTab("debate");
+                if (onTriggerDebate) onTriggerDebate();
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
+              <span>Executar Debate ao Vivo</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {activeSubTab === "debate" ? (
+        <div className="space-y-4 animate-in fade-in duration-150">
+          <NeuroDebateView
+            assessment={assessment}
+            tables={tables}
+            turns={turns}
+            topUseCases={topUseCases}
+            salienceMatrix={salienceMatrix}
+            auditTargets={auditTargets}
+            autoStart={autoStartDebate}
+            onDebateComplete={onDebateComplete || (() => {})}
+            onNavigateToCases={() => {
+              if (onNavigateToTab) onNavigateToTab("cases");
+            }}
+          />
+        </div>
+      ) : (
+        <>
+      {/* 3. SEÇÃO DE INDICADORES EXECUTIVOS & RETORNO FINOPS (ModoUI Sales & Financial Insights) */}
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -679,9 +782,19 @@ SELECT
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>3 Redes Neurais Sincronizadas</span>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>3 Redes Neurais Sincronizadas</span>
+            </div>
+            <button
+              onClick={() => setActiveSubTab("debate")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 text-[#074878] hover:bg-sky-100 border border-sky-200 text-xs font-bold transition-colors cursor-pointer"
+            >
+              <BrainCircuit className="w-3.5 h-3.5 text-[#074878]" />
+              <span>Ver Debate Completo</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#074878]" />
+            </button>
           </div>
         </div>
 
@@ -960,7 +1073,7 @@ SELECT
         </div>
       </section>
 
-      {/* 2. GOOGLE SALES ADVISORY BOARD (Cockpit de Decisão do Vendedor GCP) */}
+      {/* 4. GOOGLE SALES ADVISORY BOARD (Cockpit de Decisão do Vendedor GCP) */}
       <section className="space-y-4">
         {/* Header da Mesa */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -1061,6 +1174,8 @@ SELECT
           ))}
         </div>
       </section>
+        </>
+      )}
 
       {/* 3. MODAL DE DOSSIÊ ANALÍTICO BQ */}
       {selectedDossier && (

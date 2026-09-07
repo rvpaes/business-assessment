@@ -25,7 +25,7 @@ import { LanguageSelector } from "./LanguageSelector";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { CustomerOption, formatAssessmentDate } from "./ControlTowerHeader";
 
-export type ModernNavTab = "upload" | "decision" | "cases" | "debate" | "chat";
+export type ModernNavTab = "upload" | "decision" | "cases" | "chat";
 
 export interface ModernTopNavbarProps {
   activeTab: ModernNavTab;
@@ -41,7 +41,6 @@ export interface ModernTopNavbarProps {
   onNavigateToUpload?: () => void;
   onSelectCustomer?: (customer: CustomerOption) => void;
   casesCount?: number;
-  showDebateTab?: boolean; // Ajuste 3: Tela Debate Multi-Agente só aparece após executar Assessment de Negócio
 }
 
 export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
@@ -57,8 +56,7 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
   onSearchSubmit,
   onNavigateToUpload,
   onSelectCustomer,
-  casesCount = 6,
-  showDebateTab = false
+  casesCount = 6
 }) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,8 +122,7 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
 
   const displayHeaderDate = formatAssessmentDate(uploadTimestamp);
 
-  // Ajuste 4: "Assessment de Negócio" como item principal
-  // Ajuste 3: "Debate Multi-Agente" só entra na lista quando showDebateTab for true!
+  // Menu superior enxuto e de alto nível (4 pilares executivos)
   const navItems = [
     {
       id: "upload" as ModernNavTab,
@@ -143,12 +140,6 @@ export const ModernTopNavbar: React.FC<ModernTopNavbarProps> = ({
       icon: Target,
       badge: casesCount > 0 ? `${casesCount}` : undefined,
     },
-    ...(showDebateTab ? [{
-      id: "debate" as ModernNavTab,
-      label: t("tabDebate") || "Debate Multi-Agente",
-      icon: BrainCircuit,
-      badge: "NC-MAD",
-    }] : []),
     {
       id: "chat" as ModernNavTab,
       label: t("tabChat") || "Data Agent BQ",
