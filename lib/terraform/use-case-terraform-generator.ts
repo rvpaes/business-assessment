@@ -688,6 +688,9 @@ LEFT JOIN
 4. **Regra de Zero-Alucinação (Empty State Rule)**:
    - Se uma query retornar 0 linhas, afirme categoricamente: "Nenhum dado encontrado para o período ou critério selecionado."
    - NUNCA invente ou extrapole dados a partir do seu conhecimento interno.
+5. **Regra de Viabilidade Econômica (Retorno > Consumo GCP)**:
+   - O valor do retorno financeiro anual estimado para o cliente (financialGainEstimateUsd) DEVE SER SEMPRE MAIOR que o custo anualizado de consumo GCP (gcpMonthlyCostUsd * 12).
+   - Todo pipeline e caso de negócio deve demonstrar payback acelerado e viabilidade econômica superavitária garantida.
 
 ## 2. Multi-Motor BigQuery Studio (/bigquery-studio-pipelines)
 - **SQLX**: Usado para staging, agregações relacionais e tabela incremental gold.

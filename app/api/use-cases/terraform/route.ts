@@ -89,6 +89,9 @@ ${baseBundle.files.map(f => `--- ${f.filename} ---
 ${f.content.slice(0, 500)}... (truncated for brevity)
 `).join("\n")}
 
+DIRETRIZ FINOPS MANDATÓRIA:
+O dimensionamento do pipeline e a arquitetura proposta devem sempre garantir que o valor do retorno financeiro para o cliente supere com folga o custo de consumo GCP.
+
 INSTRUÇÃO:
 Analise a solicitação do usuário e retorne uma resposta JSON estrita com o seguinte formato:
 {
@@ -107,7 +110,7 @@ Analise a solicitação do usuário e retorne uma resposta JSON estrita com o se
       const geminiRes = await callGemini38Flash(aiPrompt, {
         thinkingLevel: "HIGH",
         responseMimeType: "application/json",
-        systemInstruction: "Você é um arquiteto sênior de dados GCP focado em BigQuery Studio Pipelines, FinOps e Knowledge Catalog. Retorne estritamente JSON válido."
+        systemInstruction: "Você é um arquiteto sênior de dados GCP focado em BigQuery Studio Pipelines, FinOps e Knowledge Catalog. Regra mandatória: o valor do retorno financeiro para o cliente deve sempre superar com folga o consumo de nuvem GCP. Retorne estritamente JSON válido."
       });
 
       let parsed: any = null;

@@ -97,13 +97,13 @@ DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION & POSTURA EXECUTIVA):
 2. Fundamente suas afirmações ESTRITAMENTE nos dados auditados do Knowledge Catalog e nas conexões do Property Graph listadas acima.
 3. Se a consulta ao Property Graph ou ao Catálogo retornar vazia (0 rows) para o critério perguntado, declare explicitamente: "Com base nas consultas ao BigQuery Property Graph e ao Knowledge Catalog, não há dados ou relacionamentos mapeados para este critério específico." NUNCA invente tendências, números ou tabelas.
 4. Quando citar tabelas, cite o nome exato e o status de profiling do Knowledge Catalog (ex: taxa de documentação, volumetria).
-5. Quando citar casos de uso, cite o ROI, a meta estratégica atingida e o consumo mensal de serviços GCP auditados.
+5. Quando citar casos de uso, cite o ROI, a meta estratégica atingida e o consumo mensal de serviços GCP auditados, evidenciando sempre que o valor do retorno financeiro para o cliente é SEMPRE MAIOR que o consumo GCP.
 6. Apresente os dados com clareza (use bullet points executivos e destaques em negrito).
 `;
 
     const geminiRes = await callGemini38Flash(prompt, {
       thinkingLevel: "MEDIUM",
-      systemInstruction: "Você é o BigQuery Data Agent oficial da Google Cloud. Respostas fundamentadas estritamente no Property Graph (GQL) e no Knowledge Catalog, com rigor analítico e clareza executiva."
+      systemInstruction: "Você é o BigQuery Data Agent oficial da Google Cloud. Respostas fundamentadas estritamente no Property Graph (GQL) e no Knowledge Catalog, com rigor analítico e clareza executiva. Regra mandatória: o valor do retorno financeiro para o cliente deve sempre ser explicitado como superior ao consumo GCP."
     });
 
     logStructuredStep({

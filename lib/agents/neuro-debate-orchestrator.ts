@@ -256,24 +256,27 @@ ${JSON.stringify(auditTargets, null, 2)}
 
 SUA TAREFA:
 1. Audite rigorosamente as propostas contra os alvos de auditoria.
-2. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6), seguindo a estrutura corporativa de consumo e impacto:
+2. REGRA MANDATÓRIA DE BUSINESS CASE & FINOPS (INSTRUÇÃO CRÍTICA):
+   - O valor do retorno financeiro anual estimado para o cliente (financialGainEstimateUsd) DEVE SER SEMPRE MAIOR que o custo anualizado de consumo GCP (gcpMonthlyCostUsd * 12).
+   - Sob nenhuma hipótese o custo de nuvem pode igualar ou superar o ganho do cliente. O business case DEVE ser amplamente superavitário com ROI de pelo menos 250% a 500%+ ao ano (payback acelerado de 1 a 4 meses).
+3. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6), seguindo a estrutura corporativa de consumo e impacto:
    - CASOS 1 a 3 (ALTO IMPACTO NO CLIENTE & ALTO CONSUMO GCP):
      * Cargas analíticas massivas, inferência contínua com Vertex AI Gemini 3.8 Flash, BigQuery Slots Dedicados e Feature Store em tempo real.
      * Consumo GCP: Entre $6.500/mês e $14.000/mês (ARR de ~$80k a $170k).
-     * Ganho Financeiro para o Cliente (EBITDA/Receita): Entre $2.200.000/ano e $4.800.000/ano (R$ 12M a R$ 27M/ano).
+     * Ganho Financeiro para o Cliente (EBITDA/Receita): Entre $2.200.000/ano e $4.800.000/ano (R$ 12M a R$ 27M/ano). Sempre maior que o custo GCP anual.
    - CASOS 4 a 6 (IMPACTO RELEVANTE NO CLIENTE & CONSUMO OTIMIZADO/MAIS BAIXO GCP):
      * Cargas serverless sob demanda, consultas incrementais BigQuery Studio, Cloud Run e governança Knowledge Catalog.
      * Consumo GCP: Entre $750/mês e $1.850/mês (ARR de ~$9k a $22k).
-     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano (R$ 2.6M a R$ 5.1M/ano).
+     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano (R$ 2.6M a R$ 5.1M/ano). Sempre maior que o custo GCP anual.
 
-3. Para CADA caso de uso, gere:
+4. Para CADA caso de uso, gere:
    - rank (1 a 6)
    - title (Nome do caso de uso de alto impacto executivo)
    - category (ex: "Inteligência Causal & NBA", "Supply Chain & S&OP", "Prevenção de Churn & LTV", "FinOps & Governança", "Detecção de Anomalias & Fraude", "Engenharia de Decisão com IA Generativa")
    - businessProblem (Descrição clara da dor de negócio do cliente)
    - solutionDescription (Arquitetura técnica com BigQuery, Gemini 3.8 Flash, Vertex AI ou Cloud Run)
    - businessCaseRoi (Benchmarking de mercado e ROI; ex: "ROI de 380% no ano 1 com payback em 2.2 meses")
-   - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD de acordo com a faixa do caso)
+   - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD; OBRIGATÓRIO: deve ser estritamente maior que gcpMonthlyCostUsd * 12)
    - gcpMonthlyCostUsd (Custo total mensal em GCP de acordo com a faixa do caso)
    - costBreakdown: { bigqueryUsd, vertexAiUsd, cloudRunUsd, storageUsd }
    - requiredTables: Lista das tabelas REAIS do cliente que alimentam a solução
@@ -291,7 +294,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
   const cenResponse = await callGemini38Flash(cenPrompt, {
     thinkingLevel: "LOW",
     responseMimeType: "application/json",
-    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso (3 alto consumo/alto impacto + 3 consumo otimizado/impacto relevante)."
+    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso (3 alto consumo/alto impacto + 3 consumo otimizado/impacto relevante). REGRA MANDATÓRIA INVIOLÁVEL: O valor do retorno financeiro anual para o cliente (financialGainEstimateUsd) deve sempre ser estritamente maior que o custo anual de consumo GCP (gcpMonthlyCostUsd * 12)."
   });
 
   let cenParsed: any = {};
@@ -311,8 +314,14 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
     const isHigh = idx < 3;
     const fallbackGain = isHigh ? defaultHighGains[idx] : defaultLowGains[idx - 3];
     const fallbackMonthly = isHigh ? defaultHighMonthly[idx] : defaultLowMonthly[idx - 3];
-    const financialGainEstimateUsd = Number(uc.financialGainEstimateUsd) || fallbackGain;
-    const gcpMonthlyCostUsd = Number(uc.gcpMonthlyCostUsd) || fallbackMonthly;
+    let financialGainEstimateUsd = Number(uc.financialGainEstimateUsd) || fallbackGain;
+    let gcpMonthlyCostUsd = Number(uc.gcpMonthlyCostUsd) || fallbackMonthly;
+
+    // Salvaguarda mandatória: O valor do retorno para o cliente DEVE SEMPRE ser maior que o consumo GCP anualizado
+    const annualGcpCost = gcpMonthlyCostUsd * 12;
+    if (financialGainEstimateUsd <= annualGcpCost) {
+      financialGainEstimateUsd = Math.round(annualGcpCost * (isHigh ? 3.5 : 4.5));
+    }
 
     return {
       useCaseId: `uc_${idx + 1}_${Date.now()}`,
@@ -322,7 +331,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
       category: uc.category || (isHigh ? "Inteligência Estratégica de Alta Escala" : "Eficiência & Governança"),
       businessProblem: uc.businessProblem || "Otimização de processos e aumento de eficiência operacional com dados analíticos.",
       solutionDescription: uc.solutionDescription || "Implementação de pipeline analítico no BigQuery integrado ao Gemini 3.8 Flash e Knowledge Catalog.",
-      businessCaseRoi: uc.businessCaseRoi || `Retorno de ${Math.round((financialGainEstimateUsd / (gcpMonthlyCostUsd * 12)) * 100)}% em 12 meses com payback em ~2 meses.`,
+      businessCaseRoi: uc.businessCaseRoi || `Retorno de ${Math.round((financialGainEstimateUsd / annualGcpCost) * 100)}% em 12 meses com payback em ~2 meses.`,
       financialGainEstimateUsd,
       gcpMonthlyCostUsd,
       costBreakdown: {
