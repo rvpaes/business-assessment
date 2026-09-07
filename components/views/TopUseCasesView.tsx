@@ -227,7 +227,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                     setTerraformModalCase(useCase);
                   }}
                   className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:scale-105"
-                  title="Gerar Pipeline Terraform (Multi-Engine BigQuery Studio & Dataplex)"
+                  title="Gerar Pipeline Terraform (Multi-Engine BigQuery Studio & Knowledge Catalog)"
                 >
                   <Cpu className="w-3.5 h-3.5 text-purple-600" />
                   <span>Pipeline Terraform</span>
@@ -512,7 +512,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                         </span>
                       </div>
                       <h3 className="text-lg sm:text-xl font-black">
-                        Blueprint Arquitetural: BigQuery Studio + Vertex AI Gemini 3.8 Flash + Dataplex
+                        Blueprint Arquitetural: BigQuery Studio + Vertex AI Gemini 3.8 Flash + Knowledge Catalog
                       </h3>
                       <p className="text-xs sm:text-sm text-blue-100/90 max-w-3xl leading-relaxed">
                         Desenho técnico e funcional da solução corporativa desenhado para habilitar o caso de negócio <strong>&quot;{activeModalCase.title}&quot;</strong> com pipelines multi-engine nativos, grounding analítico sem alucinação e governança automatizada.
@@ -647,7 +647,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                             </div>
                             <h4 className="text-sm font-black text-slate-900 mt-2.5 flex items-center gap-1.5">
                               <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                              Dataplex Knowledge Catalog
+                              Knowledge Catalog
                             </h4>
                             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                               Data Profile scans automáticos, Data Insights gerados por IA e mascaramento dinâmico (Policy Tags RLS/CLS) para conformidade total com a LGPD.
@@ -723,8 +723,8 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                               </tr>
                               <tr>
                                 <td className="py-2.5 pr-4 font-bold text-slate-900">Governança & LGPD</td>
-                                <td className="py-2.5 pr-4 text-slate-600">Catalogação manual, lentidão em auditorias e risco de vazamento de PII.</td>
-                                <td className="py-2.5 font-bold text-emerald-700">Dataplex Knowledge Catalog automático com Policy Tags e mascaramento dinâmico.</td>
+                                 <td className="py-2.5 pr-4 text-slate-600">Catalogação manual, lentidão em auditorias e risco de vazamento de PII.</td>
+                                <td className="py-2.5 font-bold text-emerald-700">Knowledge Catalog automático com Policy Tags e mascaramento dinâmico.</td>
                               </tr>
                             </tbody>
                           </table>
@@ -753,7 +753,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                             Dados protegidos dentro do perímetro BigQuery
                           </h5>
                           <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
-                            &quot;O Gemini 3.8 Flash opera diretamente nos dados governados pelo Dataplex, sem exportar informações para terceiros nem usar os dados do cliente para treinamento de modelos.&quot;
+                            &quot;O Gemini 3.8 Flash opera diretamente nos dados governados pelo Knowledge Catalog, sem exportar informações para terceiros nem usar os dados do cliente para treinamento de modelos.&quot;
                           </p>
                         </div>
 
@@ -809,7 +809,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                           <div className="p-3 rounded-xl bg-white border border-slate-200">
                             <span className="text-[10px] font-black text-[#074878] uppercase block">Semanas 1-2</span>
                             <strong className="text-slate-900 block mt-1">Setup & Governança</strong>
-                            <p className="text-[11px] text-slate-500 mt-1">Landing Zone, GCS Staging, BigQuery Gold e ativação do Dataplex Catalog.</p>
+                            <p className="text-[11px] text-slate-500 mt-1">Landing Zone, GCS Staging, BigQuery Gold e ativação do Knowledge Catalog.</p>
                           </div>
                           <div className="p-3 rounded-xl bg-white border border-slate-200">
                             <span className="text-[10px] font-black text-purple-700 uppercase block">Semanas 3-4</span>

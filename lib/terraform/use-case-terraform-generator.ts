@@ -76,7 +76,7 @@ export function generateUseCaseTerraformBundle(
  * Skills aplicadas:
  *   - /bigquery-studio-pipelines (Dataform, SQLX, BigFrames e PySpark Serverless Stored Procedures)
  *   - /gcp_bq_otimization (FinOps, Particionamento Diário, Clustering x4 e PK/FK NOT ENFORCED)
- *   - /gcp_knowledge_catalog (Dataplex LIGHTWEIGHT Scan, Aspect Types e Descrições de Coluna)
+ *   - /gcp_knowledge_catalog (Knowledge Catalog LIGHTWEIGHT Scan, Aspect Types e Descrições de Coluna)
  * Modelo Global IA: Vertex AI Gemini 3.8 Flash (gemini-3.8-flash)
  */
 
@@ -337,7 +337,7 @@ resource "google_dataform_repository" "studio_pipeline_repo" {
     "customer"          = var.customer_slug
     "use_case"          = "${caseSlug}"
     "environment"       = "production"
-    "governance"        = "dataplex"
+    "governance"        = "knowledge_catalog"
   }
 }
 
@@ -360,9 +360,9 @@ resource "google_dataform_repository_release_config" "production_release" {
 }
 `;
 
-  // 5. dataplex_catalog.tf
-  const dataplexTf = `/**
- * Governança, Catalogação e Qualidade no Knowledge Catalog (Dataplex)
+  // 5. knowledge_catalog.tf
+  const knowledgeCatalogTf = `/**
+ * Governança, Catalogação e Qualidade no Knowledge Catalog
  * Skill: /gcp_knowledge_catalog
  * - Data Profile Scan em modo LIGHTWEIGHT (Quase zero custo para tabelas nativas BQ)
  * - Data Documentation Scan para geração de Insights e relacionamentos de negócio
@@ -625,7 +625,7 @@ print(f"[PySpark Procedure] Finalizado com sucesso para {output_table}")
  * Regras:
  *   - Particionamento por data_referencia
  *   - Predicado incremental obrigatório: \${when(incremental(), ...)}
- *   - Bloco metadata integrado para catalogação automática no Dataplex
+ *   - Bloco metadata integrado para catalogação automática no Knowledge Catalog
  */
 
 config {
@@ -776,10 +776,10 @@ terraform apply -var="project_id=${projectId}" -var="region=${region}" -auto-app
         content: dataformTf
       },
       {
-        filename: "dataplex_catalog.tf",
+        filename: "knowledge_catalog.tf",
         category: "iac",
-        description: "Dataplex Data Profile Scan em modo LIGHTWEIGHT, Data Documentation Scan e Aspect Types",
-        content: dataplexTf
+        description: "Knowledge Catalog Data Profile Scan em modo LIGHTWEIGHT, Data Documentation Scan e Aspect Types",
+        content: knowledgeCatalogTf
       },
       {
         filename: "actions.yaml",
@@ -808,7 +808,7 @@ terraform apply -var="project_id=${projectId}" -var="region=${region}" -auto-app
       {
         filename: "transform_incremental.sqlx",
         category: "studio",
-        description: "Modelo SQLX incremental com \${when(incremental(), ...)} e bloco metadata para Dataplex",
+        description: "Modelo SQLX incremental com \${when(incremental(), ...)} e bloco metadata para Knowledge Catalog",
         content: transformSqlx
       },
       {
@@ -863,7 +863,7 @@ terraform apply -var="project_id=${projectId}" -var="region=${region}" -auto-app
         description: "Permite ao otimizador Dremel eliminar joins desnecessários e ativa relacionamentos de Dataset Insights."
       },
       {
-        title: "Dataplex Scan em Modo LIGHTWEIGHT",
+        title: "Knowledge Catalog Scan em Modo LIGHTWEIGHT",
         skill: "gcp_knowledge_catalog",
         status: "APPLIED",
         description: "Executa Data Profile Scan estatístico com custo quase zero em tabelas BigQuery nativas."

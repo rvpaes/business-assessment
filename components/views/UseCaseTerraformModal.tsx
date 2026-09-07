@@ -220,7 +220,7 @@ export const UseCaseTerraformModal: React.FC<UseCaseTerraformModalProps> = ({
             📦 bigquery-workflow: preview
           </span>
           <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-semibold flex items-center gap-1">
-            🛡️ Dataplex LIGHTWEIGHT Scan
+            🛡️ Knowledge Catalog Data Profile Scan
           </span>
         </div>
 

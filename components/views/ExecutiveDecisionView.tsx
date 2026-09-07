@@ -106,7 +106,7 @@ export const ExecutiveDecisionView: React.FC<ExecutiveDecisionViewProps> = ({
     ],
     bqMetrics: [
       { label: "Patrimônio de Dados no BigQuery", value: `${totalTables} Tabelas`, trend: "100% Auditado", subtext: `Dataset ${datasetId}` },
-      { label: "Qualidade de Metadados", value: `${docPercentage}% Documentado`, trend: "Alto Nível", subtext: "Dicionário de dados Dataplex" },
+      { label: "Qualidade de Metadados", value: `${docPercentage}% Documentado`, trend: "Alto Nível", subtext: "Dicionário Knowledge Catalog" },
       { label: "Consumo Mensal GCP", value: totalMonthlyGcpUsd > 0 ? `$${totalMonthlyGcpUsd.toFixed(0)}/mês` : "$2.450/mês", trend: "Otimizado", subtext: "Slots BQ + Vertex AI" },
       { label: "Conformidade e Risco", value: "Zero Alucinação", trend: "Garantida", subtext: "Grounding estrito no esquema" }
     ],
@@ -303,11 +303,11 @@ ORDER BY u.rank ASC;`,
       letter: "S",
       bgLetter: "bg-emerald-600",
       title: "Agente Arquitetura Integrada & Empacotamento de SKUs",
-      subtitle: "Stack Completo: BigQuery Enterprise + Vertex AI Gemini 3.8 + Dataplex",
+      subtitle: "Stack Completo: BigQuery Enterprise + Vertex AI Gemini 3.8 + Knowledge Catalog",
       badge: "OFERTA INTEGRADA",
       badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
       action: `Consolidar 4 ferramentas legadas (ETL externo, MLflow, Catálogo terceiro e Vector DB) em 1 único SKU Google Cloud`,
-      rationale: `Ao unificar BigQuery com Dataplex e Vertex AI, o cliente elimina custos de licença terceiros (como Snowflake, Collibra ou APIs avulsas da OpenAI), simplificando a gestão e aumentando a margem comercial do Google.`,
+      rationale: `Ao unificar BigQuery com Knowledge Catalog e Vertex AI, o cliente elimina custos de licença terceiros (como Snowflake, Collibra ou APIs avulsas da OpenAI), simplificando a gestão e aumentando a margem comercial do Google.`,
       salesTip: "Mostre o ganho de consolidação de fornecedores: 1 única fatura Google elimina 4 contratos de software dispersos.",
       pills: [
         { label: "SKUs Unificados", val: "3 em 1" },
@@ -320,18 +320,18 @@ ORDER BY u.rank ASC;`,
         avatarLetter: "S",
         avatarBg: "bg-emerald-600",
         latencyMs: 132,
-        sugestaoAcao: `Apresentar pacote de solução unificada: BigQuery Enterprise + Dataplex Governança + Vertex AI Studio`,
+        sugestaoAcao: `Apresentar pacote de solução unificada: BigQuery Enterprise + Knowledge Catalog Governança + Vertex AI Studio`,
         racionalPorQue: `Reduz custos de licenciamento e elimina integrações frágeis mantidas por pipelines manuais do cliente.`,
         targetDirectiveTitle: "TOPOLOGIA INTEGRADA & SKUS",
         targetDirectiveBadge: "STACK GOOGLE CLOUD",
         targetCards: [
-          { title: "SKUs Integrados", value: "3 Pilares", subValue: "BQ + Vertex + Dataplex", badgeText: "SOLUÇÃO" },
+          { title: "SKUs Integrados", value: "3 Pilares", subValue: "BQ + Vertex + Knowledge Catalog", badgeText: "SOLUÇÃO" },
           { title: "Ferramentas Deslocadas", value: "4 Licenças", subValue: "ETL, MLflow, Catálogo, Vector", badgeText: "CONSOLIDAÇÃO" },
           { title: "Tempo de Implantação", value: "Semanas", subValue: "Zero setup de infra", badgeText: "AGILIDADE" },
           { title: "SLA Contratual", value: "99.99%", subValue: "Garantia Google Cloud", badgeText: "ENTERPRISE" }
         ],
         bqMetrics: [
-          { label: "Tabelas no Catálogo Dataplex", value: `${totalTables} Tabelas`, trend: "Nativo", subtext: "Zero licença Collibra/Alation" },
+          { label: "Tabelas no Knowledge Catalog", value: `${totalTables} Tabelas`, trend: "Nativo", subtext: "Zero licença Collibra/Alation" },
           { label: "Modelos In-Database BQML", value: "Suporte Total", trend: "Nativo", subtext: "Zero licença MLflow dedicada" }
         ],
         sqlQuery: `SELECT 
@@ -346,10 +346,10 @@ SELECT
 UNION ALL
 SELECT 
   'Governance & Lineage' AS capability,
-  'Dataplex Universal Catalog' AS google_sku,
+  'Knowledge Catalog' AS google_sku,
   'Collibra / Alation' AS replaced_vendor;`,
         sellerPlaybook: {
-          pitch: `Com o Google Cloud, ${customerName} não precisa comprar um banco vetorial separado, uma ferramenta de catálogo como Collibra e pagar APIs avulsas de LLM. O BigQuery reúne vetores nativos, o Dataplex cobre catalogação com 0 licença extra, e o Vertex AI traz o Gemini 3.8 totalmente integrado com controle corporativo.`,
+          pitch: `Com o Google Cloud, ${customerName} não precisa comprar um banco vetorial separado, uma ferramenta de catálogo como Collibra e pagar APIs avulsas de LLM. O BigQuery reúne vetores nativos, o Knowledge Catalog cobre catalogação com 0 licença extra, e o Vertex AI traz o Gemini 3.8 totalmente integrado com controle corporativo.`,
           objectionHandling: `Quando o arquiteto do cliente disser 'Queremos usar ferramentas especializadas para cada camada': mostre que a integração nativa BigQuery + Vertex AI elimina pipelines frágeis de exportação e reduz o tempo de desenvolvimento em 65%.`,
           closingTrigger: `Oferecer Architecture Review Session conjunta com o Google Cloud Office of the CTO (OCTO) para validar a topologia corporativa.`,
           targetBuyer: "CTO, Enterprise Architect e Head de Plataforma de Dados",
@@ -512,7 +512,7 @@ SELECT
             {t("decisionHeroTitle")}
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-blue-100/85 leading-relaxed font-normal">
-            A análise multi-agente cruzou o catálogo de metadados, a maturidade de governança Dataplex e as tabelas auditadas no BigQuery para <strong className="text-white font-bold">{customerName}</strong>, sintetizando hipóteses de inovação, viabilidade e plano de valor para a indústria de <strong className="text-white font-bold">{industry}</strong>.
+            A análise multi-agente cruzou o catálogo de metadados, a maturidade de governança Knowledge Catalog e as tabelas auditadas no BigQuery para <strong className="text-white font-bold">{customerName}</strong>, sintetizando hipóteses de inovação, viabilidade e plano de valor para a indústria de <strong className="text-white font-bold">{industry}</strong>.
           </p>
         </div>
 
@@ -689,7 +689,7 @@ SELECT
                   </span>
                 </div>
                 <div className="text-[11px] font-bold text-white">
-                  Modernização BigQuery Property Graph, Vertex AI & Dataplex
+                  Modernização BigQuery Property Graph, Vertex AI & Knowledge Catalog
                 </div>
                 <p className="text-[10px] text-blue-100/80 leading-relaxed">
                   A Matriz de Saliência priorizou os 6 casos com o melhor equilíbrio entre valor imediato de negócio para <strong className="text-white">{customerName}</strong> e consumo sustentável na plataforma Google Cloud.
@@ -703,7 +703,7 @@ SELECT
                   <span>OPORTUNIDADE DE EXPANSÃO GOOGLE CLOUD</span>
                 </div>
                 <p className="text-[10px] text-blue-100/90 leading-relaxed">
-                  Pipeline comercial viabilizado: consumo escalável de <strong>BigQuery Slots Dedicados</strong>, inferência contínua com <strong>Vertex AI Gemini 3.8 Flash</strong>, microserviços em <strong>Cloud Run</strong> e auditoria automatizada em <strong>Dataplex</strong>.
+                  Pipeline comercial viabilizado: consumo escalável de <strong>BigQuery Slots Dedicados</strong>, inferência contínua com <strong>Vertex AI Gemini 3.8 Flash</strong>, microserviços em <strong>Cloud Run</strong> e auditoria automatizada em <strong>Knowledge Catalog</strong>.
                 </p>
               </div>
             </div>
@@ -767,7 +767,7 @@ SELECT
                   </div>
                   <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
                     <span className="text-emerald-300 font-bold block text-[9px] uppercase">Onda 3 (90 Dias) • Autonomia & Data Agent</span>
-                    <span>Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Dataplex para Casos 5 e 6.</span>
+                    <span>Implantar BigQuery Conversational Data Agent com grounding no grafo, RLS e governança Knowledge Catalog para Casos 5 e 6.</span>
                   </div>
                 </div>
               </div>

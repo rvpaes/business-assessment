@@ -345,7 +345,7 @@ LIMIT 10;`);
             <DollarSign className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <span className="text-xs font-bold text-slate-800 block">2. Dimensionamento de ARR</span>
-              <p className="text-[11px] text-slate-500 mt-0.5">Calcula o consumo mensal de cada serviço GCP (BigQuery, Vertex AI, Dataplex) por caso.</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Calcula o consumo mensal de cada serviço GCP (BigQuery, Vertex AI, Knowledge Catalog) por caso.</p>
             </div>
           </div>
 

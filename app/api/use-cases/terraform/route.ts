@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     const aiPrompt = `Você é o Arquiteto Principal de Google Cloud especializado nas skills:
 1. /bigquery-studio-pipelines (SQLX, Python BigFrames com pushdown e PySpark Serverless Stored Procedures)
 2. /gcp_bq_otimization (FinOps, Particionamento Diário, Clustering x4, PK/FK NOT ENFORCED)
-3. /gcp_knowledge_catalog (Dataplex LIGHTWEIGHT Scan, Data Documentation Scan, Aspect Types e Descrições de Coluna)
+3. /gcp_knowledge_catalog (Knowledge Catalog LIGHTWEIGHT Scan, Data Documentation Scan, Aspect Types e Descrições de Coluna)
 
 CASO DE USO:
 - Título: ${targetUseCase.title}
@@ -107,7 +107,7 @@ Analise a solicitação do usuário e retorne uma resposta JSON estrita com o se
       const geminiRes = await callGemini38Flash(aiPrompt, {
         thinkingLevel: "HIGH",
         responseMimeType: "application/json",
-        systemInstruction: "Você é um arquiteto sênior de dados GCP focado em BigQuery Studio Pipelines, FinOps e Dataplex Knowledge Catalog. Retorne estritamente JSON válido."
+        systemInstruction: "Você é um arquiteto sênior de dados GCP focado em BigQuery Studio Pipelines, FinOps e Knowledge Catalog. Retorne estritamente JSON válido."
       });
 
       let parsed: any = null;

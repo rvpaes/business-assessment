@@ -66,7 +66,7 @@ Dataset: `rafaelpaes-477-20240820125418.business_assessment_customer`
 |---|---|---|
 | `customers` | BASE TABLE | Clientes cadastrados e vínculo ao último assessment |
 | `customer_assessments` | BASE TABLE | Sumário de maturidade, contagem de ativos e caminho no GCS |
-| `assessment_tables_catalog` | BASE TABLE | Dicionário de tabelas, contagem de linhas e status Dataplex |
+| `assessment_tables_catalog` | BASE TABLE | Dicionário de tabelas, contagem de linhas e status Knowledge Catalog |
 | `top_use_cases` | BASE TABLE | Top 6 casos de uso com ROI, ganhos e custos mensais GCP |
 | `neuro_debates` | BASE TABLE | Registro dialético das fases DMN, SN e CEN |
 | `graph_nodes` | BASE TABLE | Nós do grafo (Cliente, Assessment, Tabelas, Casos de Uso, Personas) |

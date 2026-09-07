@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     });
 
     // =========================================================================
-    // FASE 1: Inspeção do Dataplex Knowledge Catalog (Semântica & Data Profiles)
+    // FASE 1: Inspeção do Knowledge Catalog (Semântica & Data Profiles)
     // =========================================================================
     let catalogSummary = "";
     let catalogItems: any[] = [];
@@ -73,9 +73,9 @@ export async function POST(req: NextRequest) {
     // =========================================================================
     const prompt = `
 Você é o BigQuery Data Agent Executivo de Inteligência Analítica e IA da Google Cloud para o cliente ${customerName || "Corporativo"}.
-Você está operando diretamente sobre o BigQuery Property Graph (GQL) e o Dataplex Knowledge Catalog.
+Você está operando diretamente sobre o BigQuery Property Graph (GQL) e o Knowledge Catalog.
 
-METADADOS DO KNOWLEDGE CATALOG (DATAPLEX PROFILE & QUALIDADE DE DADOS):
+METADADOS DO KNOWLEDGE CATALOG (DATA PROFILE & QUALIDADE DE DADOS):
 ${catalogSummary}
 
 EVIDÊNCIAS DE TRAVESSIA NO BIGQUERY PROPERTY GRAPH (ISO GQL GRAPH_TABLE):
@@ -96,7 +96,7 @@ DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION & POSTURA EXECUTIVA):
 1. Responda em Português do Brasil com postura executiva de alto nível (C-Level), clara, elegante e orientada a valor de negócio.
 2. Fundamente suas afirmações ESTRITAMENTE nos dados auditados do Knowledge Catalog e nas conexões do Property Graph listadas acima.
 3. Se a consulta ao Property Graph ou ao Catálogo retornar vazia (0 rows) para o critério perguntado, declare explicitamente: "Com base nas consultas ao BigQuery Property Graph e ao Knowledge Catalog, não há dados ou relacionamentos mapeados para este critério específico." NUNCA invente tendências, números ou tabelas.
-4. Quando citar tabelas, cite o nome exato e o status de profiling do Dataplex (ex: taxa de documentação, volumetria).
+4. Quando citar tabelas, cite o nome exato e o status de profiling do Knowledge Catalog (ex: taxa de documentação, volumetria).
 5. Quando citar casos de uso, cite o ROI, a meta estratégica atingida e o consumo mensal de serviços GCP auditados.
 6. Apresente os dados com clareza (use bullet points executivos e destaques em negrito).
 `;
@@ -110,7 +110,7 @@ DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION & POSTURA EXECUTIVA):
       severity: "INFO",
       phase: "CHAT",
       toolAction: "gemini_graph_grounded_response",
-      thought: "Resposta executiva gerada com grounding duplo: Dataplex Knowledge Catalog + BigQuery Property Graph GQL.",
+      thought: "Resposta executiva gerada com grounding duplo: Knowledge Catalog + BigQuery Property Graph GQL.",
       sqlQuery: generatedGql,
       bqResultRows: graphRows.length,
       outputSummary: geminiRes.text.slice(0, 150)
@@ -119,13 +119,13 @@ DIRETRIZES MANDATÓRIAS DE RESPOSTA (ZERO-HALLUCINATION & POSTURA EXECUTIVA):
     return NextResponse.json({
       success: true,
       reply: geminiRes.text,
-      thoughts: geminiRes.thoughtText ? [geminiRes.thoughtText] : ["Consulta fundamentada no BigQuery Property Graph (ISO GQL) e Dataplex Knowledge Catalog."],
+      thoughts: geminiRes.thoughtText ? [geminiRes.thoughtText] : ["Consulta fundamentada no BigQuery Property Graph (ISO GQL) e Knowledge Catalog."],
       generatedSql: generatedGql,
       queryResults: graphRows,
       catalogMetadata: catalogItems,
       source: "bigquery_data_agent",
       followupQuestions: isGovernanceQuestion ? [
-        "Como as Policy Tags do Dataplex garantem conformidade com a LGPD?",
+        "Como as Policy Tags do Knowledge Catalog garantem conformidade com a LGPD?",
         "Quais tabelas que alimentam os casos de uso possuem dados sensíveis mascarados?",
         "Qual o impacto de governança na migração para o BigQuery?"
       ] : [

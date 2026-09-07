@@ -437,9 +437,9 @@ export async function populatePropertyGraph(
       properties: { mrrEstimateUsd: 850, category: "AI Platform", tier: "Advanced AI" }
     },
     {
-      id: "gcp_dataplex",
+      id: "gcp_knowledge_catalog",
       nodeType: "GcpService",
-      name: "Dataplex Universal Catalog",
+      name: "Knowledge Catalog",
       category: "Data Governance & Quality",
       properties: { mrrEstimateUsd: 320, category: "Data Governance", tier: "Compliance" }
     },
@@ -503,11 +503,11 @@ export async function populatePropertyGraph(
   // 4. Ações de Modernização de Arquitetura Google Cloud
   const modernizationActions: PropertyGraphNode[] = [
     {
-      id: "act_bq_graph_indexing",
+      id: "act_biqguery_studio_dag",
       nodeType: "ModernizationAction",
-      name: "Ativação de Property Graph BigQuery com Índices GQL",
-      category: "Graph Analytics",
-      properties: { targetService: "BigQuery", impact: "Latência < 180ms" }
+      name: "Esteira Multi-Engine BigQuery Studio (SQLX, PySpark, BigFrames)",
+      category: "Pipeline Engineering",
+      properties: { targetService: "BigQuery Studio", impact: "Zero ETL Frágil" }
     },
     {
       id: "act_data_agents_grounding",
@@ -517,11 +517,11 @@ export async function populatePropertyGraph(
       properties: { targetService: "Vertex AI + BigQuery", impact: "Zero Alucinação" }
     },
     {
-      id: "act_dataplex_policy_tags",
+      id: "act_knowledge_catalog_policy_tags",
       nodeType: "ModernizationAction",
-      name: "Governança com Dataplex Policy Tags & Data Profiling",
+      name: "Governança com Knowledge Catalog Policy Tags & Data Profiling",
       category: "Data Security",
-      properties: { targetService: "Dataplex", impact: "Conformidade LGPD" }
+      properties: { targetService: "Knowledge Catalog", impact: "Conformidade LGPD" }
     },
     {
       id: "act_streaming_ingestion",
@@ -687,11 +687,11 @@ export async function populatePropertyGraph(
       weight: 0.8,
       properties: {}
     });
-    // Conecta tabela ao Dataplex para governança
+    // Conecta tabela ao Knowledge Catalog para governança
     edges.push({
-      edgeId: `e_tbl_dataplex_${cleanTblId}`,
+      edgeId: `e_tbl_kc_${cleanTblId}`,
       sourceId: cleanTblId,
-      destinationId: "gcp_dataplex",
+      destinationId: "gcp_knowledge_catalog",
       edgeType: "GOVERNED_BY",
       weight: 1.0,
       properties: {}
@@ -799,7 +799,7 @@ export interface KnowledgeCatalogInspectionResult {
 }
 
 /**
- * ADK Tool: Inspeciona metadados de negócio, data profile e governança do Knowledge Catalog no BigQuery/Dataplex.
+ * ADK Tool: Inspeciona metadados de negócio, data profile e governança do Knowledge Catalog no BigQuery.
  */
 export async function inspectKnowledgeCatalog(
   assessmentId?: string,
@@ -809,7 +809,7 @@ export async function inspectKnowledgeCatalog(
     severity: "INFO",
     phase: "GRAPH_GQL",
     toolAction: "inspect_knowledge_catalog",
-    thought: `ADK inspecionando Dataplex Knowledge Catalog para assessment '${assessmentId || "global"}' com ${tableNames?.length || "todas as"} tabelas.`
+    thought: `ADK inspecionando Knowledge Catalog para assessment '${assessmentId || "global"}' com ${tableNames?.length || "todas as"} tabelas.`
   });
 
   const tableFilter = tableNames && tableNames.length > 0
@@ -863,7 +863,7 @@ export async function inspectKnowledgeCatalog(
 
   const summaryText = catalogItems.length > 0
     ? catalogItems.map(c => 
-        `- \`${c.tableName}\` (${c.tableType}): ${c.estimatedRows.toLocaleString()} linhas, ${c.columnCount} colunas (${c.docPercentage}% doc). Dataplex Profile: ${c.dataplexScanActive ? "Ativo" : "Pendente"}.`
+        `- \`${c.tableName}\` (${c.tableType}): ${c.estimatedRows.toLocaleString()} linhas, ${c.columnCount} colunas (${c.docPercentage}% doc). Profile Scan: ${c.dataplexScanActive ? "Ativo" : "Pendente"}.`
       ).join("\n")
     : "Nenhum metadado auditado encontrado no Knowledge Catalog para os filtros especificados.";
 
@@ -990,7 +990,7 @@ export async function queryGovernanceLineageGQL(
     FROM (
       SELECT 
         t.table_name,
-        'Dataplex Universal Catalog' AS service_name,
+        'Knowledge Catalog' AS service_name,
         'Row & Column Policy Tags' AS governance_mechanism,
         'Masked PII (LGPD/Bacen)' AS policy_tag_level,
         u.title AS use_case_title

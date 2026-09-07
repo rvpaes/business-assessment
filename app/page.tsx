@@ -37,7 +37,7 @@ const defaultAssessment: CustomerAssessment = {
   dataAgentsCount: 2,
   gcsArchiveUri: "gs://dass-2026/business_assessment/20260904_104605_hypera_pharma/metadata_assessment_organization.zip",
   summaryMarkdown: `# Assessment Executivo de Dados
-Patrimônio de dados auditado com 3.293 tabelas no Google BigQuery, governança Dataplex e grafo de conhecimento relacional.`
+Patrimônio de dados auditado com 3.293 tabelas no Google BigQuery, governança Knowledge Catalog e grafo de conhecimento relacional.`
 };
 
 import { getCustomerUseCases } from "@/lib/data/customer-usecases-catalog";

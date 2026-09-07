@@ -88,7 +88,7 @@ export const GCP_CUSTOMER_STORIES_CATALOG: GoogleCloudCustomerStory[] = [
     industry: "Cadeia de Suprimentos & Varejo",
     headline: "Morrisons otimiza cadeia de suprimentos e reduz índice de rupturas em 500 lojas com BigQuery",
     summary: "Monitoramento de estoque em centros de distribuição e gôndolas com machine learning no BigQuery, prevenindo desbalanceamentos logísticos e eliminando perdas por ruptura de canais.",
-    products: ["BigQuery", "Vertex AI", "Dataplex"],
+    products: ["BigQuery", "Vertex AI", "Knowledge Catalog"],
     storyUrl: "https://cloud.google.com/customers/morrisons?hl=pt-BR",
     country: "Global",
     tags: ["ruptura", "estoque", "supply chain", "distribuição", "s&op", "logística", "sku", "canais", "anti-ruptura"]

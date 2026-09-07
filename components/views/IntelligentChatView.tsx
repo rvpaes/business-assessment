@@ -41,7 +41,7 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
       followupQuestions: [
         "Quais são os 6 casos de uso prioritários e seus respectivos ROIs?",
         "Qual o consumo mensal total em nuvem (ARR) se aprovarmos todos os casos?",
-        "Quais serviços GCP (BigQuery, Vertex AI, Dataplex) são contratados?"
+        "Quais serviços GCP (BigQuery, Vertex AI, Knowledge Catalog) são contratados?"
       ],
       timestamp: new Date().toISOString()
     }
@@ -66,8 +66,8 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
 
   const quickPrompts = [
     "Quais casos de uso conectam diretamente à meta de maior retorno no Grafo?",
-    "Qual o consumo mensal de serviços GCP (BigQuery, Vertex AI, Dataplex) no Grafo?",
-    "Como o Dataplex Knowledge Catalog audita as tabelas e protege dados com PII?",
+    "Qual o consumo mensal de serviços GCP (BigQuery, Vertex AI, Knowledge Catalog) no Grafo?",
+    "Como o Knowledge Catalog audita as tabelas e protege dados com PII?",
     "Quais tabelas do catálogo alimentam o Caso 1 prioritário?"
   ];
 
@@ -264,11 +264,11 @@ export const IntelligentChatView: React.FC<IntelligentChatViewProps> = ({
                   </div>
                 )}
 
-                {/* Metadados Dataplex Knowledge Catalog */}
+                {/* Metadados Knowledge Catalog */}
                 {msg.catalogMetadata && msg.catalogMetadata.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50/70 border border-violet-200 text-violet-900 text-[11px] font-medium">
                     <span className="font-bold flex items-center gap-1 text-violet-700">
-                      <Layers className="w-3.5 h-3.5" /> Dataplex Knowledge Catalog:
+                      <Layers className="w-3.5 h-3.5" /> Knowledge Catalog:
                     </span>
                     <span>{msg.catalogMetadata.length} tabelas auditadas</span>
                     <span className="text-violet-400">•</span>

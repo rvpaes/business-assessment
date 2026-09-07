@@ -30,7 +30,7 @@ export async function runNeuroDebatePipeline(
 ): Promise<NeuroDebateResult> {
   const turns: NeuroDebateTurn[] = [];
 
-  // 1. Inspeção Prévia no Knowledge Catalog (Dataplex Profiles & Qualidade)
+  // 1. Inspeção Prévia no Knowledge Catalog (Data Profile & Qualidade)
   let catalogContextStr = "";
   try {
     const catalogResult = await inspectKnowledgeCatalog(assessment.assessmentId);
@@ -47,7 +47,7 @@ export async function runNeuroDebatePipeline(
     rows: t.estimatedRows,
     cols: t.columnCount,
     desc: t.tableDescription || "Sem descrição formal",
-    hasDataplexScan: t.dataplexProfileScanActive
+    hasKnowledgeCatalogScan: t.dataplexProfileScanActive
   }));
 
   const tablesContextStr = JSON.stringify(tableSummaryList, null, 2);
@@ -77,7 +77,7 @@ INFORMAÇÕES DO CLIENTE AUDITADO:
 - Total de Tabelas: ${assessment.totalTables} | Views: ${assessment.totalViews} | Colunas: ${assessment.totalColumns}
 - % Documentação de Colunas: ${assessment.docPercentage}%
 
-METADADOS DO KNOWLEDGE CATALOG (DATAPLEX PROFILE & QUALIDADE DE DADOS):
+METADADOS DO KNOWLEDGE CATALOG (DATA PROFILE & QUALIDADE DE DADOS):
 ${catalogContextStr || "Em catalogação"}
 
 TABELAS E DATASETS REAIS DISPONÍVEIS NO BIGQUERY (GROUNDING):
@@ -245,7 +245,7 @@ CONTEXTO DO CLIENTE:
 - Tabelas Reais:
 ${tablesContextStr}
 
-- Metadados do Knowledge Catalog (Dataplex Profiles & Qualidade):
+- Metadados do Knowledge Catalog (Data Profile & Qualidade):
 ${catalogContextStr || "Em catalogação"}
 
 PROPOSTAS SELECIONADAS PELO SN:
@@ -256,21 +256,30 @@ ${JSON.stringify(auditTargets, null, 2)}
 
 SUA TAREFA:
 1. Audite rigorosamente as propostas contra os alvos de auditoria.
-2. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6).
+2. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6), seguindo a estrutura corporativa de consumo e impacto:
+   - CASOS 1 a 3 (ALTO IMPACTO NO CLIENTE & ALTO CONSUMO GCP):
+     * Cargas analíticas massivas, inferência contínua com Vertex AI Gemini 3.8 Flash, BigQuery Slots Dedicados e Feature Store em tempo real.
+     * Consumo GCP: Entre $6.500/mês e $14.000/mês (ARR de ~$80k a $170k).
+     * Ganho Financeiro para o Cliente (EBITDA/Receita): Entre $2.200.000/ano e $4.800.000/ano (R$ 12M a R$ 27M/ano).
+   - CASOS 4 a 6 (IMPACTO RELEVANTE NO CLIENTE & CONSUMO OTIMIZADO/MAIS BAIXO GCP):
+     * Cargas serverless sob demanda, consultas incrementais BigQuery Studio, Cloud Run e governança Knowledge Catalog.
+     * Consumo GCP: Entre $750/mês e $1.850/mês (ARR de ~$9k a $22k).
+     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano (R$ 2.6M a R$ 5.1M/ano).
+
 3. Para CADA caso de uso, gere:
    - rank (1 a 6)
    - title (Nome do caso de uso de alto impacto executivo)
    - category (ex: "Inteligência Causal & NBA", "Supply Chain & S&OP", "Prevenção de Churn & LTV", "FinOps & Governança", "Detecção de Anomalias & Fraude", "Engenharia de Decisão com IA Generativa")
    - businessProblem (Descrição clara da dor de negócio do cliente)
    - solutionDescription (Arquitetura técnica com BigQuery, Gemini 3.8 Flash, Vertex AI ou Cloud Run)
-   - businessCaseRoi (Benchmarking de mercado e ROI; ex: "ROI de 420% no ano 1 com payback em 3 meses")
-   - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD; ex: 850000)
-   - gcpMonthlyCostUsd (Custo total mensal em GCP; ex: 1250)
+   - businessCaseRoi (Benchmarking de mercado e ROI; ex: "ROI de 380% no ano 1 com payback em 2.2 meses")
+   - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD de acordo com a faixa do caso)
+   - gcpMonthlyCostUsd (Custo total mensal em GCP de acordo com a faixa do caso)
    - costBreakdown: { bigqueryUsd, vertexAiUsd, cloudRunUsd, storageUsd }
    - requiredTables: Lista das tabelas REAIS do cliente que alimentam a solução
    - requiredColumns: Amostra de colunas chave
-   - guardrails: Regra de proteção contra alucinação e conformidade (ex: "Validação estrita de 0 rows, anonimização prévia de PII")
-   - confidenceScore: Pontuação de 0.85 a 0.99
+   - guardrails: Regra de proteção contra alucinação e conformidade (ex: "Validação estrita de 0 rows, governança no Knowledge Catalog")
+   - confidenceScore: Pontuação de 0.88 a 0.99
 
 Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos 6 casos de uso:
 {
@@ -282,7 +291,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
   const cenResponse = await callGemini38Flash(cenPrompt, {
     thinkingLevel: "LOW",
     responseMimeType: "application/json",
-    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso com custos GCP e Business Case calculados."
+    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso (3 alto consumo/alto impacto + 3 consumo otimizado/impacto relevante)."
   });
 
   let cenParsed: any = {};
@@ -292,32 +301,45 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
     console.warn("Erro no parse JSON do CEN:", e);
   }
 
+  const defaultHighGains = [3400000, 2800000, 2300000];
+  const defaultHighMonthly = [11850, 8950, 7400];
+  const defaultLowGains = [850000, 720000, 580000];
+  const defaultLowMonthly = [1650, 1250, 880];
+
   const rawUseCases = cenParsed.topUseCases || [];
-  const topUseCases: TopUseCase[] = rawUseCases.slice(0, 6).map((uc: any, idx: number) => ({
-    useCaseId: `uc_${idx + 1}_${Date.now()}`,
-    assessmentId: assessment.assessmentId,
-    rank: idx + 1,
-    title: uc.title || `Caso de Uso #${idx + 1}`,
-    category: uc.category || "Inteligência Estratégica",
-    businessProblem: uc.businessProblem || "Otimização de processos e aumento de eficiência operacional com dados analíticos.",
-    solutionDescription: uc.solutionDescription || "Implementação de pipeline analítico no BigQuery integrado ao Gemini 3.8 Flash.",
-    businessCaseRoi: uc.businessCaseRoi || "Retorno estimado de 350% em 12 meses com expansão de margem.",
-    financialGainEstimateUsd: Number(uc.financialGainEstimateUsd) || (500000 + idx * 120000),
-    gcpMonthlyCostUsd: Number(uc.gcpMonthlyCostUsd) || (800 + idx * 150),
-    costBreakdown: {
-      bigqueryUsd: Number(uc.costBreakdown?.bigqueryUsd) || 450,
-      vertexAiUsd: Number(uc.costBreakdown?.vertexAiUsd) || 300,
-      cloudRunUsd: Number(uc.costBreakdown?.cloudRunUsd) || 150,
-      storageUsd: Number(uc.costBreakdown?.storageUsd) || 50
-    },
-    requiredTables: Array.isArray(uc.requiredTables) && uc.requiredTables.length > 0 
-      ? uc.requiredTables 
-      : [tableSummaryList[0]?.name || "tabela_mestra"],
-    requiredColumns: Array.isArray(uc.requiredColumns) ? uc.requiredColumns : ["id", "status", "valor"],
-    guardrails: uc.guardrails || "Tratamento de 0 rows e auditoria estruturada no Cloud Logging.",
-    confidenceScore: Number(uc.confidenceScore) || 0.95,
-    status: "VALIDATED"
-  }));
+  const topUseCases: TopUseCase[] = rawUseCases.slice(0, 6).map((uc: any, idx: number) => {
+    const isHigh = idx < 3;
+    const fallbackGain = isHigh ? defaultHighGains[idx] : defaultLowGains[idx - 3];
+    const fallbackMonthly = isHigh ? defaultHighMonthly[idx] : defaultLowMonthly[idx - 3];
+    const financialGainEstimateUsd = Number(uc.financialGainEstimateUsd) || fallbackGain;
+    const gcpMonthlyCostUsd = Number(uc.gcpMonthlyCostUsd) || fallbackMonthly;
+
+    return {
+      useCaseId: `uc_${idx + 1}_${Date.now()}`,
+      assessmentId: assessment.assessmentId,
+      rank: idx + 1,
+      title: uc.title || `Caso de Uso #${idx + 1}`,
+      category: uc.category || (isHigh ? "Inteligência Estratégica de Alta Escala" : "Eficiência & Governança"),
+      businessProblem: uc.businessProblem || "Otimização de processos e aumento de eficiência operacional com dados analíticos.",
+      solutionDescription: uc.solutionDescription || "Implementação de pipeline analítico no BigQuery integrado ao Gemini 3.8 Flash e Knowledge Catalog.",
+      businessCaseRoi: uc.businessCaseRoi || `Retorno de ${Math.round((financialGainEstimateUsd / (gcpMonthlyCostUsd * 12)) * 100)}% em 12 meses com payback em ~2 meses.`,
+      financialGainEstimateUsd,
+      gcpMonthlyCostUsd,
+      costBreakdown: {
+        bigqueryUsd: Number(uc.costBreakdown?.bigqueryUsd) || Math.round(gcpMonthlyCostUsd * 0.58),
+        vertexAiUsd: Number(uc.costBreakdown?.vertexAiUsd) || Math.round(gcpMonthlyCostUsd * 0.28),
+        cloudRunUsd: Number(uc.costBreakdown?.cloudRunUsd) || Math.round(gcpMonthlyCostUsd * 0.10),
+        storageUsd: Number(uc.costBreakdown?.storageUsd) || Math.round(gcpMonthlyCostUsd * 0.04)
+      },
+      requiredTables: Array.isArray(uc.requiredTables) && uc.requiredTables.length > 0 
+        ? uc.requiredTables 
+        : [tableSummaryList[0]?.name || "tabela_mestra"],
+      requiredColumns: Array.isArray(uc.requiredColumns) ? uc.requiredColumns : ["id", "status", "valor"],
+      guardrails: uc.guardrails || "Tratamento de 0 rows e governança no Knowledge Catalog.",
+      confidenceScore: Number(uc.confidenceScore) || 0.95,
+      status: "VALIDATED"
+    };
+  });
 
   const cenTurn: NeuroDebateTurn = {
     turnId: `turn_cen_${Date.now()}`,
