@@ -15,7 +15,10 @@ import {
   FileText,
   Check,
   ChevronRight,
-  Bot
+  Bot,
+  Database,
+  Download,
+  FileCode2
 } from "lucide-react";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -41,12 +44,31 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
   const [isDetectingSector, setIsDetectingSector] = useState(false);
   const [sectorDetectedByAi, setSectorDetectedByAi] = useState(false);
   const [sectorRationale, setSectorRationale] = useState("");
+  const [selectedLake, setSelectedLake] = useState<"bigquery" | "databricks" | "snowflake">("bigquery");
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadNotebook = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const link = document.createElement("a");
+      link.href = "/api/download-notebook?lake=" + selectedLake;
+      link.setAttribute("download", "gcp_enterprise_metadata_assessment.ipynb");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 6000);
+    } catch (err) {
+      console.error("Erro ao baixar notebook:", err);
+    }
+  };
 
   const industriesList = [
     "Varejo & E-commerce",
@@ -358,11 +380,151 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           </div>
         </div>
 
-        {/* Passo 2: Dropzone de Arquivo ZIP */}
+        {/* Passo 2: Seleção do Lake & Download do Script (Notebook) */}
+        <div className="space-y-3.5 pt-2 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
+                2
+              </span>
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
+                {t("lakeSelectionTitle")}
+              </h2>
+            </div>
+            <span className="text-[10px] font-bold text-slate-400">
+              {t("lakeSelectionSub")}
+            </span>
+          </div>
+
+          {/* Seletor de Plataforma / Lake (BigQuery ativo, Databricks e Snowflake em breve) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Opção 1: Google BigQuery (Ativo / Padrão) */}
+            <div
+              onClick={() => setSelectedLake("bigquery")}
+              className={`relative rounded-2xl p-3.5 border-2 transition-all cursor-pointer ${
+                selectedLake === "bigquery"
+                  ? "border-[#074878] bg-blue-50/40 shadow-xs ring-2 ring-[#074878]/10"
+                  : "border-slate-200 hover:border-slate-300 bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-xl bg-[#074878]/10 text-[#074878] flex items-center justify-center font-black">
+                  <Database className="w-4 h-4 text-[#074878]" />
+                </div>
+                <span className="text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-[#074878]">
+                  {t("lakeBigQueryBadge")}
+                </span>
+              </div>
+              <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                <span>{t("lakeBigQuery")}</span>
+                {selectedLake === "bigquery" && (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1 leading-snug">
+                {t("lakeBigQueryDesc")}
+              </p>
+            </div>
+
+            {/* Opção 2: Databricks (Em breve) */}
+            <div
+              className="relative rounded-2xl p-3.5 border border-slate-200 bg-slate-50/60 opacity-60 cursor-not-allowed select-none"
+              title="Suporte a Databricks em desenvolvimento"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black text-xs">
+                  🧱
+                </div>
+                <span className="text-[9.5px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                  {t("lakeComingSoon")}
+                </span>
+              </div>
+              <div className="text-xs font-bold text-slate-700">
+                {t("lakeDatabricks")}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                Unity Catalog, Delta Lake e workspaces corporativos.
+              </p>
+            </div>
+
+            {/* Opção 3: Snowflake (Em breve) */}
+            <div
+              className="relative rounded-2xl p-3.5 border border-slate-200 bg-slate-50/60 opacity-60 cursor-not-allowed select-none"
+              title="Suporte a Snowflake em desenvolvimento"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-black text-xs">
+                  ❄️
+                </div>
+                <span className="text-[9.5px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                  {t("lakeComingSoon")}
+                </span>
+              </div>
+              <div className="text-xs font-bold text-slate-700">
+                {t("lakeSnowflake")}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                Snowflake Data Cloud, estágios e warehouses virtuais.
+              </p>
+            </div>
+          </div>
+
+          {/* Card de Destaque: Baixar o Script de Assessment (Notebook) */}
+          <div className="rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/60 p-4 sm:p-5 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#074878] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <FileCode2 className="w-5 h-5" />
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                      {t("downloadScriptTitle")}
+                    </h3>
+                    <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      BigQuery Studio Ready
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 max-w-xl leading-relaxed">
+                    {t("downloadScriptDesc")}
+                  </p>
+                  <div className="flex items-center gap-3 pt-1 text-[10px] text-slate-500 font-medium">
+                    <span className="inline-flex items-center gap-1 font-mono text-slate-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      gcp_enterprise_metadata_assessment.ipynb
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline text-slate-400">Tamanho: ~152 KB</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botão para Baixar o Script na Máquina do Usuário */}
+              <div className="flex flex-col sm:items-end gap-1.5 shrink-0 pt-1 sm:pt-0">
+                <button
+                  type="button"
+                  onClick={handleDownloadNotebook}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#074878] hover:bg-[#053456] active:scale-[0.98] text-white text-xs font-bold shadow-xs hover:shadow transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{t("downloadScriptBtn")}</span>
+                </button>
+                {downloadSuccess && (
+                  <span className="text-[10px] font-bold text-emerald-700 animate-in fade-in duration-150 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>{t("downloadScriptSuccess")}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Passo 3: Dropzone de Arquivo ZIP */}
         <div className="space-y-3 pt-2 border-t border-slate-100">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
-              2
+              3
             </span>
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
               {t("metadataZipTitle")}
