@@ -22,6 +22,45 @@ import {
 } from "lucide-react";
 import { CustomerAssessment, TableCatalogItem } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { GoogleCloudIcon } from "../GoogleCloudLogo";
+
+// Ícone Oficial Databricks (SVG)
+export const DatabricksIcon: React.FC<{ size?: number; className?: string }> = ({ size = 22, className = "" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`shrink-0 select-none ${className}`}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-label="Databricks"
+  >
+    <path
+      d="M.95 14.184L12 20.403l9.919-5.55v2.21L12 22.662l-10.484-5.96-.565.308v.77L12 24l11.05-6.218v-4.317l-.515-.309L12 19.118l-9.867-5.653v-2.21L12 16.805l11.05-6.218V6.32l-.515-.308L12 11.974 2.647 6.681 12 1.388l7.76 4.368.668-.411v-.566L12 0 .95 6.27v.72L12 13.207l9.919-5.55v2.26L12 15.52 1.516 9.56l-.565.308Z"
+      fill="#FF3621"
+    />
+  </svg>
+);
+
+// Ícone Oficial Snowflake (SVG)
+export const SnowflakeIcon: React.FC<{ size?: number; className?: string }> = ({ size = 22, className = "" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`shrink-0 select-none ${className}`}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-label="Snowflake"
+  >
+    <path
+      d="M24 3.459c0 .646-.418 1.18-1.141 1.18-.723 0-1.142-.534-1.142-1.18 0-.647.419-1.18 1.142-1.18.723 0 1.141.533 1.141 1.18zm-.228 0c0-.533-.38-.951-.913-.951s-.913.38-.913.95c0 .533.38.952.913.952.57 0 .913-.419.913-.951zm-1.37-.533h.495c.266 0 .456.152.456.38 0 .153-.076.229-.19.305l.19.266v.038h-.266l-.19-.266h-.229v.266h-.266zm.495.228h-.229v.267h.229c.114 0 .152-.038.152-.114.038-.077-.038-.153-.152-.153zM7.602 12.4c.038-.151.076-.304.076-.456 0-.114-.038-.228-.038-.342-.114-.343-.304-.647-.646-.838l-4.87-2.777c-.685-.38-1.56-.152-1.94.533-.381.685-.153 1.56.532 1.94l2.701 1.56-2.701 1.56c-.685.38-.913 1.256-.533 1.94.38.685 1.256.914 1.94.533l4.832-2.777c.343-.267.571-.533.647-.876zm1.332 2.626c-.266-.038-.57.038-.837.19l-4.832 2.777c-.685.38-.913 1.256-.532 1.94.38.686 1.255.914 1.94.533l2.701-1.56v3.12c0 .8.647 1.408 1.446 1.408.799 0 1.407-.647 1.407-1.408v-5.592c0-.761-.57-1.37-1.293-1.408zm4.946-6.088c.266.038.57-.038.837-.19l4.832-2.777c.685-.38.913-1.256.532-1.94-.38-.686-1.255-.914-1.94-.533l-2.701 1.56V1.975c0-.799-.647-1.408-1.446-1.408-.799 0-1.446.609-1.446 1.408V7.53c0 .76.609 1.37 1.332 1.407zM3.265 5.97l4.832 2.777c.266.152.533.19.837.19.723-.038 1.331-.684 1.331-1.407V1.975c0-.799-.646-1.408-1.407-1.408-.799 0-1.446.647-1.446 1.408v3.12l-2.701-1.56c-.685-.38-1.56-.152-1.94.533-.419.646-.19 1.521.494 1.902zm9.093 6.011a.412.412 0 00-.114-.266l-.57-.571a.346.346 0 00-.267-.114.412.412 0 00-.266.114l-.571.57a.411.411 0 00-.114.267c0 .076.038.19.114.267l.57.57a.345.345 0 00.267.114c.076 0 .19-.038.266-.114l.571-.57a.412.412 0 00.114-.267zm1.598.533L11.94 14.53c-.039.038-.153.114-.229.114h-.608a.411.411 0 01-.267-.114L8.82 12.514a.408.408 0 01-.076-.229v-.608c0-.076.038-.19.114-.267l2.016-2.016a.41.41 0 01.267-.114h.608a.41.41 0 01.267.114l2.016 2.016a.347.347 0 01.114.267v.608c-.076.077-.114.19-.19.229zm5.593 5.44l-4.832-2.777c-.266-.152-.57-.19-.837-.152-.723.038-1.332.684-1.332 1.408v5.554c0 .8.647 1.408 1.408 1.408.799 0 1.446-.647 1.446-1.408v-3.12l2.7 1.56c.686.38 1.561.152 1.941-.533.419-.646.19-1.521-.494-1.94zm2.549-7.533l-2.701 1.56 2.7 1.56c.686.38.914 1.256.533 1.94-.38.685-1.255.913-1.94.533l-4.832-2.778a1.644 1.644 0 01-.647-.798c-.037-.153-.076-.305-.076-.457 0-.114.039-.228.039-.342.114-.343.342-.647.646-.837l4.832-2.778c.685-.38 1.56-.152 1.94.533.457.609.19 1.484-.494 1.864"
+      fill="#29B5E8"
+    />
+  </svg>
+);
 
 interface UploadIngestionViewProps {
   assessment: CustomerAssessment | null;
@@ -380,151 +419,11 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
           </div>
         </div>
 
-        {/* Passo 2: Seleção do Lake & Download do Script (Notebook) */}
-        <div className="space-y-3.5 pt-2 border-t border-slate-100">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
-                2
-              </span>
-              <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
-                {t("lakeSelectionTitle")}
-              </h2>
-            </div>
-            <span className="text-[10px] font-bold text-slate-400">
-              {t("lakeSelectionSub")}
-            </span>
-          </div>
-
-          {/* Seletor de Plataforma / Lake (BigQuery ativo, Databricks e Snowflake em breve) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Opção 1: Google BigQuery (Ativo / Padrão) */}
-            <div
-              onClick={() => setSelectedLake("bigquery")}
-              className={`relative rounded-2xl p-3.5 border-2 transition-all cursor-pointer ${
-                selectedLake === "bigquery"
-                  ? "border-[#074878] bg-blue-50/40 shadow-xs ring-2 ring-[#074878]/10"
-                  : "border-slate-200 hover:border-slate-300 bg-white"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-xl bg-[#074878]/10 text-[#074878] flex items-center justify-center font-black">
-                  <Database className="w-4 h-4 text-[#074878]" />
-                </div>
-                <span className="text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-[#074878]">
-                  {t("lakeBigQueryBadge")}
-                </span>
-              </div>
-              <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                <span>{t("lakeBigQuery")}</span>
-                {selectedLake === "bigquery" && (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                )}
-              </div>
-              <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                {t("lakeBigQueryDesc")}
-              </p>
-            </div>
-
-            {/* Opção 2: Databricks (Em breve) */}
-            <div
-              className="relative rounded-2xl p-3.5 border border-slate-200 bg-slate-50/60 opacity-60 cursor-not-allowed select-none"
-              title="Suporte a Databricks em desenvolvimento"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black text-xs">
-                  🧱
-                </div>
-                <span className="text-[9.5px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
-                  {t("lakeComingSoon")}
-                </span>
-              </div>
-              <div className="text-xs font-bold text-slate-700">
-                {t("lakeDatabricks")}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1 leading-snug">
-                Unity Catalog, Delta Lake e workspaces corporativos.
-              </p>
-            </div>
-
-            {/* Opção 3: Snowflake (Em breve) */}
-            <div
-              className="relative rounded-2xl p-3.5 border border-slate-200 bg-slate-50/60 opacity-60 cursor-not-allowed select-none"
-              title="Suporte a Snowflake em desenvolvimento"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-black text-xs">
-                  ❄️
-                </div>
-                <span className="text-[9.5px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
-                  {t("lakeComingSoon")}
-                </span>
-              </div>
-              <div className="text-xs font-bold text-slate-700">
-                {t("lakeSnowflake")}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1 leading-snug">
-                Snowflake Data Cloud, estágios e warehouses virtuais.
-              </p>
-            </div>
-          </div>
-
-          {/* Card de Destaque: Baixar o Script de Assessment (Notebook) */}
-          <div className="rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/60 p-4 sm:p-5 shadow-2xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#074878] text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <FileCode2 className="w-5 h-5" />
-                </div>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
-                      {t("downloadScriptTitle")}
-                    </h3>
-                    <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      BigQuery Studio Ready
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 max-w-xl leading-relaxed">
-                    {t("downloadScriptDesc")}
-                  </p>
-                  <div className="flex items-center gap-3 pt-1 text-[10px] text-slate-500 font-medium">
-                    <span className="inline-flex items-center gap-1 font-mono text-slate-700">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      gcp_enterprise_metadata_assessment.ipynb
-                    </span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline text-slate-400">Tamanho: ~152 KB</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Botão para Baixar o Script na Máquina do Usuário */}
-              <div className="flex flex-col sm:items-end gap-1.5 shrink-0 pt-1 sm:pt-0">
-                <button
-                  type="button"
-                  onClick={handleDownloadNotebook}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#074878] hover:bg-[#053456] active:scale-[0.98] text-white text-xs font-bold shadow-xs hover:shadow transition-all cursor-pointer whitespace-nowrap"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{t("downloadScriptBtn")}</span>
-                </button>
-                {downloadSuccess && (
-                  <span className="text-[10px] font-bold text-emerald-700 animate-in fade-in duration-150 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    <span>{t("downloadScriptSuccess")}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Passo 3: Dropzone de Arquivo ZIP */}
+        {/* Passo 2: Dropzone de Arquivo ZIP */}
         <div className="space-y-3 pt-2 border-t border-slate-100">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-[#074878] text-white text-[11px] font-black flex items-center justify-center">
-              3
+              2
             </span>
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-700">
               {t("metadataZipTitle")}
@@ -626,6 +525,151 @@ export const UploadIngestionView: React.FC<UploadIngestionViewProps> = ({
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>{t("trySamplePackage")}</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. NOVO TILE: Data Lake de Origem & Download do Script de Assessment (Notebook) */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-[#074878]/10 text-[#074878] flex items-center justify-center font-black">
+                <Database className="w-4 h-4 text-[#074878]" />
+              </div>
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+                {t("lakeSelectionTitle")}
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {t("lakeSelectionSub")}
+            </p>
+          </div>
+          <span className="text-[10.5px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200/80 self-start sm:self-auto">
+            Preparação & Extração
+          </span>
+        </div>
+
+        {/* Seletor de Plataforma / Lake com Logos Oficiais (GCP, Databricks, Snowflake) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {/* Opção 1: Google BigQuery (Logo Oficial GCP) */}
+          <div
+            onClick={() => setSelectedLake("bigquery")}
+            className={`relative rounded-2xl p-4 border-2 transition-all cursor-pointer ${
+              selectedLake === "bigquery"
+                ? "border-[#074878] bg-blue-50/40 shadow-xs ring-2 ring-[#074878]/10"
+                : "border-slate-200 hover:border-slate-300 bg-white"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0">
+                <GoogleCloudIcon size={24} />
+              </div>
+              <span className="text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-[#074878]">
+                {t("lakeBigQueryBadge")}
+              </span>
+            </div>
+            <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+              <span>{t("lakeBigQuery")}</span>
+              {selectedLake === "bigquery" && (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              )}
+            </div>
+            <p className="text-[10.5px] text-slate-500 mt-1.5 leading-relaxed">
+              {t("lakeBigQueryDesc")}
+            </p>
+          </div>
+
+          {/* Opção 2: Databricks (Logo Oficial Databricks) */}
+          <div
+            className="relative rounded-2xl p-4 border border-slate-200 bg-slate-50/60 opacity-65 cursor-not-allowed select-none"
+            title="Suporte a Databricks em desenvolvimento"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0">
+                <DatabricksIcon size={22} />
+              </div>
+              <span className="text-[9.5px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                {t("lakeComingSoon")}
+              </span>
+            </div>
+            <div className="text-xs font-bold text-slate-700">
+              {t("lakeDatabricks")}
+            </div>
+            <p className="text-[10.5px] text-slate-400 mt-1.5 leading-relaxed">
+              Unity Catalog, Delta Lake e workspaces corporativos.
+            </p>
+          </div>
+
+          {/* Opção 3: Snowflake (Logo Oficial Snowflake) */}
+          <div
+            className="relative rounded-2xl p-4 border border-slate-200 bg-slate-50/60 opacity-65 cursor-not-allowed select-none"
+            title="Suporte a Snowflake em desenvolvimento"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0">
+                <SnowflakeIcon size={22} />
+              </div>
+              <span className="text-[9.5px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                {t("lakeComingSoon")}
+              </span>
+            </div>
+            <div className="text-xs font-bold text-slate-700">
+              {t("lakeSnowflake")}
+            </div>
+            <p className="text-[10.5px] text-slate-400 mt-1.5 leading-relaxed">
+              Snowflake Data Cloud, estágios e warehouses virtuais.
+            </p>
+          </div>
+        </div>
+
+        {/* Card em Destaque: Baixar o Script de Assessment (Notebook) - Perfeitamente Contido sem Estouro */}
+        <div className="rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/60 p-4 sm:p-6 shadow-2xs space-y-4 overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5 flex-1 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-[#074878] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <FileCode2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                    {t("downloadScriptTitle")}
+                  </h4>
+                  <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    BigQuery Studio Ready
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  {t("downloadScriptDesc")}
+                </p>
+                <div className="flex items-center gap-3 pt-1 text-[10px] text-slate-500 font-medium flex-wrap">
+                  <span className="inline-flex items-center gap-1 font-mono text-slate-700 bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/60">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    gcp_enterprise_metadata_assessment.ipynb
+                  </span>
+                  <span className="text-slate-400">•</span>
+                  <span className="text-slate-500">Tamanho: ~152 KB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão para Baixar o Script na Máquina do Usuário - Perfeitamente Ajustado Dentro do Tile */}
+            <div className="flex flex-col sm:items-end gap-1.5 shrink-0 pt-2 lg:pt-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleDownloadNotebook}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#074878] hover:bg-[#053456] active:scale-[0.98] text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4 shrink-0" />
+                <span>{t("downloadScriptBtn")}</span>
+              </button>
+              {downloadSuccess && (
+                <span className="text-[10px] font-bold text-emerald-700 animate-in fade-in duration-150 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>{t("downloadScriptSuccess")}</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
