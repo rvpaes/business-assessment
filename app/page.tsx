@@ -99,9 +99,13 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
             totalColumns: latest.totalColumns,
             documentedColumns: Math.round(latest.totalColumns * (latest.docPercentage / 100)),
             docPercentage: latest.docPercentage,
-            gcsArchiveUri: latest.gcsArchiveUri || ""
+            gcsArchiveUri: latest.gcsArchiveUri || "",
+            dataplexScansCount: latest.dataplexScansCount || 1,
+            propertyGraphsCount: latest.propertyGraphsCount || 1,
+            dataAgentsCount: latest.dataAgentsCount || 1,
+            summaryMarkdown: latest.summaryMarkdown || ""
           });
-          setTopUseCases(getCustomerUseCases(latest.name));
+          setTopUseCases(getCustomerUseCases(latest.name, latest.industry));
           const casesRes = await fetch(`/api/bigquery/graph?customerName=${encodeURIComponent(latest.name)}`);
           const casesJson = await casesRes.json();
           if (casesJson.topTablesSample && casesJson.topTablesSample.length > 0) {

@@ -653,23 +653,766 @@ export const AMBEV_USE_CASES: ExtendedUseCase[] = [
   }
 ];
 
-// 5. Função de Resolução Dinâmica de Casos de Uso por Cliente / Indústria
-export function getCustomerUseCases(customerNameOrId: string): ExtendedUseCase[] {
-  const normalized = (customerNameOrId || "").toLowerCase();
 
-  if (normalized.includes("digio")) {
-    return DIGIO_USE_CASES;
+// =========================================================================
+// 5. Casos de Uso para Varejo & E-commerce (ex: Magazine Luiza, Mercado Livre, etc.)
+// =========================================================================
+export const RETAIL_USE_CASES: ExtendedUseCase[] = [
+  {
+    useCaseId: "uc_retail_01_nba_recommendations",
+    assessmentId: "asm_retail_2026",
+    rank: 1,
+    title: "Motor de Next-Best-Offer e Hiperpersonalização em Tempo Real no App/Web",
+    category: "AI/ML Preditivo & Recomendações",
+    businessProblem: "Taxa de conversão estagnada e abandono de carrinho de 68% devido a vitrines estáticas e recomendações genéricas não contextualizadas com o momento de compra do cliente.",
+    solutionDescription: "Mecanismo de embeddings de produtos e clientes com BigQuery Vector Search e Vertex AI Gemini 3.8 Flash, calculando propensão de compra e personalizando vitrines em <80ms.",
+    businessCaseRoi: "Aumento de +18% na taxa de conversão online gerando +$4.300.000/ano em receita incremental com payback em 1.1 meses.",
+    financialGainEstimateUsd: 4300000,
+    gcpMonthlyCostUsd: 12400,
+    costBreakdown: { bigqueryUsd: 6400, vertexAiUsd: 4300, cloudRunUsd: 1200, storageUsd: 500 },
+    requiredTables: ["pedidos_vendas", "navegacao_clickstream", "catalogo_produtos", "perfil_clientes"],
+    requiredColumns: ["cliente_id", "produto_id", "categoria", "valor_carrinho", "tempo_sessao", "status_compra"],
+    guardrails: "Filtro de diversidade de catálogo e restrição de exibição de itens fora de estoque.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Implementar BigQuery Continuous Queries para capturar eventos de navegação em tempo real e atualizar vetores no Vertex AI Feature Store.",
+    gcpExpansionOpportunity: "BigQuery Slots dedicados e Vertex AI Vector Search com bilhões de buscas mensais.",
+    paybackMonths: 1.1
+  },
+  {
+    useCaseId: "uc_retail_02_dynamic_pricing",
+    assessmentId: "asm_retail_2026",
+    rank: 2,
+    title: "Precificação Dinâmica Competitiva & Otimização de Elasticidade por Praça",
+    category: "Inteligência Comercial & BigQuery ML",
+    businessProblem: "Perda de margem bruta por precificação inflexível frente a promoções agressivas da concorrência e desconsideração da elasticidade de preço regional.",
+    solutionDescription: "Modelo de elasticidade-preço com BigQuery ML cruzando dados de concorrência, histórico de sell-out, estoque disponível e custos de frete por microrregião.",
+    businessCaseRoi: "Expansão de 1.8 ponto percentual na margem bruta, representando +$3.600.000/ano em lucro líquido operacional com payback em 1.2 meses.",
+    financialGainEstimateUsd: 3600000,
+    gcpMonthlyCostUsd: 9800,
+    costBreakdown: { bigqueryUsd: 5200, vertexAiUsd: 3200, cloudRunUsd: 950, storageUsd: 450 },
+    requiredTables: ["historico_precos_concorrentes", "pedidos_vendas", "custos_logisticos_cep", "estoque_lojas_cds"],
+    requiredColumns: ["sku_id", "preco_praticado", "preco_concorrente", "regiao_cep", "elasticidade_estimada"],
+    guardrails: "Teto e piso de margem mínima invioláveis garantidos por regras determinísticas no Cloud Run.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Automação de repricing com pipeline de dados particionado por hora no BigQuery.",
+    gcpExpansionOpportunity: "Cloud Run jobs em alta escala integrados ao ERP para atualização contínua de preços.",
+    paybackMonths: 1.2
+  },
+  {
+    useCaseId: "uc_retail_03_omnichannel_demand",
+    assessmentId: "asm_retail_2026",
+    rank: 3,
+    title: "Previsão de Demanda Omnicanal & Alocação Inteligente em Lojas e CDs",
+    category: "Supply Chain & S&OP",
+    businessProblem: "Ruptura de estoque de 14% em produtos de alta rotatividade enquanto lojas físicas acumulam itens encalhados, inflacionando o capital de giro.",
+    solutionDescription: "Modelagem preditiva hierárquica com BigQuery ML (ARIMA_PLUS) e Vertex AI, considerando sazonalidade, eventos comerciais (Black Friday) e prazos de ressuprimento.",
+    businessCaseRoi: "Redução de 35% nas rupturas e liberação de $2.900.000/ano em capital de giro com payback em 1.4 meses.",
+    financialGainEstimateUsd: 2900000,
+    gcpMonthlyCostUsd: 8500,
+    costBreakdown: { bigqueryUsd: 4500, vertexAiUsd: 2800, cloudRunUsd: 800, storageUsd: 400 },
+    requiredTables: ["estoque_lojas_cds", "pedidos_vendas", "lead_time_fornecedores", "calendario_promocional"],
+    requiredColumns: ["sku_id", "loja_id", "cd_origem", "demanda_prevista", "estoque_minimo_seguranca"],
+    guardrails: "Validação cruzada com histórico de 3 anos e detecção de anomalias para evitar superabastecimento.",
+    confidenceScore: 0.94,
+    status: "VALIDATED",
+    keyImprovement: "Otimização de transferências entre lojas (ship-from-store) com BigQuery GIS.",
+    gcpExpansionOpportunity: "Ingestão em streaming de inventário de 1.000+ lojas no BigQuery Storage Write API.",
+    paybackMonths: 1.4
+  },
+  {
+    useCaseId: "uc_retail_04_churn_prevention",
+    assessmentId: "asm_retail_2026",
+    rank: 4,
+    title: "Detecção Precoce de Churn de Clientes & Campanhas de Reengajamento",
+    category: "CRM & Retenção de Clientes",
+    businessProblem: "Inatividade progressiva de clientes recorrentes sem identificação prévia pelo marketing, elevando o Custo de Aquisição de Clientes (CAC).",
+    solutionDescription: "Classificação preditiva de risco de churn com BigQuery ML (BOOSTED_TREE_CLASSIFIER) acionando cupons e réguas de reengajamento via Cloud Run e Braze/Salesforce.",
+    businessCaseRoi: "Recuperação de 12% dos clientes em risco de inatividade, preservando +$820.000/ano em LTV com payback em 1.5 meses.",
+    financialGainEstimateUsd: 820000,
+    gcpMonthlyCostUsd: 1600,
+    costBreakdown: { bigqueryUsd: 850, vertexAiUsd: 500, cloudRunUsd: 180, storageUsd: 70 },
+    requiredTables: ["perfil_clientes", "pedidos_vendas", "engajamento_campanhas_crm"],
+    requiredColumns: ["cliente_id", "dias_desde_ultima_compra", "frequencia_historica", "score_churn"],
+    guardrails: "Limitação de envio de notificações para evitar fadiga de comunicação (governança de contato).",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Scores de propensão recalculados diariamente em batch serverless de baixo custo no BigQuery.",
+    gcpExpansionOpportunity: "Ativação de audiências first-party no Google Ad Manager e BigQuery Data Clean Rooms.",
+    paybackMonths: 1.5
+  },
+  {
+    useCaseId: "uc_retail_05_sku_profitability",
+    assessmentId: "asm_retail_2026",
+    rank: 5,
+    title: "FinOps Comercial: Rentabilidade Real por SKU e Eficiência de Retail Media",
+    category: "FinOps & Rentabilidade de Categorias",
+    businessProblem: "Dificuldade em mensurar a lucratividade líquida real de cada produto após descontos, comissões de marketplace, devoluções e custos de frete.",
+    solutionDescription: "Datalake analítico no BigQuery consolidando todas as linhas de receita e despesas por transação, calculando a margem de contribuição líquida exata por SKU.",
+    businessCaseRoi: "Descontinuação ou renegociação de SKUs deficitários com ganho de +$690.000/ano no EBITDA com payback em 1.6 meses.",
+    financialGainEstimateUsd: 690000,
+    gcpMonthlyCostUsd: 1200,
+    costBreakdown: { bigqueryUsd: 650, vertexAiUsd: 350, cloudRunUsd: 140, storageUsd: 60 },
+    requiredTables: ["pedidos_vendas", "tabela_comissoes_fornecedores", "custos_logisticos_cep", "devolucoes_logistica_reversa"],
+    requiredColumns: ["sku_id", "receita_liquida", "custo_cmv", "custo_frete", "margem_contribuicao_pct"],
+    guardrails: "Validação contábil com ERP e fechamento mensal auditado no Knowledge Catalog.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Dashboards executivos responsivos com consultas cacheadas em BI Engine.",
+    gcpExpansionOpportunity: "BigQuery BI Engine para consultas sub-segundo de diretores comerciais.",
+    paybackMonths: 1.6
+  },
+  {
+    useCaseId: "uc_retail_06_conversational_buyers",
+    assessmentId: "asm_retail_2026",
+    rank: 6,
+    title: "Data Agent Conversacional para Compradores e Gestores de Categoria",
+    category: "GenAI & BigQuery Data Agents",
+    businessProblem: "Compradores levam horas cruzando planilhas manuais para negociar pedidos com a indústria antes de reuniões com fornecedores.",
+    solutionDescription: "BigQuery Data Agent alimentado por Gemini 3.8 Flash e Knowledge Catalog, respondendo perguntas como 'Qual fornecedor teve maior atraso de entrega em SP no último mês?'.",
+    businessCaseRoi: "Economia de 3.200 horas de analistas por ano e melhores negociações com a indústria gerando +$540.000/ano com payback em 1.7 meses.",
+    financialGainEstimateUsd: 540000,
+    gcpMonthlyCostUsd: 950,
+    costBreakdown: { bigqueryUsd: 480, vertexAiUsd: 340, cloudRunUsd: 80, storageUsd: 50 },
+    requiredTables: ["pedidos_vendas", "catalogo_produtos", "desempenho_fornecedores_sla"],
+    requiredColumns: ["fornecedor_id", "sla_entrega_pct", "volume_comprado", "ruptura_gerada"],
+    guardrails: "Respostas restritas estritamente aos dados do catálogo sem alucinação de indicadores.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Adoção da API nativa BigQuery Data Agent com Grounding em metadados corporativos.",
+    gcpExpansionOpportunity: "Licenciamento de Data Agents para centenas de gerentes de loja e compradores.",
+    paybackMonths: 1.7
   }
-  if (normalized.includes("nubank") || normalized.includes("fintech") || normalized.includes("banco") || normalized.includes("financeir")) {
-    return NUBANK_USE_CASES;
+];
+
+// =========================================================================
+// 6. Casos de Uso para Manufatura, Siderurgia & Indústria (ex: Embraer, Gerdau, Suzano, etc.)
+// =========================================================================
+export const MANUFACTURING_USE_CASES: ExtendedUseCase[] = [
+  {
+    useCaseId: "uc_mfg_01_oee_realtime",
+    assessmentId: "asm_mfg_2026",
+    rank: 1,
+    title: "OEE Preditivo em Tempo Real & Prevenção de Paradas de Linha Industrial",
+    category: "IoT Industrial & Streaming Analytics",
+    businessProblem: "Paradas não programadas em linhas de laminação e montagem causam perdas massivas de produtividade e custo elevado de horas-máquina ociosas.",
+    solutionDescription: "Ingestão contínua de sensores industriais (PLCs/SCADA via MQTT) no BigQuery Continuous Queries, calculando OEE (Disponibilidade, Performance e Qualidade) a cada 5 segundos.",
+    businessCaseRoi: "Elevação de 4.2 pontos no OEE industrial com economia direta de +$4.600.000/ano em paradas evitadas com payback em 1.0 mês.",
+    financialGainEstimateUsd: 4600000,
+    gcpMonthlyCostUsd: 13200,
+    costBreakdown: { bigqueryUsd: 7200, vertexAiUsd: 4300, cloudRunUsd: 1200, storageUsd: 500 },
+    requiredTables: ["telemetria_sensores_iot", "ordens_producao_sap", "historico_paradas_maquinas"],
+    requiredColumns: ["maquina_id", "temperatura", "vibracao_rms", "velocidade_rpm", "status_linha", "oee_atual"],
+    guardrails: "Tratamento de outliers de leitura de sensores e idempotência na gravação de telemetria.",
+    confidenceScore: 0.97,
+    status: "VALIDATED",
+    keyImprovement: "Processamento de telemetria de sensores industriais em escala petabyte com BigQuery Storage Write API.",
+    gcpExpansionOpportunity: "BigQuery Slots dedicados + Vertex AI Endpoints dedicados para inferência de alta frequência.",
+    paybackMonths: 1.0
+  },
+  {
+    useCaseId: "uc_mfg_02_predictive_maintenance",
+    assessmentId: "asm_mfg_2026",
+    rank: 2,
+    title: "Manutenção Preditiva Causal de Ativos Críticos e Motores Industriais",
+    category: "Causal AI & Engenharia de Confiabilidade",
+    businessProblem: "Falhas catastróficas em redutores, compressores e fornos com custos milionários de manutenção corretiva emergencial e quebra de componentes caros.",
+    solutionDescription: "Modelos causais de sobrevida (Survival Analysis) no Vertex AI prevendo falha iminente com 72 horas de antecedência, disparando ordem automática no SAP PM.",
+    businessCaseRoi: "Redução de 44% no custo de manutenção corretiva gerando economia de +$3.800.000/ano com payback em 1.1 meses.",
+    financialGainEstimateUsd: 3800000,
+    gcpMonthlyCostUsd: 10500,
+    costBreakdown: { bigqueryUsd: 5600, vertexAiUsd: 3500, cloudRunUsd: 950, storageUsd: 450 },
+    requiredTables: ["historico_manutencoes_sap", "telemetria_sensores_iot", "catalogo_ativos_equipamentos"],
+    requiredColumns: ["equipamento_id", "horas_operacao", "nivel_desgaste_estimado", "probabilidade_falha_72h"],
+    guardrails: "Supervisão humana obrigatória da equipe de engenharia para ordens de alto custo.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Integração bidirecional do Vertex AI com SAP Plant Maintenance via Cloud Run API.",
+    gcpExpansionOpportunity: "Cluster de monitoramento contínuo para milhares de equipamentos em múltiplas plantas.",
+    paybackMonths: 1.1
+  },
+  {
+    useCaseId: "uc_mfg_03_energy_efficiency",
+    assessmentId: "asm_mfg_2026",
+    rank: 3,
+    title: "Otimização de Rendimento Térmico & Eficiência Energética de Fornos",
+    category: "Sustentabilidade & Redução de Custos",
+    businessProblem: "Consumo excessivo de gás natural e energia elétrica em fornos e caldeiras industriais devido a ajustes empíricos manuais dos operadores de turno.",
+    solutionDescription: "Otimizador em tempo real com BigQuery ML calibrando a curva estequiométrica de combustão e parâmetros térmicos conforme o lote de matéria-prima.",
+    businessCaseRoi: "Redução de 6.5% na conta de gás e energia, economizando +$2.800.000/ano e reduzindo pegada de CO2 com payback em 1.3 meses.",
+    financialGainEstimateUsd: 2800000,
+    gcpMonthlyCostUsd: 8200,
+    costBreakdown: { bigqueryUsd: 4400, vertexAiUsd: 2600, cloudRunUsd: 800, storageUsd: 400 },
+    requiredTables: ["consumo_gas_eletricidade", "parametros_quimicos_materia_prima", "qualidade_lote_final"],
+    requiredColumns: ["forno_id", "consumo_m3_hora", "temperatura_zona_3", "eficiencia_combustao_pct"],
+    guardrails: "Limites de segurança térmica controlados por intertravamento físico em hardware.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Gêmeo digital térmico executado no BigQuery integrado a dashboards Looker em tempo real.",
+    gcpExpansionOpportunity: "Armazenamento em escala petabyte de telemetria de processos para auditorias ambientais.",
+    paybackMonths: 1.3
+  },
+  {
+    useCaseId: "uc_mfg_04_master_production_sop",
+    assessmentId: "asm_mfg_2026",
+    rank: 4,
+    title: "Planejamento Mestre de Produção (MPS) & S&OP Integrado Multinível",
+    category: "Supply Chain & S&OP",
+    businessProblem: "Descompasso entre pedidos em carteira e capacidade instalada das plantas fabris, gerando atrasos em entregas para clientes industriais B2B.",
+    solutionDescription: "Otimizador matemático de alocação de capacidade de produção no BigQuery cruzando disponibilidade de linhas, matriz de setup e carteira de pedidos.",
+    businessCaseRoi: "Melhoria de 16% no índice On-Time In-Full (OTIF) com redução de penalidades contratuais em +$880.000/ano com payback em 1.5 meses.",
+    financialGainEstimateUsd: 880000,
+    gcpMonthlyCostUsd: 1700,
+    costBreakdown: { bigqueryUsd: 900, vertexAiUsd: 550, cloudRunUsd: 180, storageUsd: 70 },
+    requiredTables: ["ordens_producao_sap", "carteira_pedidos_b2b", "capacidade_linhas_fabris"],
+    requiredColumns: ["pedido_id", "planta_id", "linha_id", "data_entrega_acordada", "otif_status"],
+    guardrails: "Regras de restrição de setup mínimo entre famílias de produtos para evitar trocas constantes.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Substituição de planilhas de programação fabril por modelos analíticos executados no BigQuery.",
+    gcpExpansionOpportunity: "Consultas analíticas complexas integrando múltiplas plantas globais.",
+    paybackMonths: 1.5
+  },
+  {
+    useCaseId: "uc_mfg_05_quality_scrap_reduction",
+    assessmentId: "asm_mfg_2026",
+    rank: 5,
+    title: "Inspeção Automatizada de Qualidade & Redução de Sucata com Computer Vision",
+    category: "Qualidade Industrial & Visão Computacional",
+    businessProblem: "Detecção tardia de defeitos superficiais em bobinas, chapas ou peças usinadas, gerando toneladas de sucata e retrabalho fabril dispendioso.",
+    solutionDescription: "Modelos de Vertex AI Vision inspecionando imagens de câmeras de alta resolução na linha, detectando microtrincas e defeitos em milissegundos.",
+    businessCaseRoi: "Redução de 38% no volume de refugo e sucata gerando ganho líquido de +$720.000/ano com payback em 1.6 meses.",
+    financialGainEstimateUsd: 720000,
+    gcpMonthlyCostUsd: 1300,
+    costBreakdown: { bigqueryUsd: 680, vertexAiUsd: 420, cloudRunUsd: 140, storageUsd: 60 },
+    requiredTables: ["registros_inspecao_qualidade", "lotes_produzidos", "defeitos_classificados"],
+    requiredColumns: ["lote_id", "tipo_defeito", "confianca_modelo", "acao_descarte_retrabalho"],
+    guardrails: "Classificação dupla em peças com score de confiança limítrofe com envio para inspetor humano.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Pipeline de anotação e retraining contínuo de modelos no Vertex AI AutoML.",
+    gcpExpansionOpportunity: "Google Cloud Storage de arquivo para milhões de imagens de inspeção com Cloud CDN.",
+    paybackMonths: 1.6
+  },
+  {
+    useCaseId: "uc_mfg_06_conversational_plant",
+    assessmentId: "asm_mfg_2026",
+    rank: 6,
+    title: "Data Agent de Engenharia & Confiabilidade para Gerentes de Planta",
+    category: "GenAI & BigQuery Data Agents",
+    businessProblem: "Engenheiros de confiabilidade gastam horas compilando dados de falhas de múltiplos sistemas para auditorias de segurança e relatórios mensais.",
+    solutionDescription: "Data Agent corporativo integrado ao BigQuery e Knowledge Catalog respondendo perguntas sobre causa raiz de falhas e histórico de ordens em segundos.",
+    businessCaseRoi: "Aumento de 22% na produtividade da equipe de engenharia e rápida resolução de incidentes gerando +$580.000/ano com payback em 1.7 meses.",
+    financialGainEstimateUsd: 580000,
+    gcpMonthlyCostUsd: 980,
+    costBreakdown: { bigqueryUsd: 490, vertexAiUsd: 350, cloudRunUsd: 90, storageUsd: 50 },
+    requiredTables: ["historico_manutencoes_sap", "telemetria_sensores_iot", "catalogo_ativos_equipamentos"],
+    requiredColumns: ["ordem_manutencao_id", "causa_raiz_falha", "tempo_reparo_mttr", "custo_total"],
+    guardrails: "Rigorosa auditoria de permissões por planta industrial garantida por BigQuery RLS.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Uso do BigQuery Property Graph para navegar entre ativos pais e componentes filhos.",
+    gcpExpansionOpportunity: "Acesso por dispositivos móveis industriais para centenas de técnicos de campo.",
+    paybackMonths: 1.7
   }
-  if (normalized.includes("ambev") || normalized.includes("cpg") || normalized.includes("bebidas") || normalized.includes("consumo")) {
-    return AMBEV_USE_CASES;
+];
+
+// =========================================================================
+// 7. Casos de Uso para Logística, Frotas & Supply Chain (ex: JSL, Rumo, Localiza, etc.)
+// =========================================================================
+export const LOGISTICS_USE_CASES: ExtendedUseCase[] = [
+  {
+    useCaseId: "uc_log_01_dynamic_routing_gis",
+    assessmentId: "asm_log_2026",
+    rank: 1,
+    title: "Roteirização Dinâmica de Frotas & Otimização de Última Milha via BigQuery GIS",
+    category: "BigQuery GIS & Otimização Espacial",
+    businessProblem: "Rotas fixas ineficientes sujeitas a congestionamentos urbanos, gerando alta quilometragem rodada e consumo excessivo de diesel.",
+    solutionDescription: "Otimizador de rotas com BigQuery GIS (ST_DISTANCE, ST_MAKELINE) e algoritmos heurísticos no Cloud Run calculando sequências ideais de paradas em tempo real.",
+    businessCaseRoi: "Redução de 14% na distância total percorrida economizando +$4.400.000/ano em combustível e manutenção com payback em 1.1 meses.",
+    financialGainEstimateUsd: 4400000,
+    gcpMonthlyCostUsd: 12100,
+    costBreakdown: { bigqueryUsd: 6300, vertexAiUsd: 4100, cloudRunUsd: 1200, storageUsd: 500 },
+    requiredTables: ["telemetria_gps_veiculos", "entregas_pedidos_paradas", "malha_viaria_gis_sp"],
+    requiredColumns: ["veiculo_id", "coordenadas_ponto", "horario_estimado_chegada", "ordem_entrega", "consumo_diesel_estimado"],
+    guardrails: "Respeito a janelas horárias de descarregamento e restrições de circulação de caminhões municipais.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Uso de funções espaciais nativas do BigQuery GIS para processamento vetorial de milhões de waypoints.",
+    gcpExpansionOpportunity: "Processamento de telemetria GPS de 50.000+ veículos em tempo real.",
+    paybackMonths: 1.1
+  },
+  {
+    useCaseId: "uc_log_02_tower_eta",
+    assessmentId: "asm_log_2026",
+    rank: 2,
+    title: "Torre de Controle Preditiva de ETA & Gestão Inteligente de Pátios e Docas",
+    category: "Streaming & Visibilidade em Tempo Real",
+    businessProblem: "Filas de carretas na entrada de armazéns e atrasos imprevistos em docas, gerando custos de estadia e insatisfação de contratantes.",
+    solutionDescription: "Torre de controle com BigQuery Streaming prevendo a hora exata de chegada (ETA) dos veículos e escalonando docas automaticamente.",
+    businessCaseRoi: "Queda de 42% no tempo de espera em pátio com economia direta de +$3.500.000/ano em taxas de estadia com payback em 1.2 meses.",
+    financialGainEstimateUsd: 3500000,
+    gcpMonthlyCostUsd: 9600,
+    costBreakdown: { bigqueryUsd: 5100, vertexAiUsd: 3100, cloudRunUsd: 950, storageUsd: 450 },
+    requiredTables: ["agendamento_docas_armazem", "telemetria_gps_veiculos", "historico_tempos_descarga"],
+    requiredColumns: ["viagem_id", "doca_alocada", "eta_previsto", "tempo_fila_minutos", "status_descarga"],
+    guardrails: "Reagendamento automático de doca se o atraso do caminhão ultrapassar 30 minutos.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Migração de polling batch para BigQuery Continuous Queries para alertas de atraso em tempo real.",
+    gcpExpansionOpportunity: "Visualização em tempo real na torre de controle conectando dezenas de CDs.",
+    paybackMonths: 1.2
+  },
+  {
+    useCaseId: "uc_log_03_fleet_telematics_safety",
+    assessmentId: "asm_log_2026",
+    rank: 3,
+    title: "Telemetria Avançada de Direção: Prevenção de Sinistros e Economia de Diesel",
+    category: "Telemetria IoT & Segurança Viária",
+    businessProblem: "Comportamentos de risco ao volante (frenagens bruscas, excesso de velocidade) elevam o índice de acidentes rodoviários e o prêmio de seguro da frota.",
+    solutionDescription: "Processamento de telemetria CAN-bus de acelerômetros no BigQuery, gerando score contínuo de direção defensiva e premiação para motoristas.",
+    businessCaseRoi: "Redução de 29% na sinistralidade e 8% no consumo de combustível gerando +$2.900.000/ano com payback em 1.4 meses.",
+    financialGainEstimateUsd: 2900000,
+    gcpMonthlyCostUsd: 8400,
+    costBreakdown: { bigqueryUsd: 4500, vertexAiUsd: 2700, cloudRunUsd: 800, storageUsd: 400 },
+    requiredTables: ["telemetria_canbus_veiculos", "cadastro_motoristas", "historico_sinistros_seguro"],
+    requiredColumns: ["motorista_id", "veiculo_id", "frenagens_bruscas_km", "excesso_velocidade_segundos", "score_seguranca"],
+    guardrails: "Feedback educativo ao motorista sem exposição pública de dados individuais (LGPD).",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Particionamento diário de telemetria com BigQuery Time-Unit Partitioning para controle estrito de custos.",
+    gcpExpansionOpportunity: "Integração direta com seguradoras em data clean rooms no BigQuery.",
+    paybackMonths: 1.4
+  },
+  {
+    useCaseId: "uc_log_04_fleet_maintenance",
+    assessmentId: "asm_log_2026",
+    rank: 4,
+    title: "Gestão do Ciclo de Vida & Manutenção Preditiva de Frotas/Vagões",
+    category: "AI/ML Preditivo de Ativos",
+    businessProblem: "Trocas prematuras ou atrasadas de pneus, freios e fluidos geram quebras nas rodovias e custos inflacionados de peças de reposição.",
+    solutionDescription: "Modelos preditivos de desgaste de componentes com BigQuery ML determinando o momento ótimo de revisão em oficina para cada placa/vagão.",
+    businessCaseRoi: "Economia de +$850.000/ano em compras de pneus e revisões desnecessárias com payback em 1.5 meses.",
+    financialGainEstimateUsd: 850000,
+    gcpMonthlyCostUsd: 1600,
+    costBreakdown: { bigqueryUsd: 850, vertexAiUsd: 500, cloudRunUsd: 180, storageUsd: 70 },
+    requiredTables: ["ordens_oficina_manutencao", "telemetria_gps_veiculos", "vida_util_componentes"],
+    requiredColumns: ["placa_veiculo", "km_rodados_total", "desgaste_pneu_mm", "km_proxima_revisao"],
+    guardrails: "Critérios de segurança mecânica mínima exigidos por lei estritamente respeitados.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Predições automáticas de manutenção geradas via BigQuery ML sem necessidade de cluster Spark externo.",
+    gcpExpansionOpportunity: "Conexão com fornecedores de peças e oficinas credenciadas.",
+    paybackMonths: 1.5
+  },
+  {
+    useCaseId: "uc_log_05_freight_audit",
+    assessmentId: "asm_log_2026",
+    rank: 5,
+    title: "FinOps de Transportes: Auditoria Automatizada de Fretes e Faturamento",
+    category: "FinOps & Conformidade Fiscal",
+    businessProblem: "Divergências contratuais em faturas de transportadoras terceirizadas e cobranças indevidas de taxas adicionais (GRIS, pedágio, reentrega).",
+    solutionDescription: "Conciliação algorítmica de Conhecimentos de Transporte Eletrônicos (CT-e) contra tabelas acordadas no BigQuery com extração de divergências.",
+    businessCaseRoi: "Recuperação de cobranças indevidas de frete no valor de +$710.000/ano com payback em 1.6 meses.",
+    financialGainEstimateUsd: 710000,
+    gcpMonthlyCostUsd: 1200,
+    costBreakdown: { bigqueryUsd: 650, vertexAiUsd: 350, cloudRunUsd: 140, storageUsd: 60 },
+    requiredTables: ["faturas_cte_recebidas", "tabelas_frete_contratadas", "comprovantes_entrega"],
+    requiredColumns: ["cte_chave", "valor_cobrado", "valor_calculado_contrato", "diferenca_glosa", "status_aprovacao"],
+    guardrails: "Glosas com contestação formal documentada para relacionamento saudável com parceiros.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Processamento de XMLs de CT-e em larga escala diretamente no BigQuery com funções JSON nativas.",
+    gcpExpansionOpportunity: "Validação fiscal contínua para milhares de transportadoras parceiras.",
+    paybackMonths: 1.6
+  },
+  {
+    useCaseId: "uc_log_06_conversational_dispatch",
+    assessmentId: "asm_log_2026",
+    rank: 6,
+    title: "Data Agent Conversacional para Torre de Controle & Gestão de Incidentes",
+    category: "GenAI & BigQuery Data Agents",
+    businessProblem: "Operadores da torre de controle perdem tempo navegando em múltiplos sistemas legados para responder status de cargas a clientes de grande porte.",
+    solutionDescription: "Data Agent conversacional com Gemini 3.8 Flash e BigQuery respondendo instantaneamente em linguagem natural onde está qualquer carga e se há risco de atraso.",
+    businessCaseRoi: "Economia operacional de 4.000 horas de atendimento e resposta em 5 segundos gerando +$550.000/ano em retenção de clientes com payback em 1.7 meses.",
+    financialGainEstimateUsd: 550000,
+    gcpMonthlyCostUsd: 920,
+    costBreakdown: { bigqueryUsd: 460, vertexAiUsd: 330, cloudRunUsd: 80, storageUsd: 50 },
+    requiredTables: ["telemetria_gps_veiculos", "entregas_pedidos_paradas", "incidentes_rodoviarios"],
+    requiredColumns: ["nota_fiscal_id", "cliente_nome", "status_rastreamento", "localizacao_atual", "atraso_minutos"],
+    guardrails: "Isolamento de dados por cliente contratante garantido via Row-Level Security no BigQuery.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "BigQuery Data Agent com Grounding em metadados do Knowledge Catalog.",
+    gcpExpansionOpportunity: "Disponibilização de autosserviço conversacional para clientes corporativos B2B.",
+    paybackMonths: 1.7
   }
-  if (normalized.includes("hypera") || normalized.includes("farma") || normalized.includes("saude") || normalized.includes("saúde")) {
-    return HYPERA_USE_CASES;
+];
+
+// =========================================================================
+// 8. Casos de Uso para Energia, Utilities & Óleo e Gás (ex: Petrobras, Raízen, CPFL, etc.)
+// =========================================================================
+export const ENERGY_USE_CASES: ExtendedUseCase[] = [
+  {
+    useCaseId: "uc_ene_01_load_forecasting",
+    assessmentId: "asm_ene_2026",
+    rank: 1,
+    title: "Previsão de Carga & Demanda em Subestações com BigQuery Time Series",
+    category: "AI/ML Preditivo & Séries Temporais",
+    businessProblem: "Penalidades regulatórias e compra de energia cara no mercado spot decorrentes de erros na previsão de despacho de carga elétrica por subestação.",
+    solutionDescription: "Modelos BigQuery ML ARIMA_PLUS combinando dados de medidores inteligentes (AMI), telemetria climática (Inmet) e sazonalidade regional.",
+    businessCaseRoi: "Redução de 32% nos desvios de programação de carga economizando +$4.800.000/ano em penalidades da ONS/CCEE com payback em 1.1 meses.",
+    financialGainEstimateUsd: 4800000,
+    gcpMonthlyCostUsd: 13500,
+    costBreakdown: { bigqueryUsd: 7400, vertexAiUsd: 4400, cloudRunUsd: 1200, storageUsd: 500 },
+    requiredTables: ["medicao_subestacoes_carga", "telemetria_meteorologica", "calendario_operacional"],
+    requiredColumns: ["subestacao_id", "timestamp", "demanda_ativa_mw", "temperatura_c", "previsao_carga_mw"],
+    guardrails: "Auditoria de dados faltantes de medidores com imputação probabilística no BigQuery.",
+    confidenceScore: 0.97,
+    status: "VALIDATED",
+    keyImprovement: "Execução distribuída de 10.000+ séries temporais paralelas com BigQuery ML.",
+    gcpExpansionOpportunity: "Processamento de telemetria de medição horária de milhões de consumidores.",
+    paybackMonths: 1.1
+  },
+  {
+    useCaseId: "uc_ene_02_non_technical_losses",
+    assessmentId: "asm_ene_2026",
+    rank: 2,
+    title: "Detecção Causal de Perdas Não Técnicas e Furtos em Medidores Inteligentes",
+    category: "Causal AI & Detecção de Fraudes",
+    businessProblem: "Perdas não técnicas (gatos e adulterações de medidores) sangram receitas de distribuidoras e sobrecarregam transformadores em áreas críticas.",
+    solutionDescription: "Detecção de anomalias no padrão de curva de carga com Autoencoders no Vertex AI cruzando dados geográficos e perfil socioeconômico via BigQuery GIS.",
+    businessCaseRoi: "Recuperação de +$3.900.000/ano em receitas de energia fraudada com acerto de fiscalização de 78% com payback em 1.2 meses.",
+    financialGainEstimateUsd: 3900000,
+    gcpMonthlyCostUsd: 10800,
+    costBreakdown: { bigqueryUsd: 5800, vertexAiUsd: 3600, cloudRunUsd: 950, storageUsd: 450 },
+    requiredTables: ["curva_carga_consumidores", "historico_inspecoes_fraude", "cadastro_unidades_consumidoras"],
+    requiredColumns: ["uc_id", "consumo_kwh_mes", "queda_abrupta_flag", "probabilidade_fraude", "status_fiscalizacao"],
+    guardrails: "Priorização de inspeção técnica baseada em evidências estatísticas sem viés discriminatório.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Otimização de rotas de equipes de fiscalização de campo com BigQuery GIS.",
+    gcpExpansionOpportunity: "BigQuery GIS processando topologia de rede de distribuição em alta resolução.",
+    paybackMonths: 1.2
+  },
+  {
+    useCaseId: "uc_ene_03_critical_assets_gis",
+    assessmentId: "asm_ene_2026",
+    rank: 3,
+    title: "Manutenção Preditiva de Linhas de Transmissão e Dutos com Imagens e GIS",
+    category: "BigQuery GIS & Visão Computacional",
+    businessProblem: "Vegetação próxima a faixas de servidão de linhas de transmissão causa desligamentos não programados e risco de queimadas florestais.",
+    solutionDescription: "Cruzamento de imagens de satélite e sobrevoos com drones no BigQuery GIS, calculando a distância tridimensional da copa de árvores em relação aos cabos.",
+    businessCaseRoi: "Evitação de interrupções de fornecimento e multas regulatórias no valor de +$3.100.000/ano com payback em 1.3 meses.",
+    financialGainEstimateUsd: 3100000,
+    gcpMonthlyCostUsd: 8900,
+    costBreakdown: { bigqueryUsd: 4800, vertexAiUsd: 2800, cloudRunUsd: 850, storageUsd: 450 },
+    requiredTables: ["geometria_linhas_transmissao", "deteccao_vegetacao_satelite", "historico_podas_campo"],
+    requiredColumns: ["torre_id", "vao_geometria", "distancia_vegetacao_m", "risco_desligamento", "prioridade_poda"],
+    guardrails: "Conformidade ambiental e plano de manejo florestal integrado aos chamados de poda.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Uso do BigQuery GIS e Vertex AI Vision para processamento geoespacial em larga escala.",
+    gcpExpansionOpportunity: "Armazenamento em Cloud Storage de centenas de terabytes de ortofotos e voos LiDAR.",
+    paybackMonths: 1.3
+  },
+  {
+    useCaseId: "uc_ene_04_energy_trading_acl",
+    assessmentId: "asm_ene_2026",
+    rank: 4,
+    title: "Otimização Preditiva de Portfólio de Energia no Mercado Livre (ACL)",
+    category: "Finanças Quantitativas & Trading",
+    businessProblem: "Exposição a volatilidade do PLD (Preço de Liquidação das Diferenças) em mesas de comercialização de energia gerando perdas em posições desbalanceadas.",
+    solutionDescription: "Simulações de Monte Carlo no BigQuery projetando cenários de afluência hídrica (ENA), preços futuros de energia e despacho térmico.",
+    businessCaseRoi: "Maximização de margem de trading e hedge financeiro gerando +$920.000/ano no resultado da comercializadora com payback em 1.5 meses.",
+    financialGainEstimateUsd: 920000,
+    gcpMonthlyCostUsd: 1800,
+    costBreakdown: { bigqueryUsd: 950, vertexAiUsd: 580, cloudRunUsd: 190, storageUsd: 80 },
+    requiredTables: ["contratos_compra_venda_energia", "historico_pld_ccee", "projecoes_afluencia_hidrica"],
+    requiredColumns: ["contrato_id", "volume_mwh", "preco_pld_previsto", "posicao_exposta_mw", "var_risco"],
+    guardrails: "Limites de exposição e VaR (Value at Risk) parametrizados por diretoria de risco.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Execução de cálculos estatísticos de matrizes de risco diretamente em SQL no BigQuery.",
+    gcpExpansionOpportunity: "BigQuery BI Engine para dashboards em tempo real na mesa de operações.",
+    paybackMonths: 1.5
+  },
+  {
+    useCaseId: "uc_ene_05_esg_carbon_compliance",
+    assessmentId: "asm_ene_2026",
+    rank: 5,
+    title: "Gestão Automatizada de Emissões de Carbono (ESG) & Compliance Regulatório",
+    category: "ESG & Governança de Dados",
+    businessProblem: "Cálculo manual e descentralizado de emissões de Escopo 1, 2 e 3 em múltiplas unidades industriais com alto risco de autuações e glosas ambientais.",
+    solutionDescription: "Motor analítico no BigQuery e Dataplex auditando dados de queima de combustíveis e geração de resíduos, com emissão automatizada de relatórios GHG Protocol.",
+    businessCaseRoi: "Economia de +$750.000/ano em auditorias externas e acesso a linhas de crédito verde subsidiadas com payback em 1.6 meses.",
+    financialGainEstimateUsd: 750000,
+    gcpMonthlyCostUsd: 1300,
+    costBreakdown: { bigqueryUsd: 700, vertexAiUsd: 410, cloudRunUsd: 130, storageUsd: 60 },
+    requiredTables: ["consumo_combustiveis_fossil", "fatores_emissao_ghg", "certificados_energia_renovavel"],
+    requiredColumns: ["planta_id", "tipo_fonte", "emissao_tco2e_calculada", "escopo_classificacao", "status_auditoria"],
+    guardrails: "Trilha de auditoria imutável com linhagem completa de dados no Knowledge Catalog.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Linhagem de ponta a ponta garantindo reprodutibilidade das métricas de sustentabilidade.",
+    gcpExpansionOpportunity: "Data Clean Room para compartilhamento seguro de metas de descarbonização com investidores.",
+    paybackMonths: 1.6
+  },
+  {
+    useCaseId: "uc_ene_06_conversational_grid",
+    assessmentId: "asm_ene_2026",
+    rank: 6,
+    title: "Data Agent Conversacional para Engenharia de Operações de Rede e Dutos",
+    category: "GenAI & BigQuery Data Agents",
+    businessProblem: "Engenheiros de operação perdem minutos preciosos durante blecautes cruzando diagramas unifilares e relatórios de manobra.",
+    solutionDescription: "BigQuery Data Agent alimentado por Gemini 3.8 Flash e Property Graph GQL, permitindo consultas instantâneas sobre interrupções e topologia elétrica.",
+    businessCaseRoi: "Redução do tempo médio de restabelecimento (DEC/FEC) com economia de +$590.000/ano em compensações de interrupção com payback em 1.7 meses.",
+    financialGainEstimateUsd: 590000,
+    gcpMonthlyCostUsd: 980,
+    costBreakdown: { bigqueryUsd: 490, vertexAiUsd: 350, cloudRunUsd: 90, storageUsd: 50 },
+    requiredTables: ["interrupcoes_fornecimento_dec", "topologia_rede_eletrica", "equipes_manobra_campo"],
+    requiredColumns: ["circuito_id", "consumidores_afetados", "causa_desligamento", "tempo_restabelecimento_minutos"],
+    guardrails: "Respostas restritas aos protocolos de manobra aprovados pelo centro de operações da rede (COR).",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Representação de redes elétricas em BigQuery Property Graph com travessia ISO GQL.",
+    gcpExpansionOpportunity: "Implementação de Data Agents corporativos para centros de operação 24/7.",
+    paybackMonths: 1.7
+  }
+];
+
+// =========================================================================
+// 9. Casos de Uso para Agronegócio & Bioenergia (ex: SLC Agrícola, Jalles Machado, etc.)
+// =========================================================================
+export const AGRO_USE_CASES: ExtendedUseCase[] = [
+  {
+    useCaseId: "uc_agro_01_crop_yield_satellite",
+    assessmentId: "asm_agro_2026",
+    rank: 1,
+    title: "Previsão de Produtividade Agrícola por Talhão com Imagens de Satélite no BigQuery GIS",
+    category: "BigQuery GIS & Sensoriamento Remoto",
+    businessProblem: "Estimativas imprecisas de safra e quebras pontuais não detectadas a tempo em fazendas extensas de grãos e cana-de-açúcar.",
+    solutionDescription: "Cruzamento de índices de vegetação (NDVI/EVI de satélites Sentinel/Landsat) no BigQuery GIS com histórico de adubação e dados climáticos.",
+    businessCaseRoi: "Identificação precoce de estresse hídrico/nutricional preservando +$4.700.000/ano em produtividade de colheita com payback em 1.1 meses.",
+    financialGainEstimateUsd: 4700000,
+    gcpMonthlyCostUsd: 12800,
+    costBreakdown: { bigqueryUsd: 6800, vertexAiUsd: 4300, cloudRunUsd: 1200, storageUsd: 500 },
+    requiredTables: ["talhoes_fazendas_gis", "indices_vegetacao_ndvi", "telemetria_estacoes_meteorologicas"],
+    requiredColumns: ["talhao_id", "cultura_tipo", "geometria_talhao", "ndvi_medio", "produtividade_estimada_sc_ha"],
+    guardrails: "Calibração de índices de satélite com amostragens físicas de solo e biomassa.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Processamento de dados raster e vetoriais em escala massiva usando BigQuery GIS.",
+    gcpExpansionOpportunity: "Ingestão de imagens de satélite e dados de telemetria para milhões de hectares.",
+    paybackMonths: 1.1
+  },
+  {
+    useCaseId: "uc_agro_02_machinery_routing",
+    assessmentId: "asm_agro_2026",
+    rank: 2,
+    title: "Otimização de Janela de Colheita e Roteirização de Maquinário Agrícola",
+    category: "Otimização Operacional & BigQuery GIS",
+    businessProblem: "Tratores e colhedoras ociosos ou com sobreposição de passadas em campo, gerando alto consumo de combustível e pisoteio de solo.",
+    solutionDescription: "Algoritmos de otimização no BigQuery GIS calculando trajetórias de tráfego controlado e sincronização de transbordos de grãos/cana.",
+    businessCaseRoi: "Redução de 12% no consumo de diesel e 15% nas perdas de colheita gerando +$3.600.000/ano com payback em 1.2 meses.",
+    financialGainEstimateUsd: 3600000,
+    gcpMonthlyCostUsd: 9900,
+    costBreakdown: { bigqueryUsd: 5300, vertexAiUsd: 3200, cloudRunUsd: 950, storageUsd: 450 },
+    requiredTables: ["telemetria_maquinario_can", "talhoes_fazendas_gis", "programacao_colheita_diaria"],
+    requiredColumns: ["maquina_id", "posicao_gps", "taxa_recolhimento_ton_h", "velocidade_kmh", "sobreposicao_flag"],
+    guardrails: "Respeito às condições de umidade de solo para evitar compactação severa.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Streaming de telemetria ISO-BUS/CAN diretamente para o BigQuery.",
+    gcpExpansionOpportunity: "Gerenciamento de frotas agrícolas de milhares de máquinas conectadas.",
+    paybackMonths: 1.2
+  },
+  {
+    useCaseId: "uc_agro_03_grain_storage_logistics",
+    assessmentId: "asm_agro_2026",
+    rank: 3,
+    title: "Gestão Preditiva de Estoque em Silos & Risco de Quebra de Safra",
+    category: "Supply Chain do Agro & Séries Temporais",
+    businessProblem: "Gargalos de recebimento em silos durante o pico da safra e perdas por deterioração de grãos por umidade excessiva.",
+    solutionDescription: "Modelagem de equilíbrio dinâmico entre colheita, capacidade de armazenagem e contratos de frete rodoferroviário no BigQuery.",
+    businessCaseRoi: "Eliminação de filas de espera de caminhões em silos e preservação de qualidade gerando +$2.900.000/ano com payback em 1.4 meses.",
+    financialGainEstimateUsd: 2900000,
+    gcpMonthlyCostUsd: 8300,
+    costBreakdown: { bigqueryUsd: 4400, vertexAiUsd: 2700, cloudRunUsd: 800, storageUsd: 400 },
+    requiredTables: ["capacidade_silos_armazens", "umidade_temperatura_graos", "contratos_frete_embarque"],
+    requiredColumns: ["silo_id", "toneladas_armazenadas", "umidade_grao_pct", "vagoes_alocados", "risco_fermentacao"],
+    guardrails: "Sensores de aeração automatizados para evitar focos de aquecimento em silos.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Previsão de congestionamento de embarque com BigQuery ML Time Series.",
+    gcpExpansionOpportunity: "Conexão de dezenas de complexos de silos e terminais portuários no BigQuery.",
+    paybackMonths: 1.4
+  },
+  {
+    useCaseId: "uc_agro_04_tractor_fleet_maintenance",
+    assessmentId: "asm_agro_2026",
+    rank: 4,
+    title: "Manutenção Preditiva de Tratores e Pulverizadores com Telemetria CAN/IoT",
+    category: "IoT & Engenharia de Ativos do Agro",
+    businessProblem: "Quebra de pulverizadores durante janelas críticas de aplicação de defensivos, abrindo espaço para infestação de pragas na lavoura.",
+    solutionDescription: "Detecção precoce de anomalias em pressão de bicos, óleo hidráulico e rotação de motores agrícolas no BigQuery Streaming.",
+    businessCaseRoi: "Queda de 34% em paradas não programadas no campo economizando +$840.000/ano com payback em 1.5 meses.",
+    financialGainEstimateUsd: 840000,
+    gcpMonthlyCostUsd: 1600,
+    costBreakdown: { bigqueryUsd: 850, vertexAiUsd: 500, cloudRunUsd: 180, storageUsd: 70 },
+    requiredTables: ["telemetria_maquinario_can", "historico_manutencao_oficinas", "catalogo_pecas_tratores"],
+    requiredColumns: ["maquina_id", "temperatura_oleo_c", "pressao_bico_bar", "horas_motor", "alerta_falha"],
+    guardrails: "Disponibilização de máquina reserva para talhões prioritários em fase crítica.",
+    confidenceScore: 0.95,
+    status: "VALIDATED",
+    keyImprovement: "Processamento de telemetria CAN em modo assíncrono para regiões com conectividade intermitente.",
+    gcpExpansionOpportunity: "BigQuery como repositório central de telemetria de maquinário multimarcas.",
+    paybackMonths: 1.5
+  },
+  {
+    useCaseId: "uc_agro_05_esg_deforestation_traceability",
+    assessmentId: "asm_agro_2026",
+    rank: 5,
+    title: "Rastreabilidade Socioambiental & Certificação de Não Desmatamento (EUDR)",
+    category: "ESG & Compliance Internacional",
+    businessProblem: "Exigência de compliance internacional (regulamento europeu EUDR) com bloqueio de exportação de grãos e carnes sem comprovação de origem sustentável.",
+    solutionDescription: "Cruzamento automático dos polígonos CAR (Cadastro Ambiental Rural) contra bases oficiais de desmatamento (Prodes/Inpe) e embargos do Ibama no BigQuery GIS.",
+    businessCaseRoi: "Garantia de conformidade para 100% das cargas exportadas, destravando +$680.000/ano em prêmios de sustentabilidade com payback em 1.6 meses.",
+    financialGainEstimateUsd: 680000,
+    gcpMonthlyCostUsd: 1200,
+    costBreakdown: { bigqueryUsd: 650, vertexAiUsd: 350, cloudRunUsd: 140, storageUsd: 60 },
+    requiredTables: ["cadastros_propriedades_car", "poligonos_desmatamento_prodes", "embargos_ambientais_ibama"],
+    requiredColumns: ["car_codigo", "proprietario_cpf_cnpj", "sobreposicao_desmatamento_ha", "status_conformidade_eudr"],
+    guardrails: "Laudos auditáveis com carimbo de data/hora e assinatura digital no Knowledge Catalog.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Auditoria geoespacial de milhões de propriedades em minutos com BigQuery GIS.",
+    gcpExpansionOpportunity: "Plataforma de certificação ESG corporativa conectada a traders globais.",
+    paybackMonths: 1.6
+  },
+  {
+    useCaseId: "uc_agro_06_conversational_commodities",
+    assessmentId: "asm_agro_2026",
+    rank: 6,
+    title: "Data Agent Conversacional para Gestão de Safra e Comercialização de Grãos",
+    category: "GenAI & BigQuery Data Agents",
+    businessProblem: "Diretores agrícolas e traders demoram para cruzar dados de campo, custos de insumos e preços de Chicago para travar vendas futuras (hedge).",
+    solutionDescription: "BigQuery Data Agent alimentado por Gemini 3.8 Flash respondendo consultas sobre ritmo de colheita, barter de insumos e margem por hectare em segundos.",
+    businessCaseRoi: "Melhores janelas de fixação de preços de commodities gerando ganho de +$570.000/ano com payback em 1.7 meses.",
+    financialGainEstimateUsd: 570000,
+    gcpMonthlyCostUsd: 950,
+    costBreakdown: { bigqueryUsd: 480, vertexAiUsd: 340, cloudRunUsd: 80, storageUsd: 50 },
+    requiredTables: ["previsao_safra_talhoes", "contratos_venda_futura", "cotacao_commodities_chicago"],
+    requiredColumns: ["fazenda_id", "cultura", "volume_fixado_ton", "preco_medio_usd", "margem_liquida_ha"],
+    guardrails: "Respostas orientadas estritamente a dados verificados de estoque e colheita.",
+    confidenceScore: 0.96,
+    status: "VALIDATED",
+    keyImprovement: "Interação conversacional com dados geoespaciais e de mercado via BigQuery Data Agent.",
+    gcpExpansionOpportunity: "Acesso por tablets e smartphones para agrônomos e gestores de fazenda.",
+    paybackMonths: 1.7
+  }
+];
+
+// =========================================================================
+// 10. Mapeamento Universal & Resolução Dinâmica de Casos de Uso
+// =========================================================================
+export function getCustomerUseCases(customerNameOrId: string, industryOverride?: string): ExtendedUseCase[] {
+  const normName = (customerNameOrId || "").toLowerCase();
+  const normInd = (industryOverride || "").toLowerCase();
+  const targetName = customerNameOrId || "Empresa";
+
+  // Função auxiliar para personalizar o nome do cliente nos casos padrão
+  const tailor = (cases: ExtendedUseCase[]): ExtendedUseCase[] => {
+    return cases.map(c => ({
+      ...c,
+      title: c.title.replace(/{{CUSTOMER}}/g, targetName),
+      businessProblem: c.businessProblem.replace(/{{CUSTOMER}}/g, targetName),
+      solutionDescription: c.solutionDescription.replace(/{{CUSTOMER}}/g, targetName),
+      businessCaseRoi: c.businessCaseRoi.replace(/{{CUSTOMER}}/g, targetName)
+    }));
+  };
+
+  // 1. Clientes com catálogo específico dedicado
+  if (normName.includes("digio")) return tailor(DIGIO_USE_CASES);
+  if (normName.includes("nubank")) return tailor(NUBANK_USE_CASES);
+  if (normName.includes("ambev")) return tailor(AMBEV_USE_CASES);
+  if (normName.includes("hypera")) return tailor(HYPERA_USE_CASES);
+
+  // 2. Mapeamento dinâmico baseado em indústria ou nome do cliente
+  // A. Farmacêutica & Saúde
+  if (
+    normInd.includes("farma") || normInd.includes("saúde") || normInd.includes("saude") ||
+    normName.includes("farma") || normName.includes("pharma") || normName.includes("drog") ||
+    normName.includes("ems") || normName.includes("eurofarma") || normName.includes("neo quimica")
+  ) {
+    return tailor(HYPERA_USE_CASES);
   }
 
-  // Fallback padrão: Digio (se financeiro) ou Hypera
-  return normalized.includes("finan") ? DIGIO_USE_CASES : HYPERA_USE_CASES;
+  // B. Bens de Consumo & CPG / Bebidas
+  if (
+    normInd.includes("consumo") || normInd.includes("cpg") || normInd.includes("bebida") || normInd.includes("alimento") ||
+    normName.includes("heineken") || normName.includes("coca") || normName.includes("nestle") || normName.includes("unilever") ||
+    normName.includes("jbs") || normName.includes("brf") || normName.includes("mias")
+  ) {
+    return tailor(AMBEV_USE_CASES);
+  }
+
+  // C. Financeiro & Fintech / Bancos
+  if (
+    normInd.includes("financ") || normInd.includes("fintech") || normInd.includes("banco") ||
+    normName.includes("itau") || normName.includes("bradesco") || normName.includes("santander") ||
+    normName.includes("inter") || normName.includes("c6") || normName.includes("stone") ||
+    normName.includes("picpay") || normName.includes("pagseguro") || normName.includes("xp")
+  ) {
+    return tailor(DIGIO_USE_CASES);
+  }
+
+  // D. Varejo & E-commerce
+  if (
+    normInd.includes("varejo") || normInd.includes("e-commerce") || normInd.includes("comercio") ||
+    normName.includes("magalu") || normName.includes("mercado livre") || normName.includes("americanas") ||
+    normName.includes("renner") || normName.includes("casas bahia") || normName.includes("carrefour")
+  ) {
+    return tailor(RETAIL_USE_CASES);
+  }
+
+  // E. Manufatura & Indústria Pesada / Siderurgia
+  if (
+    normInd.includes("manufat") || normInd.includes("indústria") || normInd.includes("industria") || normInd.includes("siderurg") ||
+    normName.includes("embraer") || normName.includes("gerdau") || normName.includes("usiminas") ||
+    normName.includes("suzano") || normName.includes("klabin") || normName.includes("weg") || normName.includes("marcopolo")
+  ) {
+    return tailor(MANUFACTURING_USE_CASES);
+  }
+
+  // F. Logística, Frotas & Supply Chain
+  if (
+    normInd.includes("logíst") || normInd.includes("logist") || normInd.includes("transport") || normInd.includes("frota") ||
+    normName.includes("jsl") || normName.includes("loggi") || normName.includes("rumo") || normName.includes("vli") ||
+    normName.includes("localiza") || normName.includes("movida") || normName.includes("tegma") || normName.includes("correios")
+  ) {
+    return tailor(LOGISTICS_USE_CASES);
+  }
+
+  // G. Energia, Utilities & Óleo e Gás
+  if (
+    normInd.includes("energ") || normInd.includes("utilit") || normInd.includes("oleo") || normInd.includes("óleo") || normInd.includes("gas") || normInd.includes("gás") ||
+    normName.includes("petrobras") || normName.includes("raizen") || normName.includes("eletrobras") ||
+    normName.includes("cpfl") || normName.includes("equatorial") || normName.includes("vibra") || normName.includes("cosan")
+  ) {
+    return tailor(ENERGY_USE_CASES);
+  }
+
+  // H. Agronegócio & Bioenergia
+  if (
+    normInd.includes("agro") || normInd.includes("agrícol") || normInd.includes("agricol") || normInd.includes("safra") ||
+    normName.includes("slc") || normName.includes("jalles") || normName.includes("adecoagro") ||
+    normName.includes("sao martinho") || normName.includes("cargill") || normName.includes("bunge")
+  ) {
+    return tailor(AGRO_USE_CASES);
+  }
+
+  // Padrão de contingência: se for varejo/consumo -> Retail, senão -> Manufacturing
+  return tailor(RETAIL_USE_CASES);
 }
