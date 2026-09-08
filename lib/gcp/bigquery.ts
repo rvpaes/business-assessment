@@ -1,5 +1,6 @@
 // lib/gcp/bigquery.ts - Integração com BigQuery, Grafo GQL e Cloud Logging Estruturado
 import { fetchWithGcpAuth, PROJECT_ID, DATASET_ID } from "./auth";
+export { PROJECT_ID, DATASET_ID };
 import {
   CustomerAssessment,
   TableCatalogItem,
@@ -657,21 +658,25 @@ export async function populatePropertyGraph(
     }
   ];
 
+  const safeCustomerId = assessment.customerId || "customer_1";
+  const safeAssessmentId = assessment.assessmentId || `ass_${Date.now()}`;
+  const safeDocPct = typeof assessment.docPercentage === "number" ? assessment.docPercentage : 0;
+
   // 5. Gera nós e arestas integrados
   const nodes: PropertyGraphNode[] = [
     {
-      id: `cust_${assessment.customerId}`,
+      id: `cust_${safeCustomerId}`,
       nodeType: "Customer",
       name: assessment.customerName,
       category: assessment.industry,
       properties: { industry: assessment.industry }
     },
     {
-      id: `ass_${assessment.assessmentId}`,
+      id: `ass_${safeAssessmentId}`,
       nodeType: "Assessment",
-      name: `Maturidade ${assessment.docPercentage.toFixed(1)}%`,
+      name: `Maturidade ${safeDocPct.toFixed(1)}%`,
       category: "Assessment",
-      properties: { tables: assessment.totalTables, cols: assessment.totalColumns }
+      properties: { tables: assessment.totalTables || 0, cols: assessment.totalColumns || 0 }
     },
     {
       id: "agent_cen",
@@ -701,9 +706,9 @@ export async function populatePropertyGraph(
 
   const edges: PropertyGraphEdge[] = [
     {
-      edgeId: `e_cust_ass_${assessment.assessmentId}`,
-      sourceId: `cust_${assessment.customerId}`,
-      destinationId: `ass_${assessment.assessmentId}`,
+      edgeId: `e_cust_ass_${safeAssessmentId}`,
+      sourceId: `cust_${safeCustomerId}`,
+      destinationId: `ass_${safeAssessmentId}`,
       edgeType: "OWNS",
       weight: 1.0,
       properties: {}
@@ -714,7 +719,7 @@ export async function populatePropertyGraph(
   strategicGoals.forEach((goal, i) => {
     edges.push({
       edgeId: `e_cust_goal_${goal.id}`,
-      sourceId: `cust_${assessment.customerId}`,
+      sourceId: `cust_${safeCustomerId}`,
       destinationId: goal.id,
       edgeType: "STRATEGIC_GOAL",
       weight: 1.0 - (i * 0.1),
@@ -741,7 +746,7 @@ export async function populatePropertyGraph(
     });
     edges.push({
       edgeId: `e_cust_${uc.useCaseId}`,
-      sourceId: `cust_${assessment.customerId}`,
+      sourceId: `cust_${safeCustomerId}`,
       destinationId: ucId,
       edgeType: "BENEFITS",
       weight: 0.95,
@@ -806,7 +811,7 @@ export async function populatePropertyGraph(
     });
     edges.push({
       edgeId: `e_ass_${cleanTblId}`,
-      sourceId: `ass_${assessment.assessmentId}`,
+      sourceId: `ass_${safeAssessmentId}`,
       destinationId: cleanTblId,
       edgeType: "EXTRACTED_FROM",
       weight: 0.8,
@@ -947,9 +952,9 @@ export async function inspectKnowledgeCatalog(
       table_type,
       estimated_rows,
       column_count,
-      doc_percentage,
+      CASE WHEN column_count > 0 THEN SAFE_DIVIDE(documented_columns, column_count) * 100 ELSE 0 END AS doc_percentage,
       table_description,
-      dataplex_scan_active
+      dataplex_profile_scan_active AS dataplex_scan_active
     FROM \`${PROJECT_ID}.${DATASET_ID}.assessment_tables_catalog\`
     WHERE (assessment_id = '${assessmentId || ""}' OR '${assessmentId || ""}' = '')
       ${tableFilter}

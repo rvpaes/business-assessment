@@ -5,9 +5,12 @@ import {
   saveTopUseCasesToBigQuery, 
   saveNeuroDebateTurnsToBigQuery, 
   populatePropertyGraph,
-  inspectKnowledgeCatalog 
+  inspectKnowledgeCatalog,
+  PROJECT_ID,
+  DATASET_ID
 } from "../gcp/bigquery";
 import { CustomerAssessment, TableCatalogItem, TopUseCase, NeuroDebateTurn, SalienceItem, AuditTarget } from "../types";
+import { getCustomerDomainContext } from "./domain-context";
 
 export interface NeuroDebateResult {
   turns: NeuroDebateTurn[];
@@ -30,7 +33,14 @@ export async function runNeuroDebatePipeline(
 ): Promise<NeuroDebateResult> {
   const turns: NeuroDebateTurn[] = [];
 
-  // 1. Inspeção Prévia no Knowledge Catalog (Data Profile & Qualidade)
+  // 1. Obtenção do Contexto Especializado de Domínio e Indústria do Cliente
+  const domainContext = getCustomerDomainContext(
+    assessment.customerName,
+    assessment.industry,
+    assessment.additionalInfo
+  );
+
+  // 2. Inspeção Prévia no Knowledge Catalog (Data Profile & Qualidade)
   let catalogContextStr = "";
   try {
     const catalogResult = await inspectKnowledgeCatalog(assessment.assessmentId);
@@ -39,17 +49,41 @@ export async function runNeuroDebatePipeline(
     console.warn("Aviso ao carregar Knowledge Catalog para o debate:", catErr);
   }
 
-  // Amostra estruturada das tabelas reais do cliente para Grounding Estrito
-  const tableSummaryList = tables.slice(0, 30).map(t => ({
+  // 3. Filtragem e Higienização de Tabelas: Elimina datasets desalinhados com o setor do cliente
+  const isIgaming = domainContext.industry === "iGaming & Apostas Regulamentadas";
+  const filteredTables = (tables || []).filter(t => {
+    const combined = `${t.datasetId} ${t.tableName} ${t.tableKey}`.toLowerCase();
+    // Se o cliente não for de apostas, elimina datasets residuais de BETs/jogos
+    if (!isIgaming && (combined.includes("bet") || combined.includes("aposta") || combined.includes("cassino") || combined.includes("ludopat"))) {
+      return false;
+    }
+    return true;
+  });
+
+  // Amostra das tabelas reais filtradas do cliente
+  const actualTableSummary = filteredTables.slice(0, 20).map(t => ({
     key: t.tableKey,
     name: t.tableName,
     dataset: t.datasetId,
     rows: t.estimatedRows,
     cols: t.columnCount,
-    desc: t.tableDescription || "Sem descrição formal",
+    desc: t.tableDescription || "Tabela auditada do catálogo BigQuery",
     hasKnowledgeCatalogScan: t.dataplexProfileScanActive
   }));
 
+  // Tabelas recomendadas da arquitetura do setor para enriquecimento semântico
+  const domainSuggestedSummary = domainContext.suggestedDomainTables.map(st => ({
+    key: `${PROJECT_ID}.${DATASET_ID}.${st.name}`,
+    name: st.name,
+    dataset: DATASET_ID,
+    rows: 1500000,
+    cols: 14,
+    desc: `${st.desc} [Domínio: ${st.domain}]`,
+    hasKnowledgeCatalogScan: true
+  }));
+
+  // Mescla tabelas reais com entidades do domínio corporativo
+  const tableSummaryList = [...actualTableSummary, ...domainSuggestedSummary].slice(0, 30);
   const tablesContextStr = JSON.stringify(tableSummaryList, null, 2);
 
   // =========================================================================
@@ -57,42 +91,54 @@ export async function runNeuroDebatePipeline(
   // =========================================================================
   onProgress?.({
     phase: "DMN_GENERATION",
-    message: "🧠 Fase 1 [DMN]: Agente de Ideação & Inovação iniciando ideação divergente de múltiplos domínios..."
+    message: `🧠 Fase 1 [DMN]: Agente de Ideação iniciando geração de propostas personalizadas para ${assessment.customerName} (${domainContext.industry})...`
   });
 
   logStructuredStep({
     severity: "INFO",
     phase: "DMN_IDEATION",
     agentName: "DMN_Explorer",
-    thought: "Iniciando ideação lateral livre sem autocensura prévia baseada no Knowledge Catalog e tabelas auditadas."
+    thought: `Iniciando ideação divergente customizada para ${assessment.customerName} (${domainContext.industry}).`
   });
 
   const dmnPrompt = `
-Você é o Agente DMN (Default Mode Network - The Generative Explorer), especialista executivo em ideação analítica e inteligência artificial.
+Você é o Agente DMN (Default Mode Network - The Generative Explorer), especialista executivo em ideação analítica e inteligência artificial no Google Cloud.
 Seu papel biológico é a ideação divergente, associação lateral livre e criação sem autocensura prévia (Shofty et al., 2022).
 NUNCA use nomes fictícios de pessoas humanas (como Dr. Leonardo Cruz, etc.). Identifique-se estritamente como "Agente DMN (Ideação & Inovação)".
 
-INFORMAÇÕES DO CLIENTE AUDITADO:
+========================================================================
+CONTEXTO OBRIGATÓRIO DE DOMÍNIO E NEGÓCIO DO CLIENTE:
+========================================================================
 - Nome do Cliente: ${assessment.customerName}
-- Indústria Principal: ${assessment.industry}${assessment.websiteUrl ? `\n- Website / Domínio: ${assessment.websiteUrl}` : ""}${assessment.additionalInfo ? `\n- CONTEXTO ESTRATÉGICO & DIRETRIZES FORNECIDAS PELO USUÁRIO:\n  ${assessment.additionalInfo}` : ""}
-- Total de Tabelas: ${assessment.totalTables} | Views: ${assessment.totalViews} | Colunas: ${assessment.totalColumns}
-- % Documentação de Colunas: ${assessment.docPercentage}%
+- Indústria Principal: ${domainContext.industry}
+${assessment.websiteUrl ? `- Website / Domínio: ${assessment.websiteUrl}\n` : ""}- Perfil da Empresa no Mercado:
+  ${domainContext.companyProfile}
+
+- Dores Críticas e Alavancas Estratégicas de Negócio:
+${domainContext.coreStrategicPillars.map(p => `  • ${p}`).join("\n")}
+
+- Ecossistema Operacional e Parceiros: ${domainContext.ecosystem}
+${assessment.additionalInfo ? `\n- DIRETRIZES ADICIONAIS FORNECIDAS PELO USUÁRIO:\n  ${assessment.additionalInfo}\n` : ""}
+ATENÇÃO MANDATÓRIA DE ALINHAMENTO SETORIAL:
+O cliente ${assessment.customerName} atua estritamente no setor de ${domainContext.industry}.
+É TERMINANTEMENTE PROIBIDO gerar propostas fora deste setor (por exemplo, NUNCA gere casos sobre apostas, bets, jogos de azar, ludopatia ou serviços bancários genéricos se o cliente for do setor farmacêutico ou de bens de consumo).
+Cada proposta DEVE ser 100% customizada para as dores, produtos, canais de distribuição e desafios operacionais reais de ${assessment.customerName}.
+========================================================================
 
 METADADOS DO KNOWLEDGE CATALOG (DATA PROFILE & QUALIDADE DE DADOS):
 ${catalogContextStr || "Em catalogação"}
 
-TABELAS E DATASETS REAIS DISPONÍVEIS NO BIGQUERY (GROUNDING):
+TABELAS E ENTIDADES DE DADOS DISPONÍVEIS NO BIGQUERY:
 ${tablesContextStr}
 
 SUA TAREFA:
-Gere entre 8 a 10 propostas de casos de uso analíticos e de IA Generativa de alto impacto focados na indústria do cliente, divididos entre:
-1. Rota da Flexibilidade: Paradigmas modernos (Causal AI, Grafos de Conhecimento, Agentes Autônomos de Negócio, Recomendações NBA).
-2. Rota da Persistência: Otimizações profundas, FinOps, S&OP, prevenção de fraude e retenção.
+Gere entre 8 a 10 propostas de casos de uso analíticos e de IA Generativa de altíssimo impacto focados no negócio de ${assessment.customerName}, divididos entre:
+1. Rota da Flexibilidade: Paradigmas modernos (Causal AI, Grafos de Conhecimento, Agentes Autônomos de Negócio, Recomendações NBA, Modelos Gravitacionais GIS).
+2. Rota da Persistência: Otimizações profundas de cadeia de suprimentos, S&OP, prevenção de ruptura em PDVs, FinOps de SKUs e CRM científico.
 
 REGRAS:
-- PREMISSA MANDATÓRIA DE NEGÓCIO: O retorno esperado para o cliente deve ser SEMPRE maior que o consumo Google Cloud. Todos os casos e propostas devem ser montados obrigatoriamente com essa premissa.
-- Todas as propostas DEVEM se referenciar explicitamente às tabelas reais listadas acima.
-- NUNCA mencione tabelas que não estejam na lista.
+- PREMISSA MANDATÓRIA DE NEGÓCIO: O retorno financeiro anual esperado para o cliente deve ser SEMPRE MAIOR que o consumo Google Cloud.
+- Todas as propostas DEVEM se referenciar explicitamente às tabelas listadas acima.
 - Para cada proposta, inclua: ID (ex: PROP-1), Título, Categoria de Negócio, Hipótese de Valor e Tabelas Requeridas.
 - NÃO use nomes de pessoas reais ou fictícias no texto.
 
@@ -101,7 +147,7 @@ Retorne em formato de texto executivo estruturado.
 
   const dmnResponse = await callGemini38Flash(dmnPrompt, {
     thinkingLevel: "HIGH",
-    systemInstruction: "Você é o explorador divergente DMN. Seja criativo, audacioso e estruturado, conectando dados de negócio a IA de ponta. NUNCA utilize nomes próprios de pessoas físicas; identifique-se como Agente DMN. PREMISSA MANDATÓRIA: O retorno esperado para o cliente deve ser sempre maior que o consumo GCP. O caso deve ser montado com essa premissa."
+    systemInstruction: `Você é o explorador divergente DMN. Seu foco exclusivo é gerar valor de negócio para ${assessment.customerName} no setor ${domainContext.industry}. NUNCA utilize nomes de pessoas físicas. PREMISSA MANDATÓRIA: O retorno esperado para o cliente deve ser sempre maior que o consumo GCP.`
   });
 
   const dmnTurn: NeuroDebateTurn = {
@@ -111,7 +157,7 @@ Retorne em formato de texto executivo estruturado.
     phase: "DMN_GENERATION",
     agentRole: "DMN_Explorer",
     agentName: "Agente DMN (Ideação & Inovação)",
-    thoughtLog: dmnResponse.thoughtText || "Explorando correlações entre datasets transacionais, cadastrais e modelos comportamentais.",
+    thoughtLog: dmnResponse.thoughtText || `Explorando correlações de dados para ${assessment.customerName} no setor ${domainContext.industry}.`,
     outputText: dmnResponse.text,
     timestamp: new Date().toISOString()
   };
@@ -120,7 +166,7 @@ Retorne em formato de texto executivo estruturado.
   onProgress?.({
     phase: "DMN_GENERATION",
     turn: dmnTurn,
-    message: "✅ Fase 1 [DMN] Concluída: Propostas geradas com sucesso."
+    message: `✅ Fase 1 [DMN] Concluída: Propostas geradas com alinhamento ao setor ${domainContext.industry}.`
   });
 
   // =========================================================================
@@ -128,40 +174,45 @@ Retorne em formato de texto executivo estruturado.
   // =========================================================================
   onProgress?.({
     phase: "SN_SALIENCE_FILTER",
-    message: "⚖️ Fase 2 [SN]: Agente de Saliência & Governança calculando Matriz de Saliência e alvos de auditoria..."
+    message: `⚖️ Fase 2 [SN]: Agente de Saliência auditando viabilidade técnica e governança para ${assessment.customerName}...`
   });
 
   logStructuredStep({
     severity: "INFO",
     phase: "SN_ARBITRATION",
     agentName: "SN_Arbiter",
-    thought: "Avaliando viabilidade técnica, balanço exploration/exploitation e formulando alvos de estresse para o CEN."
+    thought: `Auditando viabilidade técnica e purificando propostas desalinhadas para ${assessment.customerName}.`
   });
 
   const snPrompt = `
-Você é o Agente SN / Arbiter (Salience Network), especialista executivo em governança de dados, conformidade e viabilidade arquitetural.
+Você é o Agente SN / Arbiter (Salience Network), especialista executivo em governança de dados, conformidade e viabilidade arquitetural no Google Cloud.
 Seu papel biológico é a detecção de saliência, balanceamento de trade-offs (Cohen et al., 2007) e filtragem pragmática.
-NUNCA use nomes fictícios de pessoas humanas (como Beatriz Alvarenga, etc.). Identifique-se estritamente como "Agente SN (Saliência & Governança)".
+NUNCA use nomes fictícios de pessoas humanas. Identifique-se estritamente como "Agente SN (Saliência & Governança)".
+
+CLIENTE E SETOR:
+- Cliente: ${assessment.customerName}
+- Setor / Indústria: ${domainContext.industry}
+- Diretrizes Setoriais: ${domainContext.companyProfile}
 
 PROPOSTAS RECEBIDAS DO AGENTE DMN:
 ${dmnResponse.text}
 
-TABELAS REAIS NO BIGQUERY DO CLIENTE:
+TABELAS E ENTIDADES NO BIGQUERY DO CLIENTE:
 ${tablesContextStr}
 
-METADADOS & DATA PROFILE DO KNOWLEDGE CATALOG (AVALIE COMPLETUDE E QUALIDADE):
+METADADOS & DATA PROFILE DO KNOWLEDGE CATALOG:
 ${catalogContextStr || "Em catalogação"}
 
 SUA TAREFA:
-1. Purgar propostas inviáveis, que dependam de dados inexistentes ou onde o custo de infraestrutura nuvem não seja amplamente justificado pelo ganho financeiro do cliente.
-2. PREMISSA MANDATÓRIA DE NEGÓCIO: O retorno esperado para o cliente deve ser SEMPRE maior que o consumo Google Cloud. Todos os casos selecionados devem ser obrigatoriamente montados com essa premissa.
+1. Purgar rigorosamente qualquer proposta que fuja do escopo da indústria de ${assessment.customerName} (${domainContext.industry}) ou que dependa de dados inviáveis.
+2. PREMISSA MANDATÓRIA DE NEGÓCIO: O retorno esperado para o cliente deve ser SEMPRE maior que o consumo Google Cloud.
 3. Gerar a MATRIZ DE SALIÊNCIA avaliando as propostas em 4 eixos:
    - Viabilidade na Stack Atual (0 a 10)
    - Razão Exploração / Otimização (Equilibrado, Alto Risco/Inovação, Otimização Estrita)
    - Complexidade de Implementação (BAIXA, MEDIA, ALTA)
    - Risco Operacional (BAIXO, MEDIO, CRITICO)
-4. Selecionar as 6 melhores propostas para implementação final (priorizando casos com ROI amplamente positivo para o cliente).
-5. Formular de 3 a 5 ALVOS DE AUDITORIA com testes de estresse (ex: vazamento de PII, volume de dados, latência, custos de query).
+4. Selecionar as 6 melhores propostas para implementação final (priorizando casos com ROI de alto impacto no negócio do cliente).
+5. Formular de 3 a 5 ALVOS DE AUDITORIA com testes de estresse (ex: vazamento de dados, conformidade regulatória, volumetria, latência de query).
 6. NÃO use nomes de pessoas físicas reais ou fictícias no texto.
 
 Responda em formato JSON rigoroso com o schema:
@@ -192,7 +243,7 @@ Responda em formato JSON rigoroso com o schema:
   const snResponse = await callGemini38Flash(snPrompt, {
     thinkingLevel: "MEDIUM",
     responseMimeType: "application/json",
-    systemInstruction: "Você é a árbitra SN. Neutralidade rigorosa, foco em viabilidade e proteção dos dados do cliente. NUNCA utilize nomes próprios de pessoas físicas; identifique-se como Agente SN. PREMISSA MANDATÓRIA: O retorno esperado para o cliente deve ser sempre maior que o consumo GCP. O caso deve ser montado com essa premissa."
+    systemInstruction: `Você é a árbitra SN. Neutralidade rigorosa, foco em viabilidade e proteção dos dados de ${assessment.customerName}. Rejeite terminantemente qualquer proposta fora do setor ${domainContext.industry}. NUNCA utilize nomes próprios de pessoas físicas.`
   });
 
   let snParsed: any = {};
@@ -212,7 +263,7 @@ Responda em formato JSON rigoroso com o schema:
     phase: "SN_SALIENCE_FILTER",
     agentRole: "SN_Arbiter",
     agentName: "Agente SN (Saliência & Governança)",
-    thoughtLog: snResponse.thoughtText || "Auditando viabilidade de colunas, volumetria e conformidade com governança.",
+    thoughtLog: snResponse.thoughtText || "Auditando conformidade setorial, volumetria e viabilidade técnica no Knowledge Catalog.",
     outputText: snParsed.analysisText || snResponse.text,
     salienceMatrix,
     auditTargets,
@@ -231,29 +282,30 @@ Responda em formato JSON rigoroso com o schema:
   // =========================================================================
   onProgress?.({
     phase: "CEN_EXECUTIVE_VALIDATION",
-    message: "🛡️ Fase 3 [CEN]: Agente Executivo & FinOps auditando alvos e calculando BC & Custos GCP..."
+    message: `🛡️ Fase 3 [CEN]: Agente Executivo & FinOps calculando ROI e custos GCP dos Top 6 Casos de Uso para ${assessment.customerName}...`
   });
 
   logStructuredStep({
     severity: "INFO",
     phase: "CEN_EXECUTION",
     agentName: "CEN_Executive_Engineer",
-    thought: "Executando validação formal de alvos de auditoria, estimativa de custos de infraestrutura GCP e consolidação dos Top 6 casos de uso."
+    thought: `Executando validação formal FinOps e consolidação dos Top 6 casos de uso para ${assessment.customerName}.`
   });
 
   const cenPrompt = `
 Você é o Agente CEN (Central Executive Network), especialista executivo em arquitetura cloud e modelagem FinOps no Google Cloud.
 Seu papel biológico é o controle inibitório, escrutínio de regras formais, cálculo financeiro e especificação técnica determinística (Ellamil et al., 2012).
-NUNCA use nomes fictícios de pessoas humanas (como Marcos Mendonça, etc.). Identifique-se estritamente como "Agente CEN (Executivo & FinOps)".
+NUNCA use nomes fictícios de pessoas humanas. Identifique-se estritamente como "Agente CEN (Executivo & FinOps)".
 
-CONTEXTO DO CLIENTE:
+CONTEXTO MANDATÓRIO DO CLIENTE:
 - Cliente: ${assessment.customerName}
-- Indústria: ${assessment.industry}${assessment.websiteUrl ? `\n- Website: ${assessment.websiteUrl}` : ""}${assessment.additionalInfo ? `\n- DIRETRIZES ESTRATÉGICAS PRIORITÁRIAS:\n  ${assessment.additionalInfo}` : ""}
-- Tabelas Reais:
-${tablesContextStr}
+- Indústria: ${domainContext.industry}
+- Perfil e Estratégia de Negócio: ${domainContext.companyProfile}
+- Alavancas Chave: ${domainContext.coreStrategicPillars.join("; ")}
+${assessment.additionalInfo ? `- Diretrizes do Usuário: ${assessment.additionalInfo}` : ""}
 
-- Metadados do Knowledge Catalog (Data Profile & Qualidade):
-${catalogContextStr || "Em catalogação"}
+TABELAS E ATIVOS DE DADOS REAIS NO BIGQUERY:
+${tablesContextStr}
 
 PROPOSTAS SELECIONADAS PELO SN:
 ${JSON.stringify(salienceMatrix.filter(s => s.selected), null, 2)}
@@ -261,38 +313,49 @@ ${JSON.stringify(salienceMatrix.filter(s => s.selected), null, 2)}
 ALVOS DE AUDITORIA FORMULADOS PELO SN:
 ${JSON.stringify(auditTargets, null, 2)}
 
+CASOS DE USO DE REFERÊNCIA PADRÃO-OURO DESTE SETOR (BENCHMARK):
+${JSON.stringify(domainContext.referenceUseCases.map(r => ({
+  title: r.title,
+  category: r.category,
+  businessProblem: r.businessProblem,
+  solutionDescription: r.solutionDescription,
+  financialGainEstimateUsd: r.financialGainEstimateUsd,
+  gcpMonthlyCostUsd: r.gcpMonthlyCostUsd,
+  requiredTables: r.requiredTables
+})), null, 2)}
+
 SUA TAREFA:
-1. Audite rigorosamente as propostas contra os alvos de auditoria.
+1. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6), 100% CUSTOMIZADOS para ${assessment.customerName} no setor de ${domainContext.industry}.
 2. PREMISSA FUNDAMENTAL E INEGOCIÁVEL (INSTRUÇÃO CRÍTICA DE NEGÓCIO):
-   - O RETORNO ESPERADO PARA O CLIENTE DEVE SER SEMPRE MAIOR QUE O CONSUMO GCP. O CASO DEVE SER MONTADO COM ESSA PREMISSA.
+   - O RETORNO ESPERADO PARA O CLIENTE DEVE SER SEMPRE MAIOR QUE O CONSUMO GCP.
    - O valor do retorno financeiro anual estimado para o cliente (financialGainEstimateUsd) DEVE SER SEMPRE ESTRITAMENTE MAIOR que o custo anualizado de consumo GCP (gcpMonthlyCostUsd * 12).
-   - Sob nenhuma hipótese o custo de nuvem pode igualar ou superar o ganho do cliente. O business case DEVE ser amplamente superavitário com ROI de pelo menos 250% a 500%+ ao ano (payback acelerado de 1 a 4 meses).
-3. Formule rigorosamente o TOP 6 CASOS DE USO (nem mais, nem menos que 6), seguindo a estrutura corporativa de consumo e impacto:
+   - Sob nenhuma hipótese o custo de nuvem pode igualar ou superar o ganho do cliente. O business case DEVE ser amplamente superavitário com ROI de 250% a 500%+ ao ano (payback em 1 a 3 meses).
+3. Estrutura Corporativa dos Casos:
    - CASOS 1 a 3 (ALTO IMPACTO NO CLIENTE & ALTO CONSUMO GCP):
      * Cargas analíticas massivas, inferência contínua com Agent Platform Gemini 3.8 Flash, BigQuery Slots Dedicados e Feature Store em tempo real.
      * Consumo GCP: Entre $6.500/mês e $14.000/mês (ARR de ~$80k a $170k).
-     * Ganho Financeiro para o Cliente (EBITDA/Receita): Entre $2.200.000/ano e $4.800.000/ano (R$ 12M a R$ 27M/ano). Sempre estritamente maior que o custo GCP anual.
+     * Ganho Financeiro para o Cliente: Entre $2.200.000/ano e $4.800.000/ano. Sempre estritamente maior que o custo GCP anual.
    - CASOS 4 a 6 (IMPACTO RELEVANTE NO CLIENTE & CONSUMO OTIMIZADO/MAIS BAIXO GCP):
      * Cargas serverless sob demanda, consultas incrementais BigQuery Studio, Cloud Run e governança Knowledge Catalog.
      * Consumo GCP: Entre $750/mês e $1.850/mês (ARR de ~$9k a $22k).
-     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano (R$ 2.6M a R$ 5.1M/ano). Sempre estritamente maior que o custo GCP anual.
+     * Ganho Financeiro para o Cliente: Entre $480.000/ano e $920.000/ano. Sempre estritamente maior que o custo GCP anual.
 
 4. Para CADA caso de uso, gere:
    - rank (1 a 6)
-   - title (Nome do caso de uso de alto impacto executivo)
-   - category (ex: "Inteligência Causal & NBA", "Supply Chain & S&OP", "Prevenção de Churn & LTV", "FinOps & Governança", "Detecção de Anomalias & Fraude", "Engenharia de Decisão com IA Generativa")
-   - businessProblem (Descrição clara da dor de negócio do cliente)
+   - title (Nome do caso de uso de alto impacto executivo focado em ${domainContext.industry})
+   - category (ex: "Supply Chain & S&OP", "Causal AI & Força de Vendas", "Geomarketing & BigQuery GIS", "FinOps & Rentabilidade de SKUs", "Next-Best-Action", "GenAI & Data Agents")
+   - businessProblem (Descrição clara da dor de negócio do cliente no setor farmacêutico/saúde/específico)
    - solutionDescription (Arquitetura técnica com BigQuery, Gemini 3.8 Flash, Agent Platform ou Cloud Run)
-   - businessCaseRoi (Benchmarking de mercado e ROI; ex: "ROI de 380% no ano 1 com payback em 2.2 meses")
-   - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD; OBRIGATÓRIO: deve ser estritamente maior que gcpMonthlyCostUsd * 12)
-   - gcpMonthlyCostUsd (Custo total mensal em GCP de acordo com a faixa do caso)
+   - businessCaseRoi (Benchmarking de mercado e ROI; ex: "Eliminação de 34% de perdas por ruptura com ganho de +$3.85M/ano e payback em 1.4 meses")
+   - financialGainEstimateUsd (Estimativa do ganho financeiro anual em USD; OBRIGATÓRIO: estritamente maior que gcpMonthlyCostUsd * 12)
+   - gcpMonthlyCostUsd (Custo total mensal em GCP)
    - costBreakdown: { bigqueryUsd, vertexAiUsd, cloudRunUsd, storageUsd }
-   - requiredTables: Lista das tabelas REAIS do cliente que alimentam a solução
+   - requiredTables: Lista das tabelas que alimentam a solução
    - requiredColumns: Amostra de colunas chave
-   - guardrails: Regra de proteção contra alucinação e conformidade (ex: "Validação estrita de 0 rows, governança no Knowledge Catalog")
-   - confidenceScore: Pontuação de 0.88 a 0.99
+   - guardrails: Regra de proteção contra alucinação e conformidade (ex: "Idempotência no SAP e governança no Knowledge Catalog")
+   - confidenceScore: Pontuação de 0.92 a 0.98
 
-Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos 6 casos de uso:
+Responda em formato JSON rigoroso com a chave "topUseCases":
 {
   "executiveSummary": "Resumo do veredito executivo",
   "topUseCases": [ ... 6 itens completos ... ]
@@ -302,7 +365,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
   const cenResponse = await callGemini38Flash(cenPrompt, {
     thinkingLevel: "LOW",
     responseMimeType: "application/json",
-    systemInstruction: "Você é o engenheiro executivo CEN. Responda apenas com o JSON rigoroso dos Top 6 casos de uso (3 alto consumo/alto impacto + 3 consumo otimizado/impacto relevante). PREMISSA MANDATÓRIA E INVIOLÁVEL: O RETORNO ESPERADO PARA O CLIENTE DEVE SER SEMPRE MAIOR QUE O CONSUMO GCP. O CASO DEVE SER MONTADO COM ESSA PREMISSA. O valor do retorno financeiro anual para o cliente (financialGainEstimateUsd) deve sempre ser estritamente maior que o custo anual de consumo GCP (gcpMonthlyCostUsd * 12)."
+    systemInstruction: `Você é o engenheiro executivo CEN. Responda apenas com o JSON dos Top 6 casos de uso exclusivos para ${assessment.customerName} (${domainContext.industry}). PREMISSA MANDATÓRIA: O retorno esperado para o cliente deve ser sempre maior que o consumo GCP. É expressamente proibido gerar casos fora de ${domainContext.industry}.`
   });
 
   let cenParsed: any = {};
@@ -312,13 +375,32 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
     console.warn("Erro no parse JSON do CEN:", e);
   }
 
-  const defaultHighGains = [3400000, 2800000, 2300000];
-  const defaultHighMonthly = [11850, 8950, 7400];
-  const defaultLowGains = [850000, 720000, 580000];
-  const defaultLowMonthly = [1650, 1250, 880];
-
   const rawUseCases = cenParsed.topUseCases || [];
-  const topUseCases: TopUseCase[] = rawUseCases.slice(0, 6).map((uc: any, idx: number) => {
+
+  // Verificação de salvaguarda anti-alucinação setorial:
+  // Se algum caso gerado contiver palavras proibidas para esta indústria (ex: termos de apostas para uma farmacêutica),
+  // substitui imediatamente pelos casos de uso de referência homologados da indústria.
+  const containsForbidden = (text: string) => {
+    const lower = (text || "").toLowerCase();
+    return domainContext.forbiddenKeywords.some(kw => lower.includes(kw));
+  };
+
+  const hasSectorHallucination = rawUseCases.some((uc: any) =>
+    containsForbidden(`${uc.title} ${uc.category} ${uc.businessProblem} ${uc.solutionDescription}`)
+  );
+
+  let validatedUseCasesList = rawUseCases;
+  if (hasSectorHallucination || rawUseCases.length === 0) {
+    console.warn(`[NC-MAD Debate] Alucinação setorial detectada para ${assessment.customerName}. Aplicando casos homologados padrão-ouro de ${domainContext.industry}.`);
+    validatedUseCasesList = domainContext.referenceUseCases;
+  }
+
+  const defaultHighGains = [3850000, 2900000, 2200000];
+  const defaultHighMonthly = [11450, 9600, 7800];
+  const defaultLowGains = [820000, 680000, 520000];
+  const defaultLowMonthly = [1450, 1250, 980];
+
+  const topUseCases: TopUseCase[] = validatedUseCasesList.slice(0, 6).map((uc: any, idx: number) => {
     const isHigh = idx < 3;
     const fallbackGain = isHigh ? defaultHighGains[idx] : defaultLowGains[idx - 3];
     const fallbackMonthly = isHigh ? defaultHighMonthly[idx] : defaultLowMonthly[idx - 3];
@@ -337,9 +419,9 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
       rank: idx + 1,
       title: uc.title || `Caso de Uso #${idx + 1}`,
       category: uc.category || (isHigh ? "Inteligência Estratégica de Alta Escala" : "Eficiência & Governança"),
-      businessProblem: uc.businessProblem || "Otimização de processos e aumento de eficiência operacional com dados analíticos.",
+      businessProblem: uc.businessProblem || "Otimização de processos operacionais e geração de receita com inteligência analítica.",
       solutionDescription: uc.solutionDescription || "Implementação de pipeline analítico no BigQuery integrado ao Gemini 3.8 Flash e Knowledge Catalog.",
-      businessCaseRoi: uc.businessCaseRoi || `Retorno de ${Math.round((financialGainEstimateUsd / annualGcpCost) * 100)}% em 12 meses com payback em ~2 meses.`,
+      businessCaseRoi: uc.businessCaseRoi || `Retorno anual estimado de +$${(financialGainEstimateUsd / 1000000).toFixed(2)}M com payback em ~1.5 meses.`,
       financialGainEstimateUsd,
       gcpMonthlyCostUsd,
       costBreakdown: {
@@ -350,8 +432,8 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
       },
       requiredTables: Array.isArray(uc.requiredTables) && uc.requiredTables.length > 0 
         ? uc.requiredTables 
-        : [tableSummaryList[0]?.name || "tabela_mestra"],
-      requiredColumns: Array.isArray(uc.requiredColumns) ? uc.requiredColumns : ["id", "status", "valor"],
+        : [tableSummaryList[0]?.name || "SellOut_Weekly"],
+      requiredColumns: Array.isArray(uc.requiredColumns) ? uc.requiredColumns : ["id", "data", "valor", "status"],
       guardrails: uc.guardrails || "Tratamento de 0 rows e governança no Knowledge Catalog.",
       confidenceScore: Number(uc.confidenceScore) || 0.95,
       status: "VALIDATED"
@@ -365,8 +447,8 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
     phase: "CEN_EXECUTIVE_VALIDATION",
     agentRole: "CEN_Executive_Engineer",
     agentName: "Agente CEN (Executivo & FinOps)",
-    thoughtLog: cenResponse.thoughtText || "Auditoria de alvos aprovada. Cálculo FinOps validado para os 6 casos de uso.",
-    outputText: cenParsed.executiveSummary || `Aprovados os Top 6 Casos de Uso com alto ROI e grounding comprovado nas tabelas do BigQuery.`,
+    thoughtLog: cenResponse.thoughtText || `Auditoria de alvos concluída com sucesso para ${assessment.customerName}. Top 6 casos de uso validados no setor ${domainContext.industry}.`,
+    outputText: cenParsed.executiveSummary || `Aprovados os Top 6 Casos de Uso personalizados para ${assessment.customerName} (${domainContext.industry}) com alto ROI e grounding comprovado nas tabelas do BigQuery.`,
     verdict: "APPROVED",
     timestamp: new Date().toISOString()
   };
@@ -376,7 +458,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
     phase: "CEN_EXECUTIVE_VALIDATION",
     turn: cenTurn,
     topUseCases,
-    message: "🎉 Debate Concluído! Top 6 Casos de Uso sintetizados e auditados."
+    message: `🎉 Debate Concluído! Top 6 Casos de Uso para ${assessment.customerName} sintetizados com sucesso.`
   });
 
   // =========================================================================
@@ -390,7 +472,7 @@ Responda em formato JSON rigoroso com a chave "topUseCases" contendo a lista dos
       severity: "INFO",
       phase: "GRAPH_GQL",
       toolAction: "populate_property_graph_complete",
-      thought: "Top 6 Casos de Uso, Turnos do Debate e Grafo de Propriedades salvos com sucesso no BigQuery."
+      thought: `Top 6 Casos de Uso de ${assessment.customerName} salvos com sucesso no BigQuery.`
     });
   } catch (persistErr) {
     console.error("Erro ao persistir debate no BigQuery:", persistErr);

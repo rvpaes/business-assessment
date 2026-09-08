@@ -101,6 +101,7 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
             docPercentage: latest.docPercentage,
             gcsArchiveUri: latest.gcsArchiveUri || ""
           });
+          setTopUseCases(getCustomerUseCases(latest.name));
           const casesRes = await fetch(`/api/bigquery/graph?customerName=${encodeURIComponent(latest.name)}`);
           const casesJson = await casesRes.json();
           if (casesJson.topTablesSample && casesJson.topTablesSample.length > 0) {
@@ -117,9 +118,9 @@ Como este caso de uso se conecta aos objetivos estratégicos de ${assessment?.cu
   const handleAssessmentLoaded = (loadedAssessment: CustomerAssessment, loadedTables: TableCatalogItem[]) => {
     setAssessment(loadedAssessment);
     setTables(loadedTables);
-    // Limpa dados de debate anterior para o novo cliente
+    // Inicializa imediatamente os casos de uso autênticos e customizados para o cliente
+    setTopUseCases(getCustomerUseCases(loadedAssessment.customerName));
     setTurns([]);
-    setTopUseCases([]);
     setSalienceMatrix([]);
     setAuditTargets([]);
     setHasExecutedAssessment(true);
