@@ -158,3 +158,64 @@ export interface PropertyGraphData {
   edges: PropertyGraphEdge[];
 }
 
+// =========================================================================
+// Tipos para os 5 Agentes Executivos ADK & Mesa Redonda (persona_adk.pdf)
+// =========================================================================
+export type ExecutiveRole = "CEO" | "CTO" | "CFO" | "CMO" | "MODERATOR";
+
+export interface ExecutivePersonaInfo {
+  role: ExecutiveRole;
+  title: string;
+  subtitle: string;
+  focusArea: string;
+  avatarIcon: string;
+  themeColor: string;
+}
+
+export interface ExecutiveStructuredSections {
+  strategicThesis?: string;
+  executionFrictions?: string;
+  googleCloudQuestions?: string[];
+  technicalDiagnosisFinOps?: string;
+  riskMatrixSecurity?: string;
+  financialModelEbitda?: string;
+  budgetaryCaveats?: string;
+  commercialMetricsImpact?: string;
+  marketFrictions?: string;
+  executiveConsensus?: string;
+}
+
+export interface ExecutiveRoundTableTurn {
+  turnId: string;
+  role: ExecutiveRole;
+  agentName: string;
+  title: string;
+  round: number; // 1: Abertura, 2: Pareceres Individuais, 3: Debate Cruzado, 4: Síntese e Consenso
+  phaseName: string;
+  content: string;
+  verdict?: string; // e.g. "APROVADO", "VIÁVEL COM RESTRIÇÕES ARQUITETURAIS", etc.
+  structuredSections?: ExecutiveStructuredSections;
+  thoughtLog?: string;
+  timestamp: string;
+}
+
+export interface ExecutiveRoundTableResult {
+  caseId: string;
+  caseTitle: string;
+  customerName: string;
+  industry: string;
+  turns: ExecutiveRoundTableTurn[];
+  summary: {
+    overallVerdict: string;
+    alignmentScore: number;
+    keyAgreements: string[];
+    criticalContentions: string[];
+    gcpSabatinaChecklist: {
+      fromRole: ExecutiveRole;
+      category: string;
+      question: string;
+    }[];
+    actionPlan: string[];
+  };
+}
+

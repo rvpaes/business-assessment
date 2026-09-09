@@ -28,13 +28,15 @@ import {
   Presentation,
   Zap,
   Award,
-  Check
+  Check,
+  Users
 } from "lucide-react";
 import { TopUseCase, CustomerAssessment } from "@/lib/types";
 import { GoogleCloudLogo, GoogleCloudIcon } from "../GoogleCloudLogo";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSimilarGoogleCloudCustomerStories } from "@/lib/gcp/customer-stories";
 import { UseCaseTerraformModal } from "./UseCaseTerraformModal";
+import { ExecutiveRoundTableTab } from "./ExecutiveRoundTableTab";
 import { formatCurrencyUsd, formatCurrencyBrl, formatPercent, formatDecimal } from "@/lib/utils/formatters";
 
 interface TopUseCasesViewProps {
@@ -51,7 +53,7 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [activeModalCase, setActiveModalCase] = useState<TopUseCase | null>(null);
-  const [modalTab, setModalTab] = useState<"overview" | "architecture">("overview");
+  const [modalTab, setModalTab] = useState<"overview" | "architecture" | "roundtable">("overview");
   const [terraformModalCase, setTerraformModalCase] = useState<TopUseCase | null>(null);
 
   const customerName = assessment?.customerName || "Cliente Corporativo";
@@ -360,12 +362,23 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                     <Layers className="w-3.5 h-3.5 shrink-0" />
                     <span>Arquitetura da Solução & Playbook do Vendedor</span>
                   </button>
+                  <button
+                    onClick={() => setModalTab("roundtable")}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer w-full sm:w-auto text-center ${
+                      modalTab === "roundtable"
+                        ? "bg-[#074878] text-white shadow-xs"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5 shrink-0" />
+                    <span>Mesa Redonda Executiva (ADK Board)</span>
+                  </button>
                 </div>
               </div>
 
               {/* Conteúdo do Modal */}
               <div className="p-4 sm:p-6 lg:p-8 text-slate-700">
-                {modalTab === "overview" ? (
+                {modalTab === "overview" && (
                   <div className="space-y-6">
                     {/* 1. Problema de Negócio & Solução Proposta */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -558,10 +571,12 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                       </div>
                     )}
                   </div>
-                ) : (
-                  /* ========================================================================= */
-                  /* ABA 2: ARQUITETURA DA SOLUÇÃO & PLAYBOOK DO VENDEDOR GOOGLE CLOUD        */
-                  /* ========================================================================= */
+                )}
+
+                {/* ========================================================================= */}
+                {/* ABA 2: ARQUITETURA DA SOLUÇÃO & PLAYBOOK DO VENDEDOR GOOGLE CLOUD        */}
+                {/* ========================================================================= */}
+                {modalTab === "architecture" && (
                   <div className="space-y-8 animate-in fade-in duration-200">
                     {/* Banner Topo da Arquitetura */}
                     <div className="p-6 rounded-3xl bg-gradient-to-r from-[#063964] via-[#08487D] to-[#20104e] text-white shadow-md space-y-2">
@@ -891,6 +906,16 @@ export const TopUseCasesView: React.FC<TopUseCasesViewProps> = ({
                       </div>
                     </div>
                   </div>
+                )}
+
+                {/* ========================================================================= */}
+                {/* ABA 3: MESA REDONDA EXECUTIVA (5 AGENTES ADK - PERSONA_ADK.PDF)          */}
+                {/* ========================================================================= */}
+                {modalTab === "roundtable" && assessment && (
+                  <ExecutiveRoundTableTab
+                    useCase={activeModalCase}
+                    assessment={assessment}
+                  />
                 )}
               </div>
 
